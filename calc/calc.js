@@ -296,7 +296,6 @@ function createAboutMenu() { // create menu with all cipher catergories
 	// o += '<center><div class="gematroLogo">'+gematroSvgLogo()+'</div>'
 	// o += '</center>'
 	// o += '<div style="margin: 1em;"></div>'
-	<p> Thanks Gematrinator! Founded By Gematro, Curated By Net Void & Alektryon, Updated By Hyperdope Gematria </p>
 	o += '<input class="intBtn" type="button" value="Cyphers Discord Server" onclick="gotoDiscordServer()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="GitHub Repository" onclick="gotoGitHubRepo()">'
