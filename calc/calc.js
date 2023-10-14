@@ -306,7 +306,7 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Net Void" onclick="gotoNetVoid()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Hyperdope Blog" onclick="gotoHyperdopeBlog()">'
+	o += '<input class="intBtn" type="button" value="Hyperdope Gematria" onclick="gotoHyperdopeBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Alektryon Cipher History Blog" onclick="gotoAlektryonBlog()">'
 	
