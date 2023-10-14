@@ -296,6 +296,7 @@ function createAboutMenu() { // create menu with all cipher catergories
 	// o += '<center><div class="gematroLogo">'+gematroSvgLogo()+'</div>'
 	// o += '</center>'
 	// o += '<div style="margin: 1em;"></div>'
+	<p> Thanks Gematrinator! Founded By Gematro, Curated By Net Void & Alektryon, Updated By Hyperdope Gematria </p>
 	o += '<input class="intBtn" type="button" value="Cyphers Discord Server" onclick="gotoDiscordServer()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="GitHub Repository" onclick="gotoGitHubRepo()">'
@@ -303,6 +304,8 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<input class="intBtn" type="button" value="Quickstart Guide" onclick="displayQuickstartGuide()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Youtube" onclick="gotoCyphersYoutube()">'
+	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Net Void" onclick="gotoNetVoid()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Hyperdope Blog" onclick="gotoHyperdopeBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
@@ -324,7 +327,9 @@ function gotoCyphersYoutube() { window.open("https://www.youtube.com/channel/UCg
 
 function gotoHyperdopeBlog () {window.open("https://www.hyperdope.com/gematria/", "_blank") }
 
-function gotoAlektryronBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
+function gotoAlektryonBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
+
+function gotoNetVoid () {window.open("https://netvoid.tv/", "_blank") }
 
 function gematroSvgLogo() {
 	return '<svg xmlns="http://www.w3.org/2000/svg" width="802.4" height="76.4" viewBox="0 0 2006 191"><defs><style>.cls-1 {fill: #bababa;fill-rule: evenodd;}</style></defs><path id="gematro_svg" data-name="gematroSVG" class="cls-1" d="M192.556,55.8L238,56l0.143-12.972q0-24.223-10.351-33.474T188.592,0.3H50.512q-29.07,0-39.31,9.47T0.961,45.23V145.873q0,26.21,10.24,35.676t39.31,9.47h138.08q29.07,0,39.31-9.47t10.241-35.676V80.026H116.8V113.94h75.757v40.522H47.429V35.32H192.556V55.8Zm332.1,135.218V155.343h-160.1V108.435h91.833V75.621H364.552V34h157.68V0.3H317.644V191.019H524.655Zm104.386,0V62.848l86.328,105.268h9.03L809.625,59.765V191.019h43.164V0.3H815.351L722.417,113.5,629.041,0.3H591.823V191.019h37.218Zm326.153,0,24-41.843H1105.39l24,41.843h52.19L1066.63,0.3h-44.71L908.726,191.019h46.468ZM1041.96,34.88l44.49,79.5H999.018Zm368.44-.44V0.3H1179.6V34.439h92.06v156.58h46.46V34.439h92.28Zm228.7,2.2q4.515,3.525,4.52,11.892V70.556q0,8.372-4.52,11.892t-16.63,3.524H1516.33V33.118h106.14Q1634.59,33.118,1639.1,36.642ZM1516.33,191.019V118.785h43.82l79.94,72.234h66.73l-90.73-72.234h26.2q23.565,0,34.14-8.588T1687,82.228V37.3q0-19.6-10.57-28.3t-34.14-8.7H1470.52V191.019h45.81Zm289.15-155.7H1959.2V154.462H1805.48V35.32Zm-46.47,110.553q0,26.21,10.13,35.676t39.42,9.47h147.55q29.07,0,39.31-9.47t10.24-35.676V45.23q0-25.983-10.02-35.456T1956.11,0.3H1808.56q-29.28,0-39.42,9.47T1759.01,45.23V145.873Z"/></svg>'
