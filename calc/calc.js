@@ -296,19 +296,19 @@ function createAboutMenu() { // create menu with all cipher catergories
 	// o += '<center><div class="gematroLogo">'+gematroSvgLogo()+'</div>'
 	// o += '</center>'
 	// o += '<div style="margin: 1em;"></div>'
-	o += '<input class="intBtn" type="button" value="Cyphers Discord Server" onclick="gotoDiscordServer()">'
-	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="GitHub Repository" onclick="gotoGitHubRepo()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Quickstart Guide" onclick="displayQuickstartGuide()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Youtube" onclick="gotoCyphersYoutube()">'
 	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Cyphers Discord Server" onclick="gotoDiscordServer()">'
+	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Net Void" onclick="gotoNetVoid()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Hyperdope Gematria" onclick="gotoHyperdopeBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Alektryon Cipher History Blog" onclick="gotoAlektryonBlog()">'
+	o += '<input class="intBtn" type="button" value="Alektryon Gematria Research" onclick="gotoAlektryonBlog()">'
 	
 	// o += '<div style="margin: 0.5em;"></div>'
 	// o += '<input class="intBtn" type="button" value="Contacts" onclick="displayContactInfo()">'
@@ -320,9 +320,9 @@ function createAboutMenu() { // create menu with all cipher catergories
 
 function gotoGitHubRepo() { window.open("https://github.com/malonehunter/hyperdope-gematria", "_blank") }
 
-function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_blank") }
-
 function gotoCyphersYoutube() { window.open("https://www.youtube.com/channel/UCg2_MXc1Q8AajN_n9kqIltQ", "_blank") }
+
+function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_blank") }
 
 function gotoNetVoid () {window.open("https://netvoid.tv/", "_blank") }
 
