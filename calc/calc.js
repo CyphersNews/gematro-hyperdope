@@ -311,7 +311,7 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematro Calculator" onclick="gotoGematroCalculator()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Hyperdope Gematria" onclick="gotoHyperdopeBlog()">'
+	o += '<input class="intBtn" type="button" value="Hyperdope Calculator" onclick="gotoHyperdopeBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Alektryon Gematria Research" onclick="gotoAlektryonBlog()">'
 	
@@ -335,7 +335,7 @@ function gotoNetVoid () {window.open("https://www.netvoid.tv/", "_blank") }
 
 function gotoGematroCalculator() { window.open("https://gematro.github.io/", "_blank") }
 
-function gotoHyperdopeBlog () {window.open("https://www.hyperdope.com/gematria/", "_blank") }
+function gotoHyperdopeBlog () {window.open("https://calc.hyperdope.com/", "_blank") }
 
 function gotoAlektryonBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
 
