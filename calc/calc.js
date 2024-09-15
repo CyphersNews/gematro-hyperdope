@@ -329,7 +329,7 @@ function gotoCyphersYoutube() { window.open("https://www.youtube.com/channel/UCg
 
 function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_blank") }
 
-function gotoNetVoid () {window.open("https://netvoid.tv/", "_blank") }
+function gotoNetVoid () {window.open("https://www.netvoid.tv/", "_blank") }
 
 function gotoHyperdopeBlog () {window.open("https://www.hyperdope.com/gematria/", "_blank") }
 
