@@ -296,7 +296,10 @@ function createAboutMenu() { // create menu with all cipher catergories
 	// o += '<center><div class="gematroLogo">'+gematroSvgLogo()+'</div>'
 	// o += '</center>'
 	// o += '<div style="margin: 1em;"></div>'
-	o += '<input class="intBtn" type="button" value="GitHub Repository" onclick="gotoGitHubRepo()">'
+	
+	o += '<input class="intBtn" type="button" value="Coded By Gematro" onclick="gotoCodedByGematro()">'
+	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Hyperdope Repository" onclick="gotoGitHubRepo()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Quickstart Guide" onclick="displayQuickstartGuide()">'
 	o += '<div style="margin: 0.5em;"></div>'
@@ -317,6 +320,8 @@ function createAboutMenu() { // create menu with all cipher catergories
 
 	document.getElementById("calcOptionsPanel").innerHTML = o
 }
+
+function gotoCodedByGematro() { window.open("https://github.com/gematro", "_blank") }
 
 function gotoGitHubRepo() { window.open("https://github.com/malonehunter/hyperdope-gematria", "_blank") }
 
