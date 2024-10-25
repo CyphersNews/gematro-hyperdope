@@ -307,8 +307,6 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Webmaster Net Void" onclick="gotoNetVoid()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="$Cypher DexScreener Solana" onclick="gotoCypher()">'
-	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Youtube" onclick="gotoCyphersYoutube()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Discord" onclick="gotoDiscordServer()">'
@@ -316,6 +314,8 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<input class="intBtn" type="button" value="Cyphers Twitter / X" onclick="gotoX()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Database" onclick="gotoDatabase()">'
+	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="$Cypher DexScreener Solana" onclick="gotoCypher()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Allbano Gematria Research" onclick="gotoAlektryonBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
@@ -339,8 +339,6 @@ function gotoCyphersRepo() { window.open("https://github.dev/CyphersNews/gematro
 
 function gotoGitHubRepo() { window.open("https://github.com/malonehunter/hyperdope-gematria", "_blank") }
 
-function gotoCypher () {window.open("https://dexscreener.com/solana/CG6uhQ2ABShiKitnCHLMRoV1Swmz2iv4uwFzYEWMuUG3", "_blank") }
-
 function gotoNetVoid () {window.open("https://www.youtube.com/@NetVoid/featured", "_blank") }
 
 function gotoCyphersYoutube() { window.open("https://www.youtube.com/channel/UCg2_MXc1Q8AajN_n9kqIltQ", "_blank") }
@@ -350,6 +348,8 @@ function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_bl
 function gotoX() { window.open("https://twitter.com/CyphersNews", "_blank") }
 
 function gotoDatabase () {window.open("https://www.netvoid.tv/gematria", "_blank") }
+
+function gotoCypher () {window.open("https://dexscreener.com/solana/CG6uhQ2ABShiKitnCHLMRoV1Swmz2iv4uwFzYEWMuUG3", "_blank") }
 
 function gotoAlektryonBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
 
