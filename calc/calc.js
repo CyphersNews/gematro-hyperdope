@@ -317,7 +317,7 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="$Cypher DexScreener Solana" onclick="gotoCypher()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Allbano Gematria Research" onclick="gotoAlektryonBlog()">'
+	o += '<input class="intBtn" type="button" value="Albano Gematria Research" onclick="gotoAlektryonBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematro Calculator" onclick="gotoGematroCalculator()">'
 	o += '<div style="margin: 0.5em;"></div>'
