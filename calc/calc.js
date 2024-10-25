@@ -297,24 +297,34 @@ function createAboutMenu() { // create menu with all cipher catergories
 	// o += '</center>'
 	// o += '<div style="margin: 1em;"></div>'
 	
+	o += '<input class="intBtn" type="button" value="Quickstart Guide" onclick="displayQuickstartGuide()">'
+	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Coded By Gematro in 2021" onclick="gotoCodedByGematro()">'
+	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Cyphers Repository in 2022" onclick="gotoCyphersRepo()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Hyperdope Repository in 2023" onclick="gotoGitHubRepo()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Quickstart Guide" onclick="displayQuickstartGuide()">'
+	o += '<input class="intBtn" type="button" value="Cyphers Webmaster Net Void" onclick="gotoNetVoid()">'
+	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="$Cypher DexScreener Solana" onclick="gotoCypher()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Youtube" onclick="gotoCyphersYoutube()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Discord" onclick="gotoDiscordServer()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Net Void" onclick="gotoNetVoid()">'
+	o += '<input class="intBtn" type="button" value="Cyphers Twitter / X" onclick="gotoX()">'
+	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Cyphers Database" onclick="gotoDatabase()">'
+	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Allbano Gematria Research" onclick="gotoAlektryonBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematro Calculator" onclick="gotoGematroCalculator()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Hyperdope Calculator" onclick="gotoHyperdopeBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Alektryon Gematria Research" onclick="gotoAlektryonBlog()">'
-	
+	o += '<input class="intBtn" type="button" value="Gematrinator Calculator" onclick="gotoGEMATRINATOR()">'
+
 	// o += '<div style="margin: 0.5em;"></div>'
 	// o += '<input class="intBtn" type="button" value="Contacts" onclick="displayContactInfo()">'
 
@@ -325,19 +335,31 @@ function createAboutMenu() { // create menu with all cipher catergories
 
 function gotoCodedByGematro() { window.open("https://github.com/gematro", "_blank") }
 
+function gotoCyphersRepo() { window.open("https://github.dev/CyphersNews/gematro-hyperdope", "_blank") }
+
 function gotoGitHubRepo() { window.open("https://github.com/malonehunter/hyperdope-gematria", "_blank") }
+
+function gotoCypher () {window.open("https://dexscreener.com/solana/CG6uhQ2ABShiKitnCHLMRoV1Swmz2iv4uwFzYEWMuUG3", "_blank") }
+
+function gotoNetVoid () {window.open("https://www.youtube.com/@NetVoid/featured", "_blank") }
 
 function gotoCyphersYoutube() { window.open("https://www.youtube.com/channel/UCg2_MXc1Q8AajN_n9kqIltQ", "_blank") }
 
 function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_blank") }
 
-function gotoNetVoid () {window.open("https://www.netvoid.tv/", "_blank") }
+function gotoX() { window.open("https://twitter.com/CyphersNews", "_blank") }
+
+function gotoDatabase () {window.open("https://www.netvoid.tv/gematria", "_blank") }
+
+function gotoAlektryonBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
 
 function gotoGematroCalculator() { window.open("https://gematro.github.io/", "_blank") }
 
 function gotoHyperdopeBlog () {window.open("https://calc.hyperdope.com/", "_blank") }
 
-function gotoAlektryonBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
+function gotoGEMATRINATOR () {window.open("https://gematrinator.com/", "_blank") }
+
+
 
 
 
