@@ -335,7 +335,7 @@ function createAboutMenu() { // create menu with all cipher catergories
 
 function gotoCodedByGematro() { window.open("https://github.com/gematro", "_blank") }
 
-function gotoCyphersRepo() { window.open("https://github.dev/CyphersNews/gematro-hyperdope", "_blank") }
+function gotoCyphersRepo() { window.open("https://github.com/CyphersNews/gematro-hyperdope", "_blank") }
 
 function gotoGitHubRepo() { window.open("https://github.com/malonehunter/hyperdope-gematria", "_blank") }
 
