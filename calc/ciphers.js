@@ -517,7 +517,7 @@ cipherList = [
 	),
 
 	new cipher(
-		"QWERTY Numeric", // cipher name
+		"Numeric QWERTY", // cipher name
 		"The CCRU", // category
 		120, 57, 36, // hue, saturation, lightness
 		[49, 50, 51, 52, 53, 54, 55, 56, 57, 81, 87, 69, 82, 84, 89, 117, 105, 111, 112, 97, 115, 100, 102, 103, 104, 106, 107, 108, 122, 120, 99, 118, 98, 110, 109], // ASCII codes for 123456789QWERTYuiopasdfghjklzxcvbnm
