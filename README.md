@@ -1,4 +1,4 @@
-## Hyperdope Gematria
+## Cyphers
 ![Hyperdope Gematria](res/preview.png)
 ---
 > NOTE: Use a desktop Chromium based browser for best experience
@@ -10,7 +10,7 @@ Decode your reality.  Discover hidden synchronicities and encode your own!
 
 Try it live at https://www.hyperdope.com/gematria
 
-The Hyperdope Gematria project values these principles:
+The Cyphers, Gematro, Hyperdope Gematria project values these principles:
 
 <ul>
 <li>Accessible and relevant word and phrase matching</li>
