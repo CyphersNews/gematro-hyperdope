@@ -552,21 +552,10 @@ cipherList = [
 	),
 
 	new cipher(
-		"Synx",
-		"The CCRU",
-		180, 44, 66,
-		[48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122],
-		[1,2,3,4,5,6,7,9,10,12,14,15,18,20,21,28,30,35,36,42,45,60,63,70,84,90,105,126,140,180,210,252,315,420,630,1260],
-		true,
-		false,
-		false
-	),
-
-	new cipher(
 		"QWERTY", // cipher name
 		"The CCRU", // category
 		120, 57, 36, // hue, saturation, lightness
-		[81,87,69,82,84,89,117,105,111,112,97,115,100,102,103,104,106,107,108,122,120,99,118,98,110,109], // start with uppercase QWERTY, followed by lowercase in random order
+		[113,119,101,114,116,121,117,105,111,112,97,115,100,102,103,104,106,107,108,122,120,99,118,98,110,109], // start with uppercase QWERTY, followed by lowercase in random order
 		[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26], // values
 		true, // characters with diacritic marks have the same value as regular ones, default is "true"
 		false, // enabled state, default is "false"
@@ -594,6 +583,17 @@ cipherList = [
 		true,
 		false,
 		true
+	),
+
+	new cipher(
+		"Synx",
+		"The CCRU",
+		180, 44, 66,
+		[48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122],
+		[1,2,3,4,5,6,7,9,10,12,14,15,18,20,21,28,30,35,36,42,45,60,63,70,84,90,105,126,140,180,210,252,315,420,630,1260],
+		true,
+		false,
+		false
 	),
 
 	new cipher(
