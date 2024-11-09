@@ -41,7 +41,7 @@ var optMatrixCodeRain = true // code rain
 
 var optShowOnlyMatching = false // set opacity of nonmatching values to zero
 
-var optNumCalcMethod = 1 // 0 - "Off", 1 - "Full", 2 - "Reduced"
+var optNumCalcMethod = 2 // 0 - "Off", 1 - "Full", 2 - "Reduced"
 var optLetterWordCount = true // show word/letter count
 var optCompactBreakdown = true // compact breakdown - "phrase = 67 (English Ordinal)" is not included inside the chart
 var optWordBreakdown = true // word breakdown
@@ -51,8 +51,8 @@ var optGemSubstitutionMode = true // simple substitution of characters with corr
 var optGemMultCharPos = false // value of each character is multiplied by character index
 var optGemMultCharPosReverse = false // value of each character is multiplied by character index in reverse order
 
-var optFiltSameCipherMatch = false // filter shows only phrases that match in the same cipher
-var optFiltCrossCipherMatch = true // filter shows only ciphers that have matching values
+var optFiltSameCipherMatch = true // filter shows only phrases that match in the same cipher
+var optFiltCrossCipherMatch = false // filter shows only ciphers that have matching values
 var alphaHlt = 0.15 // opacity for values that do not match - change value here and in conf_SOM()
 
 var optAllowPhraseComments = true // allow phrase comments, text inside [...] is not evaluated
