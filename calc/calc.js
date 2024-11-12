@@ -317,8 +317,6 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Database" onclick="gotoDatabase()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="$Cypher DexScreener Solana" onclick="gotoCypher()">'
-	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematro Calculator" onclick="gotoGematroCalculator()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Hyperdope Calculator" onclick="gotoHyperdopeBlog()">'
@@ -350,8 +348,6 @@ function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_bl
 function gotoX() { window.open("https://twitter.com/CyphersNews", "_blank") }
 
 function gotoDatabase () {window.open("https://www.netvoid.tv/gematria", "_blank") }
-
-function gotoCypher () {window.open("https://dexscreener.com/solana/CG6uhQ2ABShiKitnCHLMRoV1Swmz2iv4uwFzYEWMuUG3", "_blank") }
 
 function gotoGematroCalculator() { window.open("https://gematro.github.io/", "_blank") }
 
