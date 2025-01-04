@@ -752,20 +752,36 @@ body {
 	/*background-color: transparent;*/
 }
 .intBtn2, .ciphEditBtn { /* Cipher Categories */
-	display: inline-block;
-	color: var(--font-white-1);
-	color: var(--font-white-2);
-	padding: 0.2em 0.75em;
-	margin: 0.1em 0em;
-	border: 1px solid var(--border-accent);	  
-	width: 100%;
-	font-size: 100%;
-	font-weight: 500;
-	font-family: var(--font-family), "Arial", sans-serif;
-	outline: none;
-	background-color: var(--btn-bg-accent);
-	/*background-color: transparent;*/
+    display: inline-block;
+    color: var(--font-white-1);
+    color: var(--font-white-2);
+    padding: 0.15em 0.6em; /* Padding for breathing room */
+    margin: 0.1em 0.05em; /* Margin for subtle spacing */
+    border: 1px solid var(--border-accent);	  
+    width: 100%;
+    font-size: 100%;
+    font-weight: 500;
+    font-family: var(--font-family), "Arial", sans-serif;
+    outline: none;
+    background-color: var(--btn-bg-accent);
+
+    /* Default behavior for short text (no wrapping) */
+    white-space: nowrap; /* Prevent wrapping by default */
+    overflow-wrap: normal; /* Don't break words unnecessarily */
+    text-align: center; /* Center-align the text */
+    line-height: 1.2; /* Line height for readability */
+    min-height: auto; /* Allow dynamic height */
 }
+
+/* Special class for "Gematria Club" that needs wrapping */
+.intBtn2.gematriaClub {
+    white-space: normal; /* Allow wrapping */
+    overflow-wrap: break-word; /* Break words if necessary */
+    font-size: 90%; /* Slightly smaller text */
+    padding: 0.15em 0.5em; /* Adjust padding for longer text */
+    max-width: 180px; /* Optional: Limit the width */
+}
+
 .ciphEditBtn {
 	width: auto;
 	margin: 0.75em 0.5em 0em 0.5em;

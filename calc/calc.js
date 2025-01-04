@@ -220,40 +220,43 @@ function generateRndColors() { rndCol.H = fillColArr(0, 359, 360/12); rndCol.S =
 function fillColArr(min, max, step) { var i; var a = []; for (i = min; i <= max; i += step) a.push(i); return a } // inclusive
 function getRndIndex(a) { return a[rndInt(0, a.length-1)] }
 
-// ========================== Ciphers Menu ==========================
+// ========================== Cyphers Menu ==========================
 
-function createCiphersMenu() { // create menu with all cipher catergories
-	var o = document.getElementById("calcOptionsPanel").innerHTML
+function createCiphersMenu() { // create menu with all cipher categories
+    var o = document.getElementById("calcOptionsPanel").innerHTML
 
-	o += '<div class="dropdown">'
-	o += '<button class="dropbtn">Cyphers</button>'
-	o += '<div class="dropdown-content" style="width: 380px;">'
+    o += '<div class="dropdown">'
+    o += '<button class="dropbtn">Cyphers</button>'
+    o += '<div class="dropdown-content" style="width: 380px;">'
 
-	o += '<div><center>'
-	o += '<input class="intBtn3" type="button" value="Empty" onclick="disableAllCiphers()">'
-	o += '<input class="intBtn3" type="button" value="Default" onclick="enableDefaultCiphers()">'
-	o += '<input class="intBtn3" type="button" value="All (EN)" onclick="enableAllEnglishCiphers()">'
-	o += '<input class="intBtn3" type="button" value="All" onclick="enableAllCiphers()">'
-	o += '</center></div>'
+    o += '<div><center>'
+    o += '<input class="intBtn3" type="button" value="Empty" onclick="disableAllCiphers()">'
+    o += '<input class="intBtn3" type="button" value="Default" onclick="enableDefaultCiphers()">'
+    o += '<input class="intBtn3" type="button" value="All (EN)" onclick="enableAllEnglishCiphers()">'
+    o += '<input class="intBtn3" type="button" value="All" onclick="enableAllCiphers()">'
+    o += '</center></div>'
 
-	o += '<hr style="background-color: var(--separator-accent2); height: 1px; border: none; margin: 0.4em;">'
+    o += '<hr style="background-color: var(--separator-accent2); height: 1px; border: none; margin: 0.4em;">'
 
-	o += '<div style="width: 30%; float: left;">'
-	for (i = 0; i < cCat.length; i++) {
-		o += '<input class="intBtn2 ciphCatButton" type="button" value="'+cCat[i]+'">'
-	}
+    o += '<div style="width: 30%; float: left;">'
+    for (i = 0; i < cCat.length; i++) {
+        let category = cCat[i];
+        // Apply 'gematriaClub' class only to the 'Gematria Club' category
+        let extraClass = category === "Gematria Club" ? " gematriaClub" : "";
+        o += '<input class="intBtn2 ciphCatButton' + extraClass + '" type="button" value="' + category + '">';
+    }
+    o += '</div>'
 
-	o += '</div>'
+    o += '<div style="width: 70%; float: left;">'
+    o += '<div id="menuCiphCatDetailsArea" style="margin: 0em 0.25em 0em 1.25em;">'
+    o += '</div></div>'
 
-	o += '<div style="width: 70%; float: left;">'
-	o += '<div id="menuCiphCatDetailsArea" style="margin: 0em 0.25em 0em 1.25em;">'
-	o += '</div></div>'
+    o += '</div></div>'
 
-	o += '</div></div>'
-
-	document.getElementById("calcOptionsPanel").innerHTML = o
-	displayCipherCatDetailed(cCat[0]) // open first available category
+    document.getElementById("calcOptionsPanel").innerHTML = o
+    displayCipherCatDetailed(cCat[0]) // open first available category
 }
+
 
 $(document).ready(function(){
 	$("body").on("mouseover", ".ciphCatButton", function () { // mouse over cipher category button
@@ -307,6 +310,8 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Webmaster Net Void" onclick="gotoNetVoid()">'
 	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Gematria Club" onclick="gotoGematriaClub()">'
+	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematria Research" onclick="gotoAlektryonBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Youtube" onclick="gotoCyphersYoutube()">'
@@ -338,6 +343,8 @@ function gotoCyphersRepo() { window.open("https://github.com/CyphersNews/gematro
 function gotoGitHubRepo() { window.open("https://github.com/malonehunter/hyperdope-gematria", "_blank") }
 
 function gotoNetVoid () {window.open("https://www.youtube.com/@NetVoid/featured", "_blank") }
+
+function gotoGematriaClub () {window.open("https://www.gematriaclub.com", "_blank") }
 
 function gotoAlektryonBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
 
