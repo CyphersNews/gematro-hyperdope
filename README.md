@@ -8,7 +8,7 @@
 
 Decode your reality.  Discover hidden synchronicities and encode your own!
 
-Try it live at https://www.hyperdope.com/gematria
+Try it live at https://cyphers.news/
 
 The Cyphers, Gematro, Hyperdope Gematria project values these principles:
 
@@ -37,9 +37,9 @@ The Cyphers, Gematro, Hyperdope Gematria project values these principles:
 
 ## Getting Started
 
-To learn more about how to use Hyperdope Gematria see the Quickstart Guide in the app under the About menu.
+To learn more about how to use Cyphers see the Quickstart Guide in the app under the About menu.
 
-This repo may be cloned as-is to your **web server** for self-hosting your own fully-featured gematira calulator with integrated database matching.
+This repo may be cloned as-is to your **web server** for self-hosting your own fully-featured gematria calulator with integrated database matching.
 
 To add more words or phrases to the matching database append them as new lines to the db.txt.  To autoload a different properly formatted .txt file you can change the reference in the AUTO LOAD DATABASE (DB) section at the bottom of index.html.
 
@@ -78,14 +78,22 @@ Distributed under the GNU General Public License v2.0. See `LICENSE` for more in
 <!-- CONTACT -->
 ## Contact
 
+Cyphers News - [@CyphersNews on X](https://x.com/CyphersNews) -
+cypherstvuk@gmail.com
+
+Cyphers Project Link: [Cyphers News](https://github.com/CyphersNews/gematro-hyperdope)
+
+Gematro Project Link: [Gematro](https://github.com/gematro)
+
 Hyperdope Official - [@LNHyper on X](https://twitter.com/lnhyper) - hyperdopeofficial@protonmail.com
 
-Project Link: [Hyperdope Gematria](https://github.com/malonehunter/hyperdope-gematria)
+Hyperdope Project Link: [Hyperdope Gematria](https://github.com/malonehunter/hyperdope-gematria)
 
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* Special thanks to Saun-Virroco, the creator of Gematro, on which this calculator is almost entirely based.  
+* Special thanks to @Saun-Virroco, the creator of Gematro, who's first name is Mikhail, on which this calculator is entirely based albeit our alterations.  
 * [NetVoid, who preserved the Gematro repo and secured the database](https://github.com/CyphersNews/cyphersnews.github.io)
 * [Alektryon, who contributed many cyphers, configurations, and reviews.](https://github.com/Alektryon)
+* [Hyperdope, who made the live database an option again after Gematro took his version of that code offline. Furthermore, thank you for starting the project of narrowing down our database.](https://github.com/malonehunter/hyperdope-gematria)
