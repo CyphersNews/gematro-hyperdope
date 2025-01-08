@@ -1,5 +1,5 @@
 ## Cyphers
-![Hyperdope Gematria](res/preview.png)
+![Cyphers News](res/preview.png)
 ---
 > NOTE: Use a desktop Chromium based browser for best experience
 
