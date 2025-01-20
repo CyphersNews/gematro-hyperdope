@@ -488,18 +488,6 @@ cipherList = [
 	),
 
 
-	new cipher(
-		"QWERTY Primes", // cipher name
-		"The CCRU", // category
-		44, 56, 62, // hue, saturation, lightness
-		[113,119,101,114,116,121,117,105,111,112,97,115,100,102,103,104,106,107,108,122,120,99,118,98,110,109], // start with uppercase QWERTY, followed by lowercase in random order
-		[29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,1,2,3,5,7,11,13,17,19,23], // values
-		true, // characters with diacritic marks have the same value as regular ones, default is "true"
-		false, // enabled state, default is "false"
-		false // case sensitive cipher, default is "false"
-	),
-	
-
 
 	new cipher( 
 		"Numeric QWERTY", // cipher name
@@ -513,6 +501,16 @@ cipherList = [
 	),
 
 
+	new cipher(
+		"Nmrc QWERTY Primes", // cipher name
+		"The CCRU", // category
+		44, 56, 62, // hue, saturation, lightness
+		[49,50,51,52,53,54,55,56,57,48,113,119,101,114,116,121,117,105,111,112,97,115,100,102,103,104,106,107,108,122,120,99,118,98,110,109], // starts with numeric characters followed by uppercase QWERTY, then lowercase in random order
+		[1,2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149], // values corresponding to each character
+		true, // characters with diacritic marks have the same value as regular ones, default is "true"
+		false, // enabled state, default is "false"
+		false // case sensitive cipher, default is "false"
+	),
 
 
 	new cipher(

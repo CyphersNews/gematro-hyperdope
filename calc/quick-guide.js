@@ -12,10 +12,30 @@ function displayQuickstartGuide() {
 	var o = '<div class="quickGuide">'
 	o += '<p><span class="qgBold2">Quickstart Guide</p>'
 
+
 	o += '<hr class="numPropSeparator">'
 
 	o += '<p class="qgMedium">Phrase Box - enter any word, phrase or number</p>\n<ul><li><span class="qgBold">"Enter"</span> - add phrase to history table</li><li><span class="qgBold">"Up"</span> and <span class="qgBold">"Down"</span> arrow keys - select phrase from history table<br>Press <span class="qgBold">"Down"</span> to select previously entered phrase</li><li><span class="qgBold">"Delete"</span> - delete current phrase from history table</li><li>Additional Shortcuts:<br><span class="qgBold">"Home"</span> - clear history table<br><span class="qgBold">"End"</span> - shortcut for <span class="qgBold">"Enter As Words"</span> function</li></ul>'
 
+
+
+	o += '<hr class="numPropSeparator">'
+
+	o += '<p><span class="qgBold2">History</p>'
+
+
+
+
+	o += '<p class="qgMedium">English - Modern, Archaic + Intl. Languages + Base 4</p>\n<ul><li><span class="qgBold">English</span> - Modern 26 letter alphabet since the mid-1600s.</li><li><span class="qgBold">Archaic</span> Old 24 letter English alphabet from 1300 - 1650 AD. Also known as the Elizabethan or Baconian cyphers. <br> <span class="qgBold">International Languages</span> Latin, Hebrew, Greek, Arabic and Russian. <li><span class="qgBold">Ordinal</span> as ancient as Phoneician cuneiform.</li><li><span class="qgBold">Phoenician</span> the first phonetic alphabet which introduced the first form of gematria (alphabet and number substitution systems). Phoenician Gematria is as ancient as 1000+ BC.</li><li><span class="qgBold">Reverse</span> instead of A to Z.. we inverse from Z to A.</li><li>Additional Shortcuts:<br><span class="qgBold">Reduction</span> Based on Pythagorean numerology where you sum ever digit until you get 1 digit<br><span class="qgBold">Standard</span> based on <span class="qgBold">Hebrew Gematria</span> function</li></ul>'
+
+
+
+
+
+	o += '<hr class="numPropSeparator">'
+
+	o += '<p><span class="qgBold2">Tutorial</p>'
+	
 	o += '<p class="qgMedium">Highlight Box - enter space delimited numbers</p>\n<ul><li><span class="qgBold">"Enter"</span> - activate filter (remove nonmatching phrases and ciphers)</li><li><span class="qgBold">"Delete"</span> - clear box contents (does not reset filter)<br><span class="qgNote">Note: Reset filter with an "X" button near the box</span></li><li>Additional Shortcuts:<br><span class="qgBold">"Insert"</span> - find all available matches<br><span class="qgBold">"Ctrl + Delete"</span> - reset filter and revert to initial history state<br><span class="qgNote">Note: Type "0 0" or "Ctrl + Left Click" on "0" cell twice to highlight zero<br>History table is recalculated on each keystroke</span></li></ul>'
 
 	o += '<p class="qgMedium">Enabled Ciphers Table</p>\n<ul><li><span class="qgBold">"Left Click"</span> on cipher name - choose cipher, display detailed word breakdown</li><li><span class="qgBold">"Right Click"</span> on cipher name - disable cipher</li><li><span class="qgBold">"Ctrl + Right Click"</span> on cipher name - reorder ciphers, select the same cipher to cancel</li><li><span class="qgBold">"Left Click"</span> on number - show number properties</li><li><span class="qgBold">"Right Click"</span> on number - show additional number properties</li></ul>'
