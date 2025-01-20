@@ -502,7 +502,7 @@ cipherList = [
 
 
 	new cipher(
-		"Nmrc QWERTY Primes", // cipher name
+		"Numeric QWERTY Primes", // cipher name
 		"The CCRU", // category
 		44, 56, 62, // hue, saturation, lightness
 		[49,50,51,52,53,54,55,56,57,48,113,119,101,114,116,121,117,105,111,112,97,115,100,102,103,104,106,107,108,122,120,99,118,98,110,109], // starts with numeric characters followed by uppercase QWERTY, then lowercase in random order
