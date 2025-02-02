@@ -310,7 +310,7 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematria Research" onclick="gotoAlektryonBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
-		o += '<input class="intBtn" type="button" value="Ciphers News" onclick="gotoCiphersNews()">'
+	o += '<input class="intBtn" type="button" value="Ciphers News" onclick="gotoCiphersNews()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Youtube" onclick="gotoCyphersYoutube()">'
 	o += '<div style="margin: 0.5em;"></div>'
@@ -327,6 +327,7 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<input class="intBtn" type="button" value="Hyperdope Calculator" onclick="gotoHyperdopeBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematrinator Calculator" onclick="gotoGEMATRINATOR()">'
+	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Webmaster Net Void" onclick="gotoNetVoid()">'
 	o += '<div style="margin: 0.5em;"></div>'
 
@@ -345,17 +346,17 @@ function gotoCyphersRepo() { window.open("https://github.com/CyphersNews/gematro
 
 function gotoGitHubRepo() { window.open("https://github.com/malonehunter/hyperdope-gematria", "_blank") }
 
-function gotoNetVoid () {window.open("https://www.youtube.com/@NetVoid/featured", "_blank") }
-
 function gotoAlektryonBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
 
-function gotoAlektryonBlog () {window.open("https://ciphiers.news", "_blank") }
+function gotoCiphersNews () {window.open("https://ciphers.news", "_blank") }
 
 function gotoCyphersYoutube() { window.open("https://www.youtube.com/channel/UCg2_MXc1Q8AajN_n9kqIltQ", "_blank") }
 
 function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_blank") }
 
 function gotoX() { window.open("https://twitter.com/CyphersNews", "_blank") }
+
+function gotoDatabase () {window.open("https://www.netvoid.tv/gematria", "_blank") }
 
 function gotoGematriaClub () {window.open("https://www.gematriaclub.com", "_blank") }
 
@@ -365,7 +366,7 @@ function gotoHyperdopeBlog () {window.open("https://calc.hyperdope.com/", "_blan
 
 function gotoGEMATRINATOR () {window.open("https://gematrinator.com/", "_blank") }
 
-function gotoDatabase () {window.open("https://www.netvoid.tv/gematria", "_blank") }
+function gotoNetVoid () {window.open("https://www.youtube.com/@NetVoid/featured", "_blank") }
 
 
 
