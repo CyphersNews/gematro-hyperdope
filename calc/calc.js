@@ -308,11 +308,9 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Hyperdope Repository in 2023" onclick="gotoGitHubRepo()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Cyphers Webmaster Net Void" onclick="gotoNetVoid()">'
-	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Gematria Club" onclick="gotoGematriaClub()">'
-	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematria Research" onclick="gotoAlektryonBlog()">'
+	o += '<div style="margin: 0.5em;"></div>'
+		o += '<input class="intBtn" type="button" value="Ciphers News" onclick="gotoCiphersNews()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Youtube" onclick="gotoCyphersYoutube()">'
 	o += '<div style="margin: 0.5em;"></div>'
@@ -322,11 +320,16 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Database" onclick="gotoDatabase()">'
 	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Gematria Club" onclick="gotoGematriaClub()">'
+	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematro Calculator" onclick="gotoGematroCalculator()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Hyperdope Calculator" onclick="gotoHyperdopeBlog()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematrinator Calculator" onclick="gotoGEMATRINATOR()">'
+	o += '<input class="intBtn" type="button" value="Cyphers Webmaster Net Void" onclick="gotoNetVoid()">'
+	o += '<div style="margin: 0.5em;"></div>'
+
 
 	// o += '<div style="margin: 0.5em;"></div>'
 	// o += '<input class="intBtn" type="button" value="Contacts" onclick="displayContactInfo()">'
@@ -344,9 +347,9 @@ function gotoGitHubRepo() { window.open("https://github.com/malonehunter/hyperdo
 
 function gotoNetVoid () {window.open("https://www.youtube.com/@NetVoid/featured", "_blank") }
 
-function gotoGematriaClub () {window.open("https://www.gematriaclub.com", "_blank") }
-
 function gotoAlektryonBlog () {window.open("https://gematriaresearch.blogspot.com/", "_blank") }
+
+function gotoAlektryonBlog () {window.open("https://ciphiers.news", "_blank") }
 
 function gotoCyphersYoutube() { window.open("https://www.youtube.com/channel/UCg2_MXc1Q8AajN_n9kqIltQ", "_blank") }
 
@@ -354,13 +357,17 @@ function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_bl
 
 function gotoX() { window.open("https://twitter.com/CyphersNews", "_blank") }
 
-function gotoDatabase () {window.open("https://www.netvoid.tv/gematria", "_blank") }
+function gotoGematriaClub () {window.open("https://www.gematriaclub.com", "_blank") }
 
 function gotoGematroCalculator() { window.open("https://gematro.github.io/", "_blank") }
 
 function gotoHyperdopeBlog () {window.open("https://calc.hyperdope.com/", "_blank") }
 
 function gotoGEMATRINATOR () {window.open("https://gematrinator.com/", "_blank") }
+
+function gotoDatabase () {window.open("https://www.netvoid.tv/gematria", "_blank") }
+
+
 
 
 
