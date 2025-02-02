@@ -492,7 +492,7 @@ cipherList = [
 	new cipher( 
 		"Numeric QWERTY", // cipher name
 		"The CCRU", // category
-		120, 57, 36, // hue, saturation, lightness
+		120, 57, 60, // hue, saturation, lightness
 		[49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 113, 119, 101, 114, 116, 121, 117, 105, 111, 112, 97, 115, 100, 102, 103, 104, 106, 107, 108, 122, 120, 99, 118, 98, 110, 109], // ASCII codes for 1234567890qwertyuiopasdfghjklzxcvbnm
 		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35], // ordinal values from 0 to 35
 		true, // characters with diacritic marks have the same value as regular ones
