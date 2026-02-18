@@ -320,8 +320,6 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Database" onclick="gotoDatabase()">'
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Gematria Club" onclick="gotoGematriaClub()">'
-	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Gematro Calculator" onclick="gotoGematroCalculator()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Hyperdope Calculator" onclick="gotoHyperdopeBlog()">'
@@ -330,6 +328,7 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Cyphers Webmaster Net Void" onclick="gotoNetVoid()">'
 	o += '<div style="margin: 0.5em;"></div>'
+	
 
 
 	// o += '<div style="margin: 0.5em;"></div>'
@@ -357,8 +356,6 @@ function gotoDiscordServer() { window.open("https://discord.gg/SJjN64x3h7", "_bl
 function gotoX() { window.open("https://twitter.com/CyphersNews", "_blank") }
 
 function gotoDatabase () {window.open("https://www.netvoid.tv/gematria", "_blank") }
-
-function gotoGematriaClub () {window.open("https://www.gematriaclub.com", "_blank") }
 
 function gotoGematroCalculator() { window.open("https://gematro.github.io/", "_blank") }
 
@@ -660,13 +657,13 @@ function createExportMenu() {
 	o += '<button class="dropbtn">Export</button>'
 	o += '<div class="dropdown-content">'
 
-	o += '<input id="btn-print-cipher-png" class="intBtn" type="button" value="Print Cipher Chart">' // cipher chart preview
+	o += '<input id="btn-print-cipher-png" class="intBtn" type="button" value="Print Cyphers Chart">' // cipher chart preview
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input id="btn-print-history-png" class="intBtn" type="button" value="Print History Table">' // history table preview
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input id="btn-print-word-break-png" class="intBtn" type="button" value="Print Word Breakdown">' // print word breakdown table
 	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input id="btn-print-breakdown-details-png" class="intBtn" type="button" value="Print Gematria Card">' // print detailed breakdown
+	o += '<input id="btn-print-breakdown-details-png" class="intBtn" type="button" value="Print Cyphers Card">' // print detailed breakdown
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input id="btn-num-props-png" class="intBtn" type="button" value="Print Number Properties">' // print number properties
 	o += '<div style="margin: 0.5em;"></div>'
