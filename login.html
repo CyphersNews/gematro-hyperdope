@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<head>
+<title>Sign in | Cyphers</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/x-icon" href="res/favicon.png">
+
+<script src="lib/jquery.min.js"></script>
+<script src="lib/supabase.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="calc/styles.css">
+<link rel="stylesheet" type="text/css" href="auth/auth.css">
+
+<script src="auth/supabase-config.js"></script>
+<script src="auth/auth.js"></script>
+<script src="auth/auth-ui.js"></script>
+</head>
+
+<body>
+<div class="authPage">
+	<div class="authCard">
+
+		<div class="authTitle">Sign in</div>
+		<div class="authSubtitle">Welcome back to Cyphers.</div>
+
+		<div id="authMsg" class="authMsg hideValue"></div>
+
+		<form id="loginForm" novalidate>
+			<div class="authField">
+				<label class="authLabel" for="email">Email</label>
+				<input class="authInput" type="email" id="email" autocomplete="email" spellcheck="false" required>
+				<div id="emailErr" class="authFieldErr hideValue"></div>
+			</div>
+
+			<div class="authField">
+				<label class="authLabel" for="password">Password</label>
+				<input class="authInput" type="password" id="password" autocomplete="current-password" required>
+				<div id="passwordErr" class="authFieldErr hideValue"></div>
+			</div>
+
+			<button class="authBtn" type="submit" id="loginBtn">Sign in</button>
+		</form>
+
+		<div class="authDivider">or</div>
+
+		<button class="authBtn authBtnDiscord" type="button" id="discordBtn" onclick="doDiscord()">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.445.865-.608 1.249a18.27 18.27 0 0 0-5.487 0 12.65 12.65 0 0 0-.617-1.25.077.077 0 0 0-.079-.036A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.127c-.598.35-1.22.645-1.873.891a.077.077 0 0 0-.041.107c.36.699.772 1.364 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.056c.5-5.177-.838-9.674-3.548-13.66a.061.061 0 0 0-.031-.028ZM8.02 15.331c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418Zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418Z"/></svg>
+			Continue with Discord
+		</button>
+
+		<div class="authFoot">
+			<a href="forgot-password.html">Forgot your password?</a>
+		</div>
+		<div class="authFoot">
+			No account yet? <a href="register.html">Create one</a>
+		</div>
+		<div class="authFoot" style="margin-top: 1.4em;">
+			<a href="index.html">&#8592; Back to the calculator</a>
+		</div>
+
+	</div>
+</div>
+
+<script>
+// already signed in? go straight through
+redirectIfAuthed(authNextTarget("profile.html"));
+
+$(document).ready(function () {
+	if (!authIsConfigured()) {
+		authShowMessage("authMsg", "Authentication is not configured yet. Add your Supabase project URL and anon key in auth/supabase-config.js.", "info");
+		document.getElementById("loginBtn").disabled = true;
+		document.getElementById("discordBtn").disabled = true;
+	}
+	// a fresh signup lands here after clicking the verification link
+	if (new URLSearchParams(window.location.search).get("verified") === "1") {
+		authShowMessage("authMsg", "Email confirmed. You can sign in now.", "success");
+	}
+
+	$("#loginForm").on("submit", function (e) {
+		e.preventDefault();
+		doLogin();
+	});
+});
+
+function doLogin() {
+	authClearMessage("authMsg");
+	authClearFieldErrors(["email", "password"]);
+
+	var email = document.getElementById("email").value;
+	var password = document.getElementById("password").value;
+
+	var bad = false;
+	if (!authValidEmail(email)) { authFieldError("email", "Enter a valid email address."); bad = true; }
+	if (password.length === 0) { authFieldError("password", "Enter your password."); bad = true; }
+	if (bad) return;
+
+	authSetLoading("loginBtn", true);
+	authSignIn(email, password).then(function () {
+		window.location.href = authNextTarget("index.html");
+	}).catch(function (err) {
+		authSetLoading("loginBtn", false, "Sign in");
+		var msg = authFriendlyError(err);
+		authShowMessage("authMsg", msg, "error");
+		// offer a way out of the dead end when the address is simply unverified
+		if (msg.indexOf("confirm your email") > -1) {
+			var el = document.getElementById("authMsg");
+			el.innerHTML += ' <a class="authLink" href="#" onclick="doResend(event)">Resend the link</a>';
+		}
+	});
+}
+
+function doResend(e) {
+	e.preventDefault();
+	authResendVerification(document.getElementById("email").value).then(function () {
+		authShowMessage("authMsg", "Verification email sent. Check your inbox.", "success");
+	}).catch(function (err) {
+		authShowMessage("authMsg", authFriendlyError(err), "error");
+	});
+}
+
+function doDiscord() {
+	authClearMessage("authMsg");
+	authSetLoading("discordBtn", true);
+	authSignInWithDiscord().catch(function (err) {
+		authSetLoading("discordBtn", false, "Continue with Discord");
+		authShowMessage("authMsg", authFriendlyError(err), "error");
+	});
+}
+</script>
+</body>

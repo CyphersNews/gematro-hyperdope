@@ -1,5 +1,130 @@
 // ============================= Export =============================
 
+// ---- Right-click export menu ----------------------------------------
+//
+// Everything in the Export tab, reachable without opening the menu. Each entry
+// points at the existing Export button so there is one implementation of each
+// action; `need` is a selector that must exist for the item to be usable,
+// which keeps handlers that assume a panel is open from throwing.
+
+var ctxExportItems = [
+	{ label: "Print Cyphers Chart",    btn: "#btn-print-cipher-png",            need: "#ChartTable" },
+	{ label: "Print History Table",    btn: "#btn-print-history-png",           need: ".HistoryTable" },
+	{ label: "Print Word Breakdown",   btn: "#btn-print-word-break-png",        need: "#BreakTableContainer" },
+	{ label: "Print Cyphers Card",     btn: "#btn-print-breakdown-details-png", need: "#BreakdownDetails" },
+	{ label: "Print Number Properties",btn: "#btn-num-props-png",               need: ".numPropTooltip" },
+	{ label: "Print Date Durations",   btn: "#btn-date-calc-png",               need: ".dateCalcTable2" },
+	{ sep: true },
+	{ label: "Export History (CSV)",   btn: "#btn-export-history-png",          need: ".HistoryTable" },
+	{ label: "Export Matches (TXT)",   btn: "#btn-export-matches-txt",          need: ".HistoryTable" },
+	{ label: "Export DB Query (CSV)",  btn: "#btn-export-db-query",             need: "#QueryTable" }
+]
+
+function closeExportContextMenu() {
+	$("#ctxExportMenu").remove()
+}
+
+function runExportContextItem(idx) {
+	closeExportContextMenu()
+	var item = ctxExportItems[idx]
+	if (!item || item.sep) return
+	if (item.need && $(item.need).length === 0) return
+	$(item.btn).click() // reuse the Export tab's own handler
+}
+
+function showExportContextMenu(px, py) {
+	closeExportContextMenu()
+
+	var o = '<div id="ctxExportMenu">'
+	o += '<div class="ctxExportTitle">Export</div>'
+	for (var i = 0; i < ctxExportItems.length; i++) {
+		var item = ctxExportItems[i]
+		if (item.sep) { o += '<div class="ctxExportSep"></div>'; continue }
+		var avail = $(item.need).length > 0
+		o += '<div class="ctxExportItem'+(avail ? '' : ' ctxExportDisabled')+'"'
+		o += avail ? ' onclick="runExportContextItem('+i+')"' : ' title="Not available right now"'
+		o += '>'+item.label+'</div>'
+	}
+	o += '</div>'
+
+	$(o).appendTo("body")
+
+	// keep the menu on screen when opened near an edge
+	var $m = $("#ctxExportMenu")
+	var mw = $m.outerWidth(), mh = $m.outerHeight()
+	var vw = $(window).width(), vh = $(window).height()
+	var left = px, top = py
+	if (left + mw > vw - 4) left = Math.max(4, vw - mw - 4)
+	if (top + mh > vh + $(window).scrollTop() - 4) top = Math.max(4, py - mh)
+	$m.css({ left: left + "px", top: top + "px" })
+}
+
+$(document).ready(function () {
+	$("body").on("contextmenu", function (e) {
+		var $t = $(e.target)
+		// leave the native menu alone in text fields, and don't fight the
+		// date-duration line handler which uses right-click to delete a line
+		if ($t.is("input, textarea, select")) return
+		if ($t.closest(".dateDurLine").length) return
+		if ($t.closest("#ctxExportMenu").length) return
+		e.preventDefault()
+		showExportContextMenu(e.pageX, e.pageY)
+	})
+	$(document).on("click", function (e) {
+		if ($(e.target).closest("#ctxExportMenu").length === 0) closeExportContextMenu()
+	})
+	$(document).on("keydown", function (e) {
+		if (e.key === "Escape" || e.keyCode === 27) closeExportContextMenu()
+	})
+	$(window).on("scroll resize", closeExportContextMenu)
+})
+
+// ---- Word Breakdown export prep -------------------------------------
+//
+// The exported breakdown used to capture only #BreakTableContainer, which is
+// the letter grid alone. Long phrases wrap across grid rows, so the image read
+// as a sentence chopped into pieces with no way to tell what the phrase was,
+// which cipher produced it, or what it totalled. We now capture #BreakdownSpot
+// and stamp a header on it so the image is self-describing.
+
+function breakdownExportHeader() {
+	var i, curCipher = null
+	for (i = 0; i < cipherList.length; i++) {
+		if (cipherList[i].cipherName == breakCipher) { curCipher = cipherList[i]; break }
+	}
+	if (curCipher === null) return ""
+
+	var phrase = breakPhraseText
+	var total = breakPhraseTotal
+	if (phrase === "") { // fall back to the input box if the breakdown never ran
+		phrase = (optAllowPhraseComments) ? sValNoComments() : sVal()
+		total = curCipher.calcGematria(sVal())
+	}
+	var col = (optColoredCiphers) ? 'color: hsl('+curCipher.H+' '+curCipher.S+'% '+curCipher.L+'% / 1);' : ''
+
+	var o = '<div class="breakExportHeader">'
+	o += '<div class="breakExportPhrase">'+phrase+'</div>'
+	o += '<div class="breakExportMeta">'
+	o += '<span class="breakExportTotal">'+total+'</span>'
+	o += '<span class="breakExportCiph" style="'+col+'">'+curCipher.cipherName+gemCalcModeLabel(curCipher)+'</span>'
+	o += '</div>'
+	o += '</div>'
+	return o
+}
+
+function prepBreakdownExport() {
+	// hide the app's own compact line, the header replaces it
+	$('#SimpleBreak').addClass('hideValue')
+	$('#BreakdownSpot').prepend(breakdownExportHeader())
+	$('#BreakdownSpot').addClass('breakExportMode') // solid bg + higher contrast values
+}
+
+function restoreBreakdownExport() {
+	$('.breakExportHeader').remove()
+	$('#BreakdownSpot').removeClass('breakExportMode')
+	$('#SimpleBreak').removeClass('hideValue')
+}
+
 function openImageWindow(element, imgName = "", sRatio = window.devicePixelRatio, refresh = false) { // sRatio is scaling, refresh - update the image only
 	var imageDataURL, wnd, scl
 	if ( $(element).length ) { // if specified element exists
@@ -29,6 +154,8 @@ function openImageWindow(element, imgName = "", sRatio = window.devicePixelRatio
 				$('#BreakdownDetails').removeClass('elemBorderScr') // remove outline for breakdown area
 				updateWordBreakdown() // redraw cipher chart
 			}
+
+			if (element == '#BreakdownSpot') restoreBreakdownExport() // strip the export-only header
 
 			imgName = imgName.replace(/'/g, '')
 			if (imgName == "" || imgName.length >= 200) imgName = getTimestamp()+".png"; // filename for download button (200 char limit)

@@ -380,6 +380,7 @@ function updateHistoryTableAutoHlt() {
 	    
 		document.getElementById("highlightBox").value = substr // populate highlight box
 
+		applyHistMatchOrder() // stack matches at the top, hide phrases with none
 		updateHistoryTableSameCiphMatch() // update table
 		
 		//freq = [] // frequency of matches found with auto highlighter
@@ -476,7 +477,145 @@ function updateHistoryTableAutoHlt() {
 	substr = str.substring(1, str.length - 1) // remove brackets
 	document.getElementById("highlightBox").value = substr
 
+	applyHistMatchOrder() // stack matches at the top, hide phrases with none
 	updateHistoryTable() // update table
+}
+
+// ==================================================================
+// Match-weighted ordering of the History Table
+//
+// Called after "Find Matches" has filled avail_match. Groups phrases by the
+// matched value they share, then floats the biggest groups to the top so the
+// most-matched phrases sit stacked together instead of scattered down the list.
+// Returns an array of sHistory indices, or null when there is nothing to sort.
+
+function buildHistMatchOrder() {
+
+	if (typeof sHistory === "undefined" || sHistory.length == 0) return null
+	if (typeof avail_match === "undefined" || avail_match.length == 0) return null
+
+	var i, y, v
+
+	// gematria values per phrase, enabled ciphers only
+	var rows = []
+	for (i = 0; i < sHistory.length; i++) {
+		var vals = []
+		for (y = 0; y < cipherList.length; y++) {
+			if (cipherList[y].enabled) vals.push(cipherList[y].calcGematria(sHistory[i]))
+		}
+		rows.push(vals)
+	}
+	if (rows[0].length == 0) return null // no enabled ciphers, nothing to weigh
+
+	var matchSet = {} // fast lookup for "is this a matched value"
+	for (i = 0; i < avail_match.length; i++) matchSet[avail_match[i]] = true
+
+	// how many phrases carry each matched value (distinct phrases, not cells)
+	var valPhrases = {}
+	var phraseVals = [] // distinct matched values per phrase
+	for (i = 0; i < rows.length; i++) {
+		var seen = {}
+		var mine = []
+		for (y = 0; y < rows[i].length; y++) {
+			v = rows[i][y]
+			if (v > 0 && matchSet[v] === true && seen[v] !== true) {
+				seen[v] = true
+				mine.push(v)
+				valPhrases[v] = (valPhrases[v] || 0) + 1
+			}
+		}
+		phraseVals.push(mine)
+	}
+
+	// score each phrase, and pick the value that best represents it
+	var scored = []
+	var unmatched = []
+	for (i = 0; i < phraseVals.length; i++) {
+		if (phraseVals[i].length == 0) { unmatched.push(i); continue }
+
+		var score = 0
+		var primary = phraseVals[i][0]
+		var primaryCount = 0
+		for (y = 0; y < phraseVals[i].length; y++) {
+			v = phraseVals[i][y]
+			var c = valPhrases[v]
+			if (c < 2) continue // a value only this phrase holds is not a match
+			score += c
+			if (c > primaryCount || (c == primaryCount && v < primary)) { primary = v; primaryCount = c }
+		}
+
+		if (primaryCount < 2) { unmatched.push(i); continue }
+		scored.push({ idx: i, score: score, hits: phraseVals[i].length, primary: primary, primaryCount: primaryCount })
+	}
+
+	if (scored.length == 0) return null
+
+	// bucket by shared value so those rows end up adjacent
+	var groups = {}
+	for (i = 0; i < scored.length; i++) {
+		if (groups[scored[i].primary] === undefined) groups[scored[i].primary] = []
+		groups[scored[i].primary].push(scored[i])
+	}
+
+	var groupList = []
+	for (var key in groups) {
+		if (!groups.hasOwnProperty(key)) continue
+		var members = groups[key]
+		members.sort(function(a, b) {
+			if (b.score !== a.score) return b.score - a.score
+			if (b.hits !== a.hits) return b.hits - a.hits
+			return a.idx - b.idx // stable: keep original order for genuine ties
+		})
+		var top = 0
+		for (i = 0; i < members.length; i++) if (members[i].score > top) top = members[i].score
+		groupList.push({ value: Number(key), members: members, size: members.length, top: top })
+	}
+
+	groupList.sort(function(a, b) {
+		if (b.size !== a.size) return b.size - a.size // biggest stack first
+		if (b.top !== a.top) return b.top - a.top     // then strongest phrase
+		return a.value - b.value
+	})
+
+	var order = []
+	for (i = 0; i < groupList.length; i++) {
+		for (y = 0; y < groupList[i].members.length; y++) order.push(groupList[i].members[y].idx)
+	}
+
+	// Phrases with no matches at all are left out of the display order entirely,
+	// so the table shows only what matched. They are still in sHistory and come
+	// back on Reset Order; nothing is deleted.
+	return { order: order, snapshot: sHistory.slice(), hidden: unmatched.length }
+}
+
+// Applies the match ordering and tells the user how many phrases dropped out,
+// so a suddenly shorter table is never mistaken for lost data.
+function applyHistMatchOrder() {
+	histDisplayOrder = buildHistMatchOrder()
+	if (histDisplayOrder !== null && histDisplayOrder.hidden > 0) {
+		var n = histDisplayOrder.hidden
+		displayCalcNotification(n + (n === 1 ? " phrase hidden" : " phrases hidden") + " with no matches", 2200)
+	}
+}
+
+// Returns the match order only while it still describes the current history.
+// sHistory is mutated from a dozen places (adding, deleting, reordering,
+// importing), so instead of hooking each one the order carries a snapshot of
+// the phrases it was built from and retires itself as soon as they differ.
+function getHistDisplayOrder() {
+	if (histDisplayOrder === null) return null
+	var snap = histDisplayOrder.snapshot
+	if (snap.length !== sHistory.length) { histDisplayOrder = null; return null }
+	for (var i = 0; i < snap.length; i++) {
+		if (snap[i] !== sHistory[i]) { histDisplayOrder = null; return null }
+	}
+	return histDisplayOrder.order
+}
+
+// restore the History Table to the order phrases were entered in
+function clearHistMatchSort() {
+	histDisplayOrder = null
+	if (typeof sHistory !== "undefined" && sHistory.length > 0) updateHistoryTable()
 }
 
 // add number to Highlight box (history table is rebuilt)

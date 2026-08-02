@@ -61,7 +61,12 @@ function updateWordBreakdown(impName = breakCipher, impBool = false, chartUpd = 
 	}
 
 	if (curCipher.sumArr.length > 0) {
-		
+
+		// remember what this breakdown represents; the phrase box is cleared on
+		// Enter, so exports cannot read it back from the input
+		breakPhraseText = (optAllowPhraseComments) ? sValNoComments() : sVal()
+		breakPhraseTotal = curCipher.sumArr.reduce(getSum)
+
 		var oStart = ''; var o ='';
 
 		var RTLclass = '';

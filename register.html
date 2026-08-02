@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<head>
+<title>Create account | Cyphers</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/x-icon" href="res/favicon.png">
+
+<script src="lib/jquery.min.js"></script>
+<script src="lib/supabase.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="calc/styles.css">
+<link rel="stylesheet" type="text/css" href="auth/auth.css">
+
+<script src="auth/supabase-config.js"></script>
+<script src="auth/auth.js"></script>
+<script src="auth/auth-ui.js"></script>
+</head>
+
+<body>
+<div class="authPage">
+	<div class="authCard">
+
+		<div class="authTitle">Create an account</div>
+		<div class="authSubtitle">Save your work and sync it across devices.</div>
+
+		<div id="authMsg" class="authMsg hideValue"></div>
+
+		<form id="registerForm" novalidate>
+			<div class="authField">
+				<label class="authLabel" for="email">Email</label>
+				<input class="authInput" type="email" id="email" autocomplete="email" spellcheck="false" required>
+				<div id="emailErr" class="authFieldErr hideValue"></div>
+			</div>
+
+			<div class="authField">
+				<label class="authLabel" for="password">Password</label>
+				<input class="authInput" type="password" id="password" autocomplete="new-password" required>
+				<div class="authMeter" id="pwMeter">
+					<div class="authMeterSeg"></div><div class="authMeterSeg"></div><div class="authMeterSeg"></div>
+					<div class="authMeterSeg"></div><div class="authMeterSeg"></div>
+				</div>
+				<div class="authHint">At least 10 characters, with an uppercase letter, a lowercase letter and a number.</div>
+				<div id="passwordErr" class="authFieldErr hideValue"></div>
+			</div>
+
+			<div class="authField">
+				<label class="authLabel" for="confirm">Confirm password</label>
+				<input class="authInput" type="password" id="confirm" autocomplete="new-password" required>
+				<div id="confirmErr" class="authFieldErr hideValue"></div>
+			</div>
+
+			<button class="authBtn" type="submit" id="registerBtn">Create account</button>
+		</form>
+
+		<div class="authDivider">or</div>
+
+		<button class="authBtn authBtnDiscord" type="button" id="discordBtn" onclick="doDiscord()">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.445.865-.608 1.249a18.27 18.27 0 0 0-5.487 0 12.65 12.65 0 0 0-.617-1.25.077.077 0 0 0-.079-.036A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.127c-.598.35-1.22.645-1.873.891a.077.077 0 0 0-.041.107c.36.699.772 1.364 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.056c.5-5.177-.838-9.674-3.548-13.66a.061.061 0 0 0-.031-.028ZM8.02 15.331c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418Zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418Z"/></svg>
+			Continue with Discord
+		</button>
+
+		<div class="authFoot">
+			Already have an account? <a href="login.html">Sign in</a>
+		</div>
+		<div class="authFoot" style="margin-top: 1.4em;">
+			<a href="index.html">&#8592; Back to the calculator</a>
+		</div>
+
+	</div>
+</div>
+
+<script>
+redirectIfAuthed("profile.html");
+
+$(document).ready(function () {
+	if (!authIsConfigured()) {
+		authShowMessage("authMsg", "Authentication is not configured yet. Add your Supabase project URL and anon key in auth/supabase-config.js.", "info");
+		document.getElementById("registerBtn").disabled = true;
+		document.getElementById("discordBtn").disabled = true;
+	}
+
+	$("#password").on("input", function () {
+		var score = authPasswordStrength(this.value);
+		$("#pwMeter .authMeterSeg").each(function (i) {
+			this.className = "authMeterSeg" + (i < score ? " on" + score : "");
+		});
+	});
+
+	$("#registerForm").on("submit", function (e) {
+		e.preventDefault();
+		doRegister();
+	});
+});
+
+function doRegister() {
+	authClearMessage("authMsg");
+	authClearFieldErrors(["email", "password", "confirm"]);
+
+	var email = document.getElementById("email").value;
+	var password = document.getElementById("password").value;
+	var confirm = document.getElementById("confirm").value;
+
+	var bad = false;
+	if (!authValidEmail(email)) { authFieldError("email", "Enter a valid email address."); bad = true; }
+
+	var problems = authPasswordProblems(password);
+	if (problems.length) { authFieldError("password", "Password needs " + problems.join(", ") + "."); bad = true; }
+
+	if (confirm !== password) { authFieldError("confirm", "Passwords do not match."); bad = true; }
+	if (bad) return;
+
+	authSetLoading("registerBtn", true);
+	authSignUp(email, password).then(function (data) {
+		authSetLoading("registerBtn", false, "Create account");
+
+		// Supabase returns a user with an empty identities array when the email
+		// is already registered, rather than revealing that outright
+		if (data && data.user && data.user.identities && data.user.identities.length === 0) {
+			authShowMessage("authMsg", "An account with that email already exists. Try signing in instead.", "error");
+			return;
+		}
+
+		document.getElementById("registerForm").classList.add("hideValue");
+		document.querySelector(".authDivider").classList.add("hideValue");
+		document.getElementById("discordBtn").classList.add("hideValue");
+		authShowMessage("authMsg", "Account created. Check " + email + " for a verification link, then sign in.", "success");
+	}).catch(function (err) {
+		authSetLoading("registerBtn", false, "Create account");
+		authShowMessage("authMsg", authFriendlyError(err), "error");
+	});
+}
+
+function doDiscord() {
+	authClearMessage("authMsg");
+	authSetLoading("discordBtn", true);
+	authSignInWithDiscord().catch(function (err) {
+		authSetLoading("discordBtn", false, "Continue with Discord");
+		authShowMessage("authMsg", authFriendlyError(err), "error");
+	});
+}
+</script>
+</body>

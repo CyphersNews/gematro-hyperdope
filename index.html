@@ -9,6 +9,7 @@
 <link rel="manifest" href="manifest.json">
 
 <script src="lib/jquery.min.js"></script>
+<script src="lib/supabase.min.js"></script>
 <!-- html2canvas v1.0.0-alpha.12 -->
 
 <script src="calc/gematria.js"></script>
@@ -17,6 +18,7 @@
 <script src="calc/ciphers.js"></script>
 
 <link rel="stylesheet" type="text/css" href="calc/styles.css">
+<link rel="stylesheet" type="text/css" href="auth/auth.css">
 
 <script>
 window.onpaint = function() {
@@ -44,7 +46,7 @@ $(window).load(function(){
 	<center>
 		<div id="mainLogo"></div>
 	</center>
-	
+
 	<center>
 
 		<div id="calcOptionsPanel"></div>
@@ -52,6 +54,7 @@ $(window).load(function(){
 		<div id="colorControlsMenuArea"></div>
 		<div id="editCiphersMenuArea"></div>
 		<div id="dateCalcMenuArea"></div>
+		<div id="astroMenuArea"></div>
 
 		<div id="inputArea">
 		  <input id="queryDBbtn" class="hideValue" type="button" onclick="queryDatabase()" value="Query">
@@ -84,6 +87,7 @@ $(window).load(function(){
 <script src="calc/num-prop.js"></script>
 <script src="calc/edit-ciphers.js"></script>
 <script src="calc/date-calc.js"></script>
+<script src="calc/astrology.js"></script>
 <script src="calc/database.js"></script>
 <script src="calc/quick-guide.js"></script>
 
@@ -92,6 +96,10 @@ $(window).load(function(){
 <script src="calc/encoding-ciphers.js"></script>
 
 <script src="calc/coderain.js"></script>
+
+<script src="auth/supabase-config.js"></script>
+<script src="auth/auth.js"></script>
+<script src="auth/auth-ui.js"></script>
 <script src="lib/html2canvas.min.js"></script>
 
 <!-- Initialzie the calculator.  This needs to run before loading a database or theme. -->

@@ -28,6 +28,9 @@ function toggleEncodingMenu(updateEncMenu = false, clearValues = false) {
 		var o = '<div class="colorControlsBG">'
 		o += '<input class="closeMenuBtn" type="button" value="&#215;" onclick="closeAllOpenedMenus()">'
 
+		o += '<div class="encIntro">Encoding runs the calculator backwards: you give it the totals you want, and it finds phrases that add up to them.</div>'
+		o += '<div class="encStep">1 &nbsp;Target values<span class="encStepNote">the number you want each cipher to produce</span></div>'
+
 		o += '<table id="encCipherTable" class="ciphToggleContainer">'
 		if (updateEncMenu) o = ''
 		o += '<tbody>'
@@ -73,29 +76,29 @@ function toggleEncodingMenu(updateEncMenu = false, clearValues = false) {
 		// controls
 		o += '<center>'
 
-		o += '<div style="margin: 1em;"></div>'
+		o += '<table class="globColCtrlTable">'
+		o += '<tr>'
+		o += '<td><input id="resetEncButton" class="intBtn" type="button" value="Clear Values Only" style="margin: 0em 0.5em; font-size: 75%;" onclick="toggleEncodingMenu(true, true)" title="Set every target value back to 0, keeping your other settings"></td>'
+		o += '<td><input id="resetEncButton" class="intBtn" type="button" value="Reset All Settings" style="margin: 0em 0.5em; font-size: 75%;" onclick="resetEncodingValues()" title="Reset target values and the alphabet, vowel and exclude lists to defaults"></td>'
+		o += '</tr>'
+		o += '</table>'
+
+		o += '<div style="margin: 1.2em;"></div>'
+		o += '<div class="encStep">2 &nbsp;Where phrases come from<span class="encStepNote">pick one source</span></div>'
 
 		o += '<table class="globColCtrlTable" style="padding: 0em 0em 0em 1em;">'
 		o += '<tr>'
-		o += '<td><label class="chkLabel colLabelSmallEnc">Use Database (1 phrase)<input type="checkbox" id="chkbox_useDB1Phr" onclick="setEncodingMode(1)"'+DBChkState+'><span class="custChkBox"></span></label></td>'
-		o += '<td><label class="chkLabel colLabelSmallEnc">Use Database (2 phrases)<input type="checkbox" id="chkbox_useDB2Phr" onclick="setEncodingMode(2)"'+DBAltChkState+'><span class="custChkBox"></span></label></td>'
+		o += '<td><label class="chkLabel colLabelSmallEnc" title="Search the loaded word database for a single phrase that hits your targets">Use Database (1 phrase)<input type="checkbox" id="chkbox_useDB1Phr" onclick="setEncodingMode(1)"'+DBChkState+'><span class="custChkBox"></span></label></td>'
+		o += '<td><label class="chkLabel colLabelSmallEnc" title="Search the database for two phrases that together hit your targets">Use Database (2 phrases)<input type="checkbox" id="chkbox_useDB2Phr" onclick="setEncodingMode(2)"'+DBAltChkState+'><span class="custChkBox"></span></label></td>'
 		o += '</tr>'
 		o += '</table>'
 
-		o += '<div style="margin: 1em;"></div>'
+		o += '<div style="margin: 0.6em;"></div>'
+		o += '<div class="encSubNote">Or build made-up words from letters, using the settings below:</div>'
 
 		o += '<table class="globColCtrlTable">'
 		o += '<tr>'
-		o += '<td><input id="resetEncButton" class="intBtn" type="button" value="Clear Values Only" style="margin: 0em 0.5em; font-size: 75%;" onclick="toggleEncodingMenu(true, true)"></td>'
-		o += '<td><input id="resetEncButton" class="intBtn" type="button" value="Reset All Settings" style="margin: 0em 0.5em; font-size: 75%;" onclick="resetEncodingValues()"></td>'
-		o += '</tr>'
-		o += '</table>'
-
-		o += '<div style="margin: 1em;"></div>'
-
-		o += '<table class="globColCtrlTable">'
-		o += '<tr>'
-		o += '<td><label class="chkLabel colLabelSmallEnc">Use Syllables<input type="checkbox" id="chkbox_useSylEnc" onclick="setEncodingMode(0)"'+SylChkState+'><span class="custChkBox"></span></label></td>'
+		o += '<td><label class="chkLabel colLabelSmallEnc" title="Generate pronounceable made-up words instead of searching the database">Use Syllables<input type="checkbox" id="chkbox_useSylEnc" onclick="setEncodingMode(0)"'+SylChkState+'><span class="custChkBox"></span></label></td>'
 		o += '<td><label class="chkLabel colLabelSmallEnc">Odd Length<input type="checkbox" id="chkbox_encOddLength"'+OddLetChkState+SylParamChkState+' onclick="encOddLength = !encOddLength"><span class="custChkBox"></span></label></td>'
 		o += '<td><input type="number" step="1" min="0" max="50" value="'+encSylMaxPhrases+'" id="encMaxPhrases" class="colSlider colLabelSmallEnc" style="margin-right: 0.5em;" oninput="encSylMaxPhrases = document.getElementById(&quot;encMaxPhrases&quot;).value"'+SylParamChkState+'><span class="colLabelSmall">Phrases</span></td>'
 		o += '</tr>'
@@ -114,15 +117,17 @@ function toggleEncodingMenu(updateEncMenu = false, clearValues = false) {
 		o += '</tr>'
 		o += '</table>'
 
-		o += '<div style="margin: 1em;"></div>'
+		o += '<div style="margin: 1.2em;"></div>'
+		o += '<div class="encStep">3 &nbsp;Generate</div>'
 
 		o += '<table class="globColCtrlTable">'
 		o += '<tr>'
-		o += '<td><input id="readValEncButton" class="intBtn" type="button" value="Read Values" style="margin: 0em 0.5em; font-size: 75%;" onclick="readEncodingValues()"></td>'
-		o += '<td><input id="subtractEncButton" class="intBtn" type="button" value="Subtract Values" style="margin: 0em 0.5em; font-size: 75%;" onclick="subtractEncodingValues()"></td>'
-		o += '<td><input id="startEncButton" class="intBtn" type="button" value="Find Phrases" style="margin: 0em 0.5em; font-size: 75%;" onclick="encodeGematria()"></td>'
+		o += '<td><input id="readValEncButton" class="intBtn" type="button" value="Read Values" style="margin: 0em 0.5em; font-size: 75%;" onclick="readEncodingValues()" title="Fill the target values above with the totals of whatever is currently in the phrase box"></td>'
+		o += '<td><input id="subtractEncButton" class="intBtn" type="button" value="Subtract Values" style="margin: 0em 0.5em; font-size: 75%;" onclick="subtractEncodingValues()" title="Subtract the phrase box totals from the targets, to see what is still needed to reach them"></td>'
+		o += '<td><input id="startEncButton" class="intBtn" type="button" value="Find Phrases" style="margin: 0em 0.5em; font-size: 75%;" onclick="encodeGematria()" title="Search for phrases that add up to the target values"></td>'
 		o += '</tr>'
 		o += '</table>'
+		o += '<div class="encSubNote" style="padding-top: 0.5em;">Read and Subtract work on the phrase box: type a word, then Read to load its totals, or Subtract to take it off the target.</div>'
 
 		o += '</center>'
 

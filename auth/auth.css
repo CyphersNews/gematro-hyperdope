@@ -1,0 +1,260 @@
+/* ===================== Authentication styling =====================
+   Built on the calculator's existing CSS variables so the auth pages inherit
+   whatever interface colour and theme the user has chosen. */
+
+.authPage {
+	min-height: 100%;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding: 2.5em 1em 3em 1em;
+	box-sizing: border-box;
+}
+
+.authCard {
+	width: 100%;
+	max-width: 400px;
+	background-color: var(--menu-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	padding: 1.6em 1.6em 1.4em 1.6em;
+	box-sizing: border-box;
+}
+
+.authTitle {
+	font-size: 150%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	text-align: center;
+	margin-bottom: 0.25em;
+}
+.authSubtitle {
+	font-size: 88%;
+	color: var(--font-white-3);
+	text-align: center;
+	margin-bottom: 1.4em;
+	line-height: 1.4em;
+}
+
+.authField { margin-bottom: 0.9em; }
+
+.authLabel {
+	display: block;
+	font-size: 82%;
+	font-weight: 600;
+	color: var(--font-white-3);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 0.35em;
+}
+
+.authInput {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.6em 0.7em;
+	font-size: 100%;
+	font-family: var(--font-family), "Arial", sans-serif;
+	color: var(--font-white-1);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	outline: none;
+}
+.authInput:focus { border-color: var(--focus-outline); }
+.authInput.authInputBad { border-color: hsl(5 70% 58%); }
+
+.authFieldErr {
+	font-size: 80%;
+	color: hsl(5 75% 66%);
+	padding-top: 0.3em;
+}
+
+.authBtn {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.65em 1em;
+	font-size: 100%;
+	font-weight: 600;
+	font-family: var(--font-family), "Arial", sans-serif;
+	color: var(--font-white-1);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	outline: none;
+	cursor: pointer;
+	margin-top: 0.4em;
+}
+.authBtn:hover:not(:disabled) { background-color: var(--btn-hover-accent); }
+.authBtn:disabled { opacity: 0.6; cursor: default; }
+
+.authBtnDiscord {
+	background-color: #5865F2;
+	border-color: #5865F2;
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5em;
+}
+.authBtnDiscord:hover:not(:disabled) { background-color: #4752c4; }
+.authBtnDiscord svg { width: 18px; height: 18px; fill: currentColor; }
+
+.authDivider {
+	display: flex;
+	align-items: center;
+	gap: 0.8em;
+	margin: 1.2em 0em 1em 0em;
+	color: var(--font-white-4);
+	font-size: 80%;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+.authDivider::before, .authDivider::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background-color: var(--separator-accent2);
+}
+
+.authMsg {
+	font-size: 87%;
+	padding: 0.6em 0.75em;
+	margin-bottom: 1em;
+	border: 1px solid transparent;
+	line-height: 1.4em;
+}
+.authMsg-error   { color: hsl(5 80% 74%);   background: hsla(5 70% 40% / 0.15);   border-color: hsl(5 50% 40%); }
+.authMsg-success { color: hsl(140 60% 72%); background: hsla(140 60% 35% / 0.15); border-color: hsl(140 40% 35%); }
+.authMsg-info    { color: var(--font-white-2); background: hsla(0 0% 50% / 0.12); border-color: var(--border-dark-accent); }
+
+.authFoot {
+	text-align: center;
+	font-size: 87%;
+	color: var(--font-white-3);
+	margin-top: 1.2em;
+}
+.authFoot a, .authLink {
+	color: var(--focus-outline);
+	border-bottom: 1px solid transparent;
+}
+.authFoot a:hover, .authLink:hover { border-bottom-color: var(--focus-outline); }
+
+.authHint {
+	font-size: 79%;
+	color: var(--font-white-4);
+	padding-top: 0.3em;
+	line-height: 1.35em;
+}
+
+/* password strength meter */
+.authMeter {
+	display: flex;
+	gap: 3px;
+	margin-top: 0.4em;
+}
+.authMeterSeg {
+	flex: 1;
+	height: 3px;
+	background: var(--border-dark-accent);
+}
+.authMeterSeg.on1, .authMeterSeg.on2 { background: hsl(5 70% 55%); }
+.authMeterSeg.on3 { background: hsl(40 75% 55%); }
+.authMeterSeg.on4, .authMeterSeg.on5 { background: hsl(140 55% 50%); }
+
+.authSpinner {
+	display: inline-block;
+	width: 11px; height: 11px;
+	margin-right: 0.5em;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: authSpin 0.7s linear infinite;
+	vertical-align: -1px;
+}
+@keyframes authSpin { to { transform: rotate(360deg); } }
+
+/* ---- nav integration ---- */
+
+#authNavArea {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.15em;
+	vertical-align: middle;
+}
+.authNavLink {
+	font-size: 88%;
+	font-weight: 500;
+	color: var(--font-white-2);
+	padding: 0.4em 0.7em;
+	border-bottom: none !important;
+}
+.authNavLink:hover { color: var(--font-white-1); background-color: var(--btn-hover-accent); }
+.authNavPrimary { color: var(--focus-outline); }
+
+.authNavUser {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+	padding: 0.25em 0.5em;
+	color: var(--font-white-2);
+	border-bottom: none !important;
+}
+.authNavUser:hover { color: var(--font-white-1); background-color: var(--btn-hover-accent); }
+.authNavAvatar {
+	width: 20px; height: 20px;
+	border-radius: 50%;
+	object-fit: cover;
+	display: inline-block;
+}
+.authNavAvatarFallback {
+	background: var(--btn-active-accent);
+	color: var(--font-white-1);
+	font-size: 71%;
+	font-weight: 600;
+	text-align: center;
+	line-height: 20px;
+}
+.authNavName { font-size: 88%; font-weight: 500; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.authNavNote { font-size: 80%; color: var(--font-white-4); padding: 0em 0.6em; }
+
+/* ---- profile page ---- */
+
+.authProfileRow {
+	display: flex;
+	justify-content: space-between;
+	gap: 1em;
+	padding: 0.55em 0em;
+	border-bottom: 1px solid var(--border-dark-accent);
+	font-size: 90%;
+}
+.authProfileRow:last-child { border-bottom: none; }
+.authProfileKey { color: var(--font-white-3); }
+.authProfileVal { color: var(--font-white-1); text-align: right; word-break: break-word; }
+.authProfileHead {
+	display: flex;
+	align-items: center;
+	gap: 0.8em;
+	margin-bottom: 1.2em;
+}
+.authProfileAvatar {
+	width: 52px; height: 52px;
+	border-radius: 50%;
+	object-fit: cover;
+	background: var(--btn-active-accent);
+	line-height: 52px;
+	text-align: center;
+	font-size: 150%;
+	font-weight: 600;
+	color: var(--font-white-1);
+}
+.authBadge {
+	display: inline-block;
+	font-size: 76%;
+	padding: 0.15em 0.5em;
+	border: 1px solid var(--border-accent);
+	color: var(--font-white-3);
+	margin-left: 0.4em;
+}
+.authBadgeOk { color: hsl(140 55% 65%); border-color: hsl(140 35% 40%); }
+
+@media (max-width: 560px) {
+	.authPage { padding: 1.2em 0.7em 2em 0.7em; }
+	.authCard { padding: 1.2em 1.1em; }
+}

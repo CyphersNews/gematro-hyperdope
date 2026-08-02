@@ -213,6 +213,355 @@ body {
 	text-align: center;
 	padding-right: 0.4em;
 }
+/*          Right-click Export Menu           */
+/* ########################################## */
+
+#ctxExportMenu {
+	position: absolute;
+	z-index: 120;
+	min-width: 190px;
+	background-color: var(--menu-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+	padding: 0.25em 0em 0.3em 0em;
+	font-family: var(--font-family), "Arial", sans-serif;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.ctxExportTitle {
+	font-size: 74%;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--font-white-3);
+	padding: 0.35em 0.9em 0.45em 0.9em;
+}
+.ctxExportItem {
+	font-size: 90%;
+	color: var(--font-white-2);
+	padding: 0.35em 0.9em;
+	cursor: pointer;
+	white-space: nowrap;
+}
+.ctxExportItem:hover {
+	background-color: var(--btn-hover-accent);
+	color: var(--font-white-1);
+}
+.ctxExportDisabled {
+	color: var(--font-white-4);
+	cursor: default;
+}
+.ctxExportDisabled:hover {
+	background-color: transparent;
+	color: var(--font-white-4);
+}
+.ctxExportSep {
+	height: 1px;
+	background-color: var(--separator-accent2);
+	margin: 0.3em 0.7em;
+}
+
+/*             Astrology Panel                */
+/* ########################################## */
+
+.astroBG {
+	/* colorControlsBG sets right padding to 0, which reads as content running off
+	   the edge once the panel is as wide as this one. Match the left inset and
+	   keep the whole thing inside the viewport on small screens. */
+	max-width: 780px;
+	box-sizing: border-box;
+	padding-right: 1em;
+	max-width: min(780px, calc(100vw - 1.5em));
+	overflow-x: auto;
+}
+.astroBG table {
+	max-width: 100%;
+}
+.astroIntro {
+	font-size: 85%;
+	color: var(--font-white-3);
+	padding: 0em 0.5em 0.9em 0.5em;
+	max-width: 46em;
+}
+.astroStep {
+	font-size: 92%;
+	font-weight: 600;
+	color: var(--focus-outline);
+	text-align: left;
+	padding: 0.6em 0.5em 0.5em 0.5em;
+	border-bottom: 1px solid var(--separator-accent2);
+	margin-bottom: 0.7em;
+}
+.astroNote {
+	font-size: 82%;
+	color: var(--font-white-3);
+	padding: 0.3em 0.5em;
+}
+.astroStepNote {
+	font-size: 86%;
+	font-weight: 500;
+	color: var(--font-white-3);
+	padding-left: 0.7em;
+}
+.astroSubNote {
+	font-size: 80%;
+	color: var(--font-white-3);
+	padding: 0em 0.5em 0.5em 0.5em;
+}
+.astroAngles {
+	margin-bottom: 0.9em;
+}
+.astroViewToggle {
+	float: right;
+	margin-top: -0.25em;
+}
+.astroViewBtn {
+	width: 44px !important;
+	font-size: 88% !important;
+	margin: 0em 0.1em !important;
+	padding: 0.1em 0.4em !important;
+	opacity: 0.55;
+}
+.astroViewBtn.astroViewOn,
+.astroHouseBtn.astroViewOn {
+	opacity: 1;
+	background-color: var(--btn-active-accent) !important;
+}
+.astroPlaceInput {
+	width: 300px !important;
+	font-family: var(--font-family), "Arial", sans-serif !important;
+}
+#astroGeoResults {
+	padding: 0em 0.5em 0.5em 0.5em;
+}
+.astroGeoList {
+	border: 1px solid var(--border-dark-accent);
+	max-height: 190px;
+	overflow-y: auto;
+	background: var(--input-bg-accent);
+}
+.astroGeoHit {
+	font-size: 85%;
+	padding: 0.35em 0.6em;
+	cursor: pointer;
+	border-bottom: 1px solid var(--border-dark-accent);
+	color: var(--font-white-2);
+}
+.astroGeoHit:last-child { border-bottom: none; }
+.astroGeoHit:hover {
+	background: var(--btn-hover-accent);
+	color: var(--font-white-1);
+}
+.astroGeoCoords {
+	display: block;
+	font-family: var(--font-family-mono), monospace;
+	font-size: 88%;
+	color: var(--font-white-3);
+}
+.astroGeoNote {
+	font-size: 82%;
+	color: var(--font-white-3);
+	padding: 0.35em 0.1em;
+}
+.astroZoomCtl {
+	float: right;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25em;
+}
+.astroZoomBtn {
+	width: 26px !important;
+	font-size: 90% !important;
+	padding: 0.05em 0.2em !important;
+	margin: 0em !important;
+}
+.astroZoomBtn.astroZoomReset {
+	width: auto !important;
+	padding: 0.05em 0.5em !important;
+	font-size: 82% !important;
+}
+#astroZoomLabel {
+	font-family: var(--font-family-mono), monospace;
+	font-size: 90%;
+	min-width: 3.6em;
+	text-align: center;
+	color: var(--font-white-2);
+}
+.astroHouseBtn {
+	width: auto !important;
+	font-size: 88% !important;
+	padding: 0.15em 0.7em !important;
+	margin: 0em 0.15em !important;
+	opacity: 0.55;
+}
+.astroCanvasWrap {
+	display: flex;
+	justify-content: center;
+	padding: 0.3em 0em 0.4em 0em;
+}
+#astroCanvas {
+	width: 100%;
+	max-width: 520px;
+	height: 460px;
+	background: var(--breakdown-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	cursor: grab;
+	touch-action: none;
+}
+#astroCanvas:active {
+	cursor: grabbing;
+}
+.astroWarn {
+	color: hsl(35 80% 65%);
+}
+.astroInputTable td {
+	padding: 0em 0.35em 0.4em 0em;
+	text-align: left;
+	vertical-align: middle;
+}
+.astroInput {
+	width: 62px;
+	font-size: 90%;
+	color: var(--font-white-1);
+	border: 1px solid var(--border-accent);
+	box-sizing: border-box;
+	font-family: var(--font-family-mono), monospace;
+	background-color: var(--input-bg-accent);
+	padding: 0.2em 0.3em;
+	margin-left: 0.35em;
+}
+.astroTable {
+	border-spacing: 0px;
+	width: 100%;
+	margin-bottom: 0.5em;
+}
+.astroTable td {
+	padding: 0.28em 0.6em;
+	font-size: 95%;
+	border-bottom: 1px solid var(--border-dark-accent);
+}
+.astroHeadRow td {
+	font-size: 78%;
+	font-weight: 600;
+	color: var(--font-white-3);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.astroTable tr:nth-child(odd) td {
+	background: var(--table-row-odd);
+}
+.astroTable tr:nth-child(even) td {
+	background: var(--table-row-even);
+}
+.astroTable tr.astroHeadRow td {
+	background: var(--hist-header-gradient);
+}
+.astroExact td {
+	background: var(--highlight-date) !important;
+}
+.astroGlyph {
+	font-size: 125%;
+	padding-right: 0.4em;
+	vertical-align: -1px;
+}
+.astroBody, .astroSign, .astroAspName {
+	font-weight: 500;
+	white-space: nowrap;
+}
+.astroBody, .astroSign, .astroAspName, .astroPhaseName {
+	cursor: pointer;
+}
+.astroBody:hover, .astroSign:hover, .astroAspName:hover, .astroPhaseName:hover {
+	color: var(--font-white-1);
+	text-decoration: underline;
+}
+.astroDeg {
+	font-family: var(--font-family-mono), monospace;
+	text-align: right;
+	white-space: nowrap;
+}
+.astroEl, .astroMotion {
+	font-size: 88%;
+	color: var(--font-white-3);
+}
+.astroRetro {
+	color: hsl(10 75% 68%);
+	font-weight: 600;
+}
+.astroPhase {
+	padding: 0.6em 0.5em 0.2em 0.5em;
+}
+.astroPhaseName {
+	font-size: 115%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	padding-right: 0.8em;
+}
+.astroPhaseNum {
+	font-size: 85%;
+	color: var(--font-white-3);
+	padding-right: 0.8em;
+}
+
+/*            Encoding Menu Steps             */
+/* ########################################## */
+
+.encIntro {
+	font-size: 85%;
+	color: var(--font-white-3);
+	padding: 0em 0.5em 0.9em 0.5em;
+	max-width: 46em;
+}
+.encStep {
+	font-size: 92%;
+	font-weight: 600;
+	color: var(--focus-outline);
+	text-align: left;
+	padding: 0em 0.5em 0.5em 0.5em;
+	border-bottom: 1px solid var(--separator-accent2);
+	margin-bottom: 0.7em;
+}
+.encStepNote {
+	font-size: 88%;
+	font-weight: 500;
+	color: var(--font-white-3);
+	padding-left: 0.7em;
+}
+.encSubNote {
+	font-size: 82%;
+	color: var(--font-white-3);
+	padding: 0em 0.5em 0.4em 0.5em;
+	max-width: 40em;
+	text-align: center;
+}
+
+.colCtrlHint {
+	font-size: 82%;
+	color: var(--font-white-3);
+	padding: 0em 0.5em 0.2em 0.5em;
+	max-width: 44em;
+}
+.colCtrlHead {
+	font-size: 76%;
+	font-weight: 600;
+	color: var(--font-white-3);
+	text-align: center;
+	padding-bottom: 0.15em;
+}
+.cipherSwatch { /* live result colour, click to open the OS picker */
+	width: 34px;
+	height: 21px;
+	padding: 0;
+	border: 1px solid var(--border-accent);
+	background-color: transparent;
+	cursor: pointer;
+	vertical-align: middle;
+}
+.cipherSwatch::-webkit-color-swatch-wrapper { padding: 1px; }
+.cipherSwatch::-webkit-color-swatch { border: none; }
+.cipherSwatch::-moz-color-swatch { border: none; }
 #enabledCiphTable {
 	width: 100%;
 	padding: 1em 0em 0em 0em;
@@ -318,7 +667,30 @@ body {
 	height: 100%;
 	top:0;
 	left:0;
-	z-index : -1; /* behind all elements */ 
+	z-index : -1; /* behind all elements */
+}
+
+/* ---- background toggle (last item in the nav row) ---- */
+.dropbtn.bgToggleBtn {
+	font-size: 82%;
+	opacity: 0.7;
+	cursor: pointer;
+	padding: 0.4em 0.8em;
+}
+.dropbtn.bgToggleBtn:hover {
+	opacity: 1;
+	background-color: var(--btn-hover-accent);
+}
+.dropbtn.bgToggleBtn.bgToggleOff {
+	opacity: 0.45;
+}
+.dropbtn.bgToggleBtn.bgToggleRetro { /* third state, distinct from plain On */
+	opacity: 1;
+	color: var(--checkmark-accent);
+}
+.dropbtn.bgToggleBtn.bgToggleCCRU { /* fourth state */
+	opacity: 1;
+	color: hsl(320 70% 70%);
 }
 .ciphCheckbox {
 }
@@ -881,6 +1253,9 @@ body {
 	font-weight: 500;
 	outline: none;
 }
+.dropbtn.dateCalcTab { /* same size as the other tabs, just slightly brighter */
+	color: var(--font-white-1);
+}
 .optionElementTable {
 	border-spacing: 0;
 	text-align: center;
@@ -1030,6 +1405,57 @@ body {
 .imgDataArea {
 	display: grid;
 	place-items: center;
+	overflow: auto;
+}
+.imgDataArea img { /* wide breakdowns used to overflow the preview and get clipped */
+	max-width: 100%;
+	height: auto;
+}
+
+/*        Word Breakdown Export Styling       */
+/* ########################################## */
+
+.breakExportHeader {
+	text-align: center;
+	padding: 0.2em 1em 0.9em 1em;
+}
+.breakExportPhrase {
+	font-size: 155%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	line-height: 1.25em;
+	max-width: 34em; /* wraps between words instead of running off the image */
+	margin: 0 auto;
+	overflow-wrap: break-word;
+}
+.breakExportMeta {
+	padding-top: 0.35em;
+}
+.breakExportTotal {
+	font-size: 175%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	padding-right: 0.4em;
+}
+.breakExportCiph {
+	font-size: 120%;
+	font-weight: 500;
+}
+.breakExportMode { /* applied to #BreakdownSpot only while the image is captured */
+	background-color: var(--body-bg-accent); /* solid, so the PNG is not transparent */
+	padding: 1.1em 1.4em 1.2em 1.4em;
+	border: 1px solid var(--border-dark-accent);
+}
+.breakExportMode .BreakVal,
+.breakExportMode .BreakValDark { /* dim grey values were the main legibility complaint */
+	color: var(--font-white-2);
+	font-size: 80%;
+}
+.breakExportMode .BreakChar {
+	font-size: 125%;
+}
+.breakExportMode .LetterCounts {
+	padding-bottom: 0.4em;
 }
 #downImgBtn:hover, .refreshImgBtn:hover { background-color: var(--btn-hover-accent); }
 #downImgBtn:active, .refreshImgBtn:active { background-color: var(--btn-active-accent); }
@@ -1227,10 +1653,17 @@ body {
 .dateCalcTable {
 	margin: auto;
 }
-.dateCalcTable2 {
-	line-height: 0.8em;
+.dateCalcTable2 { /* the From/to results box, sized up for readability */
+	line-height: 1.05em;
 	padding: 1em 1em 0.9em 1em;
 	background: var(--btn-bg-accent);
+}
+.dateCalcTable2 .dateDescription { /* "From" / "to" labels */
+	font-size: 100%;
+}
+.dateCalcTable2 .dateDetailsText { /* the dates themselves and the duration lines */
+	font-size: 118%;
+	font-weight: 500;
 }
 .elemBorderScr {
 	border: 1px solid var(--border-dark-accent);
@@ -1248,7 +1681,16 @@ body {
 @media (max-width: 911px) { /* mobile */
 	.dateCalcBg {
 		margin: 1em 0em 0em 0em !important;
-		height: 350px;
+		/* was a fixed 350px, which flex-centred a much shorter table and left a
+		   dead gap above it; and a 370px min-width that ignored the container */
+		height: auto;
+		min-width: 0;
+		width: 100%;
+		padding: 0.6em 0em;
+	}
+	.dateCalcTable2 {
+		width: 100%;
+		box-sizing: border-box;
 	}
 }
 .dateInputLabel {

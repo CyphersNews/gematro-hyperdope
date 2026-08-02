@@ -2,6 +2,8 @@
 // breakdown.js
 
 var breakCipher = "English Ordinal" // current cipher for breakdown
+var breakPhraseText = "" // phrase the breakdown was last built from (the input box may since have been cleared)
+var breakPhraseTotal = 0 // its total in the current cipher
 var bgCol = "var(--breakdown-bg-accent)" // breakdown table background color
 var chLimit = 30 // character limit, used to switch to a long breakdown style
 var maxRowWidth = 36 // one row character limit (long breakdown)
@@ -25,6 +27,11 @@ $(document).ready(function(){
 var code_rain; // var to clear interval
 var height_html, canvas, ctx
 var w, h, ypos
+
+// ==================================================================
+// highlighter.js
+
+var histDisplayOrder = null // sHistory indices in display order, null = natural order
 
 // ==================================================================
 // database.js
@@ -304,7 +311,8 @@ $(document).ready(function(){
 		for (var i = 0; i < cipherList.length; i++) { if (cipherList[i].cipherName == breakCipher) break; } // get current cipher index
 		var fileName = sVal().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/ /g, "-").replace(/["|']/g, "")+
 			"_"+breakCipher.replace(/ /g, "-")+"_"+cipherList[i].calcGematria(sVal())+"_breakdown.png";
-		openImageWindow("#BreakTableContainer", fileName, 2.0);
+		prepBreakdownExport() // add phrase/cipher/total header, raise contrast
+		openImageWindow("#BreakdownSpot", fileName, 2.0);
 	});
 
 	$("body").on("click", "#btn-print-breakdown-details-png", function () {
@@ -554,9 +562,13 @@ $(document).ready(function(){
 					initCiphers(false) // don't update default ciphers, recalculate order of categories
 					createCiphersMenu() // recreate menus
 					createOptionsMenu()
-					createFeaturesMenu()
+					createFindMatchesMenu()
+					createDateCalcMenu()
+					createAstrologyMenu()
 					createExportMenu()
 					createAboutMenu()
+					createBgToggleButton()
+					createAuthNavArea()
 
 					if (userDBlive.length !== 0) { // restore controls if live database is loaded
 						$("#queryDBbtn").removeClass("hideValue") // display query button
