@@ -14,10 +14,120 @@
 .authCard {
 	width: 100%;
 	max-width: 400px;
+	/* slightly translucent so the code rain reads behind it without competing
+	   with the form, which stays fully legible on top */
 	background-color: var(--menu-bg-accent);
+	background-color: color-mix(in srgb, var(--menu-bg-accent) 93%, transparent);
+	backdrop-filter: blur(3px);
+	-webkit-backdrop-filter: blur(3px);
 	border: 1px solid var(--border-dark-accent);
 	padding: 1.6em 1.6em 1.4em 1.6em;
 	box-sizing: border-box;
+	flex: 0 0 auto;
+}
+
+/* the card sits beside the perks on wide screens, above them on narrow */
+.authPageWide {
+	gap: 1.6em;
+	flex-wrap: wrap;
+}
+
+.authPerks {
+	width: 100%;
+	max-width: 360px;
+	align-self: center;
+	background-color: color-mix(in srgb, var(--menu-bg-accent) 82%, transparent);
+	backdrop-filter: blur(3px);
+	-webkit-backdrop-filter: blur(3px);
+	border: 1px solid var(--border-dark-accent);
+	padding: 1.4em 1.5em;
+	box-sizing: border-box;
+}
+.authPerksTitle {
+	font-size: 115%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	margin-bottom: 0.9em;
+}
+.authFree {
+	color: hsl(140 60% 60%);
+	font-weight: 700;
+	letter-spacing: 0.03em;
+}
+.authPerksList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.authPerksList li {
+	font-size: 88%;
+	color: var(--font-white-2);
+	line-height: 1.5em;
+	padding: 0em 0em 0.9em 1.9em;
+	position: relative;
+	/* keeps a short paragraph from dropping one orphan word onto its own line */
+	text-wrap: pretty;
+	text-wrap: balance;
+	hyphens: auto;
+}
+.authPerksList li b { color: var(--font-white-1); font-weight: 600; }
+.authPerkIcon {
+	position: absolute;
+	left: 0;
+	top: 0.05em;
+	font-size: 105%;
+	line-height: 1.3em;
+}
+.authPerksFoot {
+	/* was --font-white-4, too faint to read against the rain */
+	font-size: 83%;
+	color: var(--font-white-2);
+	border-top: 1px solid var(--separator-accent2);
+	padding-top: 0.85em;
+	margin-top: 0.2em;
+	line-height: 1.5em;
+	text-wrap: pretty;
+	text-wrap: balance;
+}
+.authPerksFoot b { color: hsl(140 60% 65%); font-weight: 700; }
+
+/* Wordmark, not an icon: it is a wide landscape lockup, so it is sized on
+   width and given no border-radius or circular crop. */
+.authLogo {
+	display: block;
+	max-width: 280px;
+	width: 78%;
+	height: auto;
+	margin: 0 auto 1.1em auto;
+}
+
+/* Back to the calculator, pinned top-left, flashes green on click */
+.authBackBtn {
+	position: absolute;
+	top: 0.9em;
+	left: 0.9em;
+	z-index: 5;
+	font-size: 85%;
+	font-weight: 500;
+	color: var(--font-white-2);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	border-bottom: 1px solid var(--border-accent) !important;
+	padding: 0.4em 0.85em;
+	text-decoration: none;
+}
+.authBackBtn:hover { background-color: var(--btn-hover-accent); color: var(--font-white-1); }
+.authBackBtn.authBackFlash { animation: authBackFlash 0.7s ease-out; }
+@keyframes authBackFlash {
+	0%   { background-color: hsla(140 85% 55% / 0.75); color: #fff; border-color: hsl(140 70% 55%); }
+	60%  { background-color: hsla(140 85% 55% / 0.3); }
+	100% { background-color: var(--btn-bg-accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.authBackBtn.authBackFlash { animation: none; background-color: hsla(140 85% 55% / 0.4); }
+}
+@media (max-width: 560px) {
+	.authBackBtn { position: static; display: inline-block; margin: 0.8em 0em 0em 0.8em; }
 }
 
 .authTitle {
@@ -213,6 +323,224 @@
 }
 .authNavName { font-size: 88%; font-weight: 500; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .authNavNote { font-size: 80%; color: var(--font-white-4); padding: 0em 0.6em; }
+
+/* The shared close button sits at right:-29px, outside its panel. The
+   astrology and profile panels clip their overflow, which hid it, so those two
+   keep it inside the top-right corner instead. */
+.astroBG > .closeMenuBtn,
+.profileBG > .closeMenuBtn {
+	right: 2px !important;
+	top: 0px !important;
+	z-index: 4;
+}
+
+/*              Profile tab panel             */
+/* ########################################## */
+
+.profileBG {
+	max-width: min(700px, calc(100vw - 1.5em));
+	box-sizing: border-box;
+	padding-right: 1em;
+}
+.profileTabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2em;
+	padding: 0em 0.2em 0.7em 0.2em;
+	border-bottom: 1px solid var(--separator-accent2);
+	margin-bottom: 0.8em;
+}
+.intBtn3.profileTab {
+	width: auto;
+	padding: 0.2em 0.8em;
+	font-size: 88%;
+	margin: 0;
+	opacity: 0.6;
+}
+.intBtn3.profileTab.profileTabOn {
+	opacity: 1;
+	background-color: var(--btn-active-accent);
+}
+.profileBody { min-height: 140px; }
+.profileLoading, .profileNote {
+	font-size: 84%;
+	color: var(--font-white-3);
+	padding: 0.5em 0.3em;
+	line-height: 1.45em;
+}
+.profileNote.profileWarn { color: hsl(35 78% 66%); }
+.profileNote.profileOk { color: hsl(140 55% 65%); }
+.profileNote.profileFoot {
+	border-top: 1px solid var(--border-dark-accent);
+	margin-top: 0.6em;
+	font-size: 79%;
+}
+
+.profileSearchRow { display: flex; align-items: center; gap: 0.6em; padding-bottom: 0.6em; }
+.profileSearchInput {
+	flex: 1;
+	box-sizing: border-box;
+	padding: 0.45em 0.6em;
+	font-size: 95%;
+	font-family: var(--font-family), "Arial", sans-serif;
+	color: var(--font-white-1);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	outline: none;
+}
+.profileSearchInput:focus { border-color: var(--focus-outline); }
+.profileCount { font-size: 80%; color: var(--font-white-4); min-width: 3em; text-align: right; }
+
+.profileList {
+	max-height: 340px;
+	overflow-y: auto;
+	border: 1px solid var(--border-dark-accent);
+}
+.profileRow {
+	display: flex;
+	align-items: center;
+	gap: 0.6em;
+	padding: 0.4em 0.6em;
+	border-bottom: 1px solid var(--border-dark-accent);
+	font-size: 90%;
+}
+.profileRow:last-child { border-bottom: none; }
+.profileRow:nth-child(odd) { background: var(--table-row-odd); }
+.profileRowPhrase {
+	flex: 1;
+	color: var(--font-white-1);
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.profileRowPhrase:hover { text-decoration: underline; }
+.profileRowActions { display: flex; align-items: center; gap: 0.35em; flex: 0 0 auto; }
+.profileWhen { font-size: 80%; color: var(--font-white-4); }
+
+.profileMiniBtn {
+	font-size: 80%;
+	font-family: var(--font-family), "Arial", sans-serif;
+	color: var(--font-white-2);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.15em 0.55em;
+	cursor: pointer;
+	outline: none;
+}
+.profileMiniBtn:hover:not(:disabled) { background-color: var(--btn-hover-accent); color: var(--font-white-1); }
+.profileMiniBtn:disabled { opacity: 0.5; cursor: default; }
+.profileMiniBtn.profileMiniDanger { color: hsl(5 70% 68%); }
+.profileMiniBtn.profileMiniDanger:hover { background-color: hsla(5 60% 45% / 0.3); }
+
+.profileBadge {
+	font-size: 78%;
+	padding: 0.12em 0.5em;
+	border: 1px solid var(--border-accent);
+	color: var(--font-white-3);
+}
+.profileBadge.profileBadgeOk { color: hsl(140 55% 65%); border-color: hsl(140 35% 40%); }
+.profileBadge.profileBadgeBad { color: hsl(5 75% 70%); border-color: hsl(5 50% 45%); }
+
+/* A submission refused by the publishing rules. The row turns red and keeps
+   the reason underneath, so it survives the re-render instead of disappearing
+   with the notification. */
+.profileRow.profileRowRefused {
+	flex-wrap: wrap;
+	background: hsla(5 60% 40% / 0.16) !important;
+	border-left: 2px solid hsl(5 65% 55%);
+}
+.profileRow.profileRowRefused .profileRowPhrase { color: hsl(5 75% 78%); }
+.profileRowWhy {
+	flex: 1 0 100%;
+	font-size: 84%;
+	color: hsl(5 70% 74%);
+	padding-top: 0.25em;
+}
+
+.profileLbRow { cursor: pointer; }
+.profileLbRow:hover { background: var(--btn-hover-accent); }
+.profileLbRank {
+	font-family: var(--font-family-mono), monospace;
+	font-size: 85%;
+	color: var(--font-white-4);
+	width: 1.6em;
+}
+.profileLbAvatar {
+	width: 22px; height: 22px;
+	border-radius: 50%;
+	object-fit: cover;
+	flex: 0 0 auto;
+}
+.profileLbFallback {
+	background: var(--btn-active-accent);
+	color: var(--font-white-1);
+	font-size: 72%;
+	font-weight: 600;
+	text-align: center;
+	line-height: 22px;
+}
+
+.profileContribBox {
+	margin-top: 0.8em;
+	border: 1px solid var(--border-dark-accent);
+	padding: 0.6em 0.7em;
+	background: var(--breakdown-bg-accent);
+}
+.profileContribTitle {
+	font-size: 86%;
+	font-weight: 600;
+	color: var(--font-white-2);
+	padding-bottom: 0.5em;
+}
+.profileChips { display: flex; flex-wrap: wrap; gap: 0.35em; }
+.profileChip {
+	font-size: 84%;
+	padding: 0.2em 0.6em;
+	background: var(--btn-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	color: var(--font-white-2);
+	cursor: pointer;
+}
+.profileChip:hover { background: var(--btn-hover-accent); color: var(--font-white-1); }
+
+.profileAccountHead { display: flex; align-items: center; gap: 0.8em; padding: 0.2em 0.3em 1em 0.3em; }
+.profileBigAvatar {
+	width: 46px; height: 46px;
+	border-radius: 50%;
+	object-fit: cover;
+	line-height: 46px;
+	font-size: 140%;
+}
+.profileAccountName { font-size: 115%; font-weight: 600; color: var(--font-white-1); }
+.profileAccountSub { font-size: 84%; color: var(--font-white-3); }
+.profileAvatarRow { display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; padding: 0.2em 0.3em; }
+.profileFileInput { font-size: 82%; color: var(--font-white-3); max-width: 100%; }
+
+.profileSignedOut { padding: 1.4em 1em 1.6em 1em; text-align: center; max-width: 30em; }
+.profileSignedOutTitle { font-size: 120%; font-weight: 600; color: var(--font-white-1); margin-bottom: 0.5em; }
+.profileSignedOutText { font-size: 88%; color: var(--font-white-3); line-height: 1.5em; margin-bottom: 1.1em; }
+.profileSignedOutBtns { display: flex; gap: 0.5em; justify-content: center; flex-wrap: wrap; }
+.intBtn3.profileCta {
+	width: auto;
+	padding: 0.35em 1em;
+	text-decoration: none;
+	border-bottom: none !important;
+	display: inline-block;
+}
+.intBtn3.profileCta.profileCtaPrimary { background-color: var(--btn-active-accent); color: var(--font-white-1); }
+
+/* history sync indicator, sits just before the account links */
+.histSyncStatus {
+	font-size: 78%;
+	color: var(--font-white-4);
+	padding: 0em 0.5em;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+.histSyncStatus.histSync-busy { color: var(--font-white-3); }
+.histSyncStatus.histSync-ok   { color: hsl(140 45% 60%); }
+.histSyncStatus.histSync-warn { color: hsl(35 75% 62%); }
 
 /* ---- profile page ---- */
 

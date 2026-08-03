@@ -90,7 +90,7 @@ function updateWordBreakdown(impName = breakCipher, impBool = false, chartUpd = 
 			oStart += '<span class="breakCipher"><font style="'+curCiphCol+'"> (' + curCipher.cipherName + gemCalcModeLabel(curCipher) + ')</font></span>'
 		}
 
-		if (optWordBreakdown == true && curCipher.cp.length <= chLimit ) { // character limit, calculated even if out of screen bounds
+		if (optWordBreakdown == true && !curCipher.wheelCipher && curCipher.cp.length <= chLimit ) { // character limit, calculated even if out of screen bounds
 			var tdCount = 0; var wCount = 0;
 
 			o += '</div><div id="BreakTableContainer" class="'+RTLclass+'"><table class="BreakTable">'
@@ -151,7 +151,7 @@ function updateWordBreakdown(impName = breakCipher, impBool = false, chartUpd = 
 
 			o = oStart + o // prepend phrase, word/letter count
 
-		} else if (optWordBreakdown == true && curCipher.cp.length > chLimit) { // breakdown for long phrases
+		} else if (optWordBreakdown == true && !curCipher.wheelCipher && curCipher.cp.length > chLimit) { // breakdown for long phrases
 
 			var wrdCount = 0; var z = 0;
 			var breakArr = buildLongBreakdown(curCipher) // index of word in phraseBox, used to mark table end
@@ -324,16 +324,19 @@ function updateCipherChart(curCipher) {
 	o = '<table id="ChartTable">'
 	o += '<tbody>'
 
+	// one column per cipher unit, not per cArr entry - see cipher.chartChars()
+	var chartCh = curCipher.chartChars()
+
 	o += '<tr>'
 	o += '<td id="spaceChartBtn" style="font-size: 150%; font-weight: 500; '+curCiphFaintCol+'">-</td>' // Space
-	o += '<td id="capsNameChartBtn" colspan="' + (Math.ceil(curCipher.cArr.length / 2) - 2) + '">'
+	o += '<td id="capsNameChartBtn" colspan="' + (Math.ceil(chartCh.length / 2) - 2) + '">'
 	o += '<font style="font-size: 150%; font-weight: 500; '+curCiphCol+'">' + curCipher.cipherName + '</font>'
 	o += '</td>'
 	o += '<td id="backspaceChartBtn" style="font-size: 150%; font-weight: 500; '+curCiphFaintCol+'">&#8592;</td>' // Backspace
 	o += '</tr><tr>'
 
-	var halfL = curCipher.cArr.length / 2
-	for (var x = 0; x < curCipher.cArr.length; x++) {
+	var halfL = chartCh.length / 2
+	for (var x = 0; x < chartCh.length; x++) {
 		if (x - halfL == 0 || x - halfL == 0.5) {
 			o += '</tr><tr>'
 			for (var y = 0; y < x; y++) { // 2nd row (values)
@@ -341,17 +344,44 @@ function updateCipherChart(curCipher) {
 			}
 			o += '</tr><tr>'
 		}
-		o += (showCapsCipherChart && !curCipher.caseSensitive) ? '<td class="ChartChar" font style="'+curCiphCol+'">' + String.fromCodePoint(curCipher.cArr[x]).toUpperCase() + '</td>' : '<td class="ChartChar" font style="'+curCiphCol+'">' + String.fromCodePoint(curCipher.cArr[x]) + '</td>'
+		o += (showCapsCipherChart && !curCipher.caseSensitive) ? '<td class="ChartChar" font style="'+curCiphCol+'">' + chartCh[x].toUpperCase() + '</td>' : '<td class="ChartChar" font style="'+curCiphCol+'">' + chartCh[x] + '</td>'
 	}
-	if (curCipher.cArr.length % 2 == 1) { o += '<td class="ChartChar" font style="'+curCiphCol+'"></td>' } // empty character cell to make even rows
+	if (chartCh.length % 2 == 1) { o += '<td class="ChartChar" font style="'+curCiphCol+'"></td>' } // empty character cell to make even rows
 	o += '</tr><tr>'
 	for (y; y < x; y++) {
 		o += '<td class="ChartVal">' + curCipher.vArr[y] + '</td>' // 4th row (values)
 	}
-	if (curCipher.cArr.length % 2 == 1) { o += '<td class="ChartVal"></td>' } // empty value cell to make even rows
+	if (chartCh.length % 2 == 1) { o += '<td class="ChartVal"></td>' } // empty value cell to make even rows
 	o += '</tr></tbody></table>'
 
 	document.getElementById("ChartSpot").innerHTML = o
+	fitCipherChart()
+}
+
+// Wide ciphers (Capitals Added has 52 characters) overflow a phone screen, and
+// the container's answer was a horizontal scrollbar. Scale the table down to
+// fit instead, so the whole chart is visible without dragging. Desktop is
+// untouched: the scale only drops below 1 when the table is genuinely too wide.
+function fitCipherChart() {
+	var table = document.getElementById("ChartTable")
+	var spot = document.getElementById("ChartSpot")
+	if (table === null || spot === null) return
+
+	table.style.zoom = ""
+
+	// #ChartSpot is sized by its content, so measuring it just returns the
+	// overflowing width. The visible width is the scroll container around it.
+	var scroller = document.getElementById("ChartSpotScroll")
+	var avail = (scroller !== null ? scroller.clientWidth : spot.clientWidth)
+	avail -= 24 // the spot's own horizontal padding
+	var natural = table.scrollWidth
+	if (avail <= 0 || natural <= avail) return
+
+	// zoom rather than transform: a transformed element keeps its original
+	// layout box, so the container would still report an overflow and keep its
+	// scrollbar. zoom reflows, so the row genuinely shrinks to fit.
+	var scale = Math.max(0.55, avail / natural) // never shrink past readable
+	table.style.zoom = scale.toFixed(3)
 }
 
 function updateCipherChartGemCard(impName = breakCipher) {
@@ -380,12 +410,15 @@ function updateCipherChartGemCard(impName = breakCipher) {
 	}
 	o += '<tbody><tr>'
 
-	o += '<td colspan="' + curCipher.cArr.length + '">'
+	// one column per cipher unit, not per cArr entry - see cipher.chartChars()
+	var chartCh = curCipher.chartChars()
+
+	o += '<td colspan="' + chartCh.length + '">'
 	o += '<font style="font-size: 150%; font-weight: 500; '+curCiphCol+'">' + curCipher.cipherName + '</font>'
 	o += '</td></tr><tr>'
 
-	var halfL = curCipher.cArr.length / 2
-	for (var x = 0; x < curCipher.cArr.length; x++) {
+	var halfL = chartCh.length / 2
+	for (var x = 0; x < chartCh.length; x++) {
 		if (x - halfL == 0 || x - halfL == 0.5) {
 			o += '</tr><tr>'
 			for (var y = 0; y < x; y++) { // 2nd row (values)
@@ -393,14 +426,14 @@ function updateCipherChartGemCard(impName = breakCipher) {
 			}
 			o += '</tr><tr>'
 		}
-		o += '<td class="ChartChar" font style="'+curCiphCol+'">' + String.fromCodePoint(curCipher.cArr[x]) + '</td>'
+		o += '<td class="ChartChar" font style="'+curCiphCol+'">' + chartCh[x] + '</td>'
 	}
-	if (curCipher.cArr.length % 2 == 1) { o += '<td class="ChartChar" font style="'+curCiphCol+'"></td>' } // empty character cell to make even rows
+	if (chartCh.length % 2 == 1) { o += '<td class="ChartChar" font style="'+curCiphCol+'"></td>' } // empty character cell to make even rows
 	o += '</tr><tr>'
 	for (y; y < x; y++) {
 		o += '<td class="ChartVal">' + curCipher.vArr[y] + '</td>' // 4th row (values)
 	}
-	if (curCipher.cArr.length % 2 == 1) { o += '<td class="ChartVal"></td>' } // empty value cell to make even rows
+	if (chartCh.length % 2 == 1) { o += '<td class="ChartVal"></td>' } // empty value cell to make even rows
 	o += '</tr></tbody></table>'
 
 	document.getElementById("ChartSpot").innerHTML = o

@@ -97,3 +97,12 @@ function authNavSignOut(e) {
 $(document).ready(function () {
 	onAuthReady(renderAuthNav)
 })
+
+// Flashes the back link green on click, matching the Find Matches tab, so the
+// press registers before the navigation happens.
+function authBackFlash(el) {
+	if (!el) return
+	el.classList.remove("authBackFlash")
+	void el.offsetWidth // restart the animation rather than letting it no-op
+	el.classList.add("authBackFlash")
+}

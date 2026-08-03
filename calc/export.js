@@ -17,7 +17,10 @@ var ctxExportItems = [
 	{ sep: true },
 	{ label: "Export History (CSV)",   btn: "#btn-export-history-png",          need: ".HistoryTable" },
 	{ label: "Export Matches (TXT)",   btn: "#btn-export-matches-txt",          need: ".HistoryTable" },
-	{ label: "Export DB Query (CSV)",  btn: "#btn-export-db-query",             need: "#QueryTable" }
+	{ label: "Export DB Query (CSV)",  btn: "#btn-export-db-query",             need: "#QueryTable" },
+	{ sep: true },
+	{ label: "Edit Table Caption",     action: "editTableCaption",              need: ".HistoryTable" },
+	{ label: "Clear History Table",    action: "clearHistoryTable",             need: ".HistoryTable", danger: true }
 ]
 
 function closeExportContextMenu() {
@@ -29,6 +32,14 @@ function runExportContextItem(idx) {
 	var item = ctxExportItems[idx]
 	if (!item || item.sep) return
 	if (item.need && $(item.need).length === 0) return
+	if (item.action === "clearHistoryTable") {
+		phraseBoxKeypress(36) // "Home" keystroke, the app's own clear-history path
+		return
+	}
+	if (item.action === "editTableCaption") {
+		conf_HTC()
+		return
+	}
 	$(item.btn).click() // reuse the Export tab's own handler
 }
 
@@ -41,7 +52,7 @@ function showExportContextMenu(px, py) {
 		var item = ctxExportItems[i]
 		if (item.sep) { o += '<div class="ctxExportSep"></div>'; continue }
 		var avail = $(item.need).length > 0
-		o += '<div class="ctxExportItem'+(avail ? '' : ' ctxExportDisabled')+'"'
+		o += '<div class="ctxExportItem'+(avail ? '' : ' ctxExportDisabled')+(item.danger ? ' ctxExportDanger' : '')+'"'
 		o += avail ? ' onclick="runExportContextItem('+i+')"' : ' title="Not available right now"'
 		o += '>'+item.label+'</div>'
 	}
@@ -368,10 +379,22 @@ function exportCiphersDB(expAllCiph = false) {
 	return out
 }
 
+// The options block is parsed back with JSON.parse on restore, so each entry
+// has to be a valid JSON string.
+//
+// Wrapping the line in bare quote characters is not enough: options whose
+// value is itself a quoted string - coderainStyle ("new"), optHistTableCaption
+// - produced "coderainStyle = "new"", which breaks the array. isJsonString()
+// then failed for the whole block and importCalcOptions() was skipped without
+// a word, so no option restored at all, from localStorage, a synced workspace
+// or a preset. Only the cipher list came back.
+//
+// JSON.stringify escapes the inner quotes, so the entry survives the round
+// trip and eval() still sees a plain assignment.
 function exportCalcOptions() {
 	var o = "calcOptions = [\n\t"
 	for (var i = 0; i < calcOptionsArr.length; i++) {
-		o += "\x22"+eval(calcOptionsArr[i])+"\x22,\n\t" // quotes - \x22
+		o += JSON.stringify(String(eval(calcOptionsArr[i])))+",\n\t"
 	}
 	o = o.slice(0,-3) + "\n]\n" // remove comma, new line, tab; new line, close array, new line
 	return o
@@ -395,7 +418,7 @@ function exportSameCipherMatches(histArr) {
 		tmp = [] // reset array
 		for (i = 0; i < histArr.length; i++) { // for each phrase
 			if (cipherList[n].enabled) {
-				g = cipherList[n].calcGematria(histArr[i]) // gematria for current phrase in one cipher
+				g = gemForMatching(cipherList[n], histArr[i]) // gematria for current phrase in one cipher
 			} else {
 				g = 0 // value for disabled ciphers
 			}
@@ -449,7 +472,7 @@ function exportCrossCipherMatches(histArr) { // maybe use highlighter mode to co
 		tmp = [histArr[i]] // reset array, add phrase at index 0
 		for (n = 0; n < cipherList.length; n++) { // for each existing cipher
 			if (cipherList[n].enabled) {
-				g = cipherList[n].calcGematria(histArr[i]) // gematria for current cipher
+				g = gemForMatching(cipherList[n], histArr[i]) // gematria for current cipher
 			} else {
 				g = 0 // zero value for disabled ciphers
 			}

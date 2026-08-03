@@ -18,13 +18,14 @@ var coderainStyle = "new" // "new" or "retro"
 // The representative is rendered once at startup; if the browser has no font
 // for it the whole range is dropped rather than drawn as empty boxes.
 var coderainRanges = [
-	[0x0061, 0x007A, 0x0061, 8], // latin lowercase
-	[0x0041, 0x005A, 0x0041, 4], // latin uppercase
-	[0x0030, 0x0039, 0x0030, 3], // digits
-	[0x05D0, 0x05EA, 0x05D0, 1], // hebrew
-	[0x0391, 0x03A9, 0x03A3, 1], // greek uppercase
-	[0x03B1, 0x03C9, 0x03BB, 1], // greek lowercase
-	[0x0410, 0x044F, 0x0416, 1]  // cyrillic
+	[0x0061, 0x007A, 0x0061, 14], // latin lowercase
+	[0x0041, 0x005A, 0x0041, 7],  // latin uppercase
+	[0x0030, 0x0039, 0x0030, 6],  // digits
+	[0x30A1, 0x30FA, 0x30A2, 1],  // katakana, the classic matrix accent
+	[0x05D0, 0x05EA, 0x05D0, 1],  // hebrew
+	[0x0391, 0x03A9, 0x03A3, 1],  // greek uppercase
+	[0x03B1, 0x03C9, 0x03BB, 1],  // greek lowercase
+	[0x0410, 0x044F, 0x0416, 1]   // cyrillic
 ]
 
 var coderainGlyphs = [] // flat array of renderable characters
@@ -33,10 +34,11 @@ var coderainFontStack = "'Roboto Mono', 'Segoe UI', system-ui, sans-serif"
 // CCRU style: the numogram is decimal, so digits dominate, cut with hex letters
 // and block/technical glyphs for a harder machine look.
 var coderainCCRUPool = [
-	["0123456789", 6],
-	["ABCDEF", 1],
+	["0123456789", 8],
+	["ABCDEF", 2],
 	["▓▒░│┃╱╲╳", 2],
-	["⌁⌇⧉◤◥◣◢", 1]
+	["⌁⌇⧉◤◥◣◢", 1],
+	["アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン", 1]
 ]
 var coderainCCRUGlyphs = []
 
@@ -137,7 +139,7 @@ function coderainFrameInterval() {
 }
 
 function coderainSpeed() {
-	return coderainSpeedMin + Math.random() * coderainSpeedVar
+	return (coderainSpeedMin + Math.random() * coderainSpeedVar) * coderainSpeedMul
 }
 
 function initCodeRain() {
@@ -174,9 +176,11 @@ function initCodeRain() {
 		coderainSpeedVar = 0.85
 	} else {
 		buildCodeRainGlyphs()
-		coderainCellW = 22
-		coderainCellH = 24
-		coderainFadeAlpha = 0.17
+		// tighter grid and longer trails than before, so the standard style
+		// reads as a full field of green rather than scattered drops
+		coderainCellW = 15
+		coderainCellH = 17
+		coderainFadeAlpha = 0.12
 		coderainSpeedMin = 0.45
 		coderainSpeedVar = 0.45
 	}
@@ -199,10 +203,15 @@ function initCodeRain() {
 		: "hsl("+interfaceHue+","+(22*interfaceSat)+"%,"+(16*interfaceLit)+"%)"
 	ctx.fillRect(0, 0, w, h)
 
-	cols = Math.floor(w / coderainCellW) + 1
+	// density squeezes or widens the column grid; fewer, wider columns reads as
+	// lighter rain, more, narrower columns as heavier
+	var effCellW = Math.max(6, Math.round(coderainCellW / coderainDensity))
+	cols = Math.floor(w / effCellW) + 1
+	coderainCellW = effCellW
 
 	// CCRU keeps nearly every column live at once, the standard style leaves gaps
-	var stagger = (coderainStyle === "ccru") ? 0.3 : 1.05
+	// density also shortens the idle gap, so heavier means more columns active
+	var stagger = ((coderainStyle === "ccru") ? 0.3 : 0.45) / coderainDensity
 
 	coderainDrops = []
 	var maxRow = h / coderainCellH
@@ -418,6 +427,7 @@ function toggleCodeRain() {
 		document.getElementById("canv").style.display = "none"
 	}
 	updateCodeRainToggleBtn()
+	coderainApplyBackdrop() // rain off still shows the picked colour behind the page
 	return
 }
 
@@ -445,6 +455,150 @@ function updateCodeRainToggleBtn() {
 	}
 	var chk = document.getElementById("chkbox_MCR")
 	if (chk !== null) chk.checked = optMatrixCodeRain
+}
+
+// ---- intensity controls -----------------------------------------------
+//
+// Density and speed multipliers applied on top of whichever style is running,
+// so the hover panel tunes all three styles rather than needing its own set of
+// numbers per style. 1.0 is the tuned default for each.
+
+var coderainDensity = 1.0   // 0.2 sparse .. 2.0 heavy
+var coderainSpeedMul = 1.0  // 0.3 slow .. 2.5 fast
+
+function coderainSetDensity(v) {
+	coderainDensity = Math.max(0.2, Math.min(2.0, Number(v) || 1))
+	var lbl = document.getElementById("rainDensityVal")
+	if (lbl !== null) lbl.textContent = coderainDensity.toFixed(2) + "x"
+	if (optMatrixCodeRain) toggleCodeRain() // re-init, column count depends on this
+}
+
+function coderainSetSpeed(v) {
+	coderainSpeedMul = Math.max(0.3, Math.min(2.5, Number(v) || 1))
+	var lbl = document.getElementById("rainSpeedVal")
+	if (lbl !== null) lbl.textContent = coderainSpeedMul.toFixed(2) + "x"
+	// applied per frame, no re-init needed
+}
+
+function coderainResetIntensity() {
+	var d = document.getElementById("rainDensitySlider")
+	var sp = document.getElementById("rainSpeedSlider")
+	var hu = document.getElementById("rainHueSlider")
+	if (d !== null) d.value = 1
+	if (sp !== null) sp.value = 1
+	coderainSetSpeed(1)
+	coderainHue = coderainHueDefault
+	coderainSat = coderainSatDefault
+	coderainColorPicked = false // back to the stock page background
+	if (hu !== null) hu.value = coderainHue
+	coderainSyncColorInputs()
+	coderainApplyBackdrop()
+	coderainSetFollow(true) // back to tracking the selected cipher
+	var fc = document.getElementById("rainFollowChk")
+	if (fc !== null) fc.checked = true
+	coderainSetDensity(1) // last, it re-inits
+}
+
+// Manual rain hue. Setting it turns off follow-the-cipher, since the two
+// would otherwise fight over the same colour on the next repaint.
+function coderainSetHue(deg) {
+	coderainHue = Math.max(0, Math.min(359, Number(deg) || 0))
+	coderainColorPicked = true
+	coderainDropFollow()
+	coderainSyncColorInputs()
+	coderainApplyBackdrop()
+}
+
+// The swatch is a real colour input, like the per-cipher swatches in Color
+// Controls, so saturation can be chosen too and not just hue. Lightness is
+// read but deliberately not applied: the rain is drawn at coderainLit so a
+// near-white pick cannot blow out the page.
+function coderainSetColorFromPicker(hex) {
+	var c = hexToHsl(hex)
+	coderainHue = c.H
+	coderainSat = Math.max(0, Math.min(100, c.S)) / 100
+	coderainColorPicked = true
+	coderainDropFollow()
+	coderainSyncColorInputs()
+	coderainApplyBackdrop()
+}
+
+// Picking a colour by hand and following the selected cipher would fight over
+// the same value on the next repaint, so choosing one drops the other.
+function coderainDropFollow() {
+	if (typeof optCoderainFollowCipher !== "undefined" && optCoderainFollowCipher) {
+		optCoderainFollowCipher = false
+		var chk = document.getElementById("chkbox_CFC")
+		if (chk !== null) chk.checked = false
+	}
+	var fc = document.getElementById("rainFollowChk")
+	if (fc !== null) fc.checked = false
+}
+
+// keep the hue slider and the swatch showing the same colour
+function coderainSyncColorInputs() {
+	var hu = document.getElementById("rainHueSlider")
+	if (hu !== null) hu.value = coderainHue
+	var sw = document.getElementById("rainColorPicker")
+	if (sw !== null) sw.value = hslToHex(coderainHue, coderainSat * 100, 55)
+}
+
+// The page background picks up the chosen rain colour, so turning the rain off
+// or running it thin still leaves the scheme the user asked for rather than
+// snapping back to the stock blue-grey. Kept very dark and desaturated - it is
+// a tint behind the content, not a wash over it.
+//
+// Only applies once a colour has actually been picked, so the default look is
+// untouched on a first visit.
+function coderainApplyBackdrop() {
+	var root = document.documentElement
+	if (!coderainColorPicked) {
+		root.style.removeProperty("--rain-backdrop")
+		return
+	}
+	var sat = Math.min(30, Math.round(coderainSat * 100))
+	root.style.setProperty("--rain-backdrop", "hsl(" + coderainHue + " " + sat + "% 11%)")
+}
+
+function coderainSetFollow(on) {
+	optCoderainFollowCipher = !!on
+	var chk = document.getElementById("chkbox_CFC")
+	if (chk !== null) chk.checked = optCoderainFollowCipher
+	// following a cipher means the rain colour is no longer the user's pick, so
+	// the backdrop goes back to the stock page background
+	if (optCoderainFollowCipher) {
+		coderainColorPicked = false
+		coderainApplyBackdrop()
+	}
+}
+
+// The panel that drops down when hovering the nav toggle. Deliberately terse:
+// three sliders, a follow toggle and a reset, no prose.
+function coderainIntensityPanel() {
+	var follow = (typeof optCoderainFollowCipher !== "undefined" && optCoderainFollowCipher)
+	var o = '<div class="rainTunePanel">'
+
+	o += '<div class="rainTuneRow"><span class="rainTuneLabel">Density</span>'
+	o += '<input type="range" id="rainDensitySlider" class="rainTuneSlider" min="0.2" max="2" step="0.05" value="'+coderainDensity+'" oninput="coderainSetDensity(this.value)">'
+	o += '<span class="rainTuneVal" id="rainDensityVal">'+coderainDensity.toFixed(2)+'x</span></div>'
+
+	o += '<div class="rainTuneRow"><span class="rainTuneLabel">Speed</span>'
+	o += '<input type="range" id="rainSpeedSlider" class="rainTuneSlider" min="0.3" max="2.5" step="0.05" value="'+coderainSpeedMul+'" oninput="coderainSetSpeed(this.value)">'
+	o += '<span class="rainTuneVal" id="rainSpeedVal">'+coderainSpeedMul.toFixed(2)+'x</span></div>'
+
+	// hue slider for a quick sweep, plus a real colour input like the per-cipher
+	// swatches in Color Controls for picking an exact shade
+	o += '<div class="rainTuneRow"><span class="rainTuneLabel">Colour</span>'
+	o += '<input type="range" id="rainHueSlider" class="rainTuneSlider rainHueSlider" min="0" max="359" step="1" value="'+coderainHue+'" oninput="coderainSetHue(this.value)">'
+	o += '<span class="rainTuneVal"><input type="color" id="rainColorPicker" class="rainColorPicker" value="'+hslToHex(coderainHue, coderainSat * 100, 55)+'" title="Pick a rain colour" oninput="coderainSetColorFromPicker(this.value)"></span></div>'
+
+	o += '<div class="rainTuneRow rainTuneFoot">'
+	o += '<label class="rainFollowLabel"><input type="checkbox" id="rainFollowChk"'+(follow ? " checked" : "")+' onchange="coderainSetFollow(this.checked)"> Follow cipher</label>'
+	o += '<input class="intBtn3 rainTuneReset" type="button" value="Reset" onclick="coderainResetIntensity()">'
+	o += '</div>'
+
+	o += '</div>'
+	return o
 }
 
 // nav button: Off -> On (new) -> Retro -> CCRU -> Off

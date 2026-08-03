@@ -198,7 +198,7 @@ function subtractEncodingValues() {
 	for (i = 0; i < cipherList.length; i++) {
 		elmt = document.getElementById('encCiphVal'+i)
 		if (elmt !== null) { // read value from encoding menu if available
-			elmt.value = elmt.value - cipherList[i].calcGematria(sVal()) // gematria of text inside phrase box
+			elmt.value = elmt.value - gemForMatching(cipherList[i], sVal()) // gematria of text inside phrase box
 		}
 	}
 	phraseBoxKeypress(46) // clear box
@@ -209,7 +209,7 @@ function readEncodingValues() {
 	for (i = 0; i < cipherList.length; i++) {
 		elmt = document.getElementById('encCiphVal'+i)
 		if (elmt !== null && cipherList[i].enabled) { // if element exists and cipher is enabled
-			elmt.value = cipherList[i].calcGematria(sVal()) // get gematria of phrase box for that cipher
+			elmt.value = gemForMatching(cipherList[i], sVal()) // get gematria of phrase box for that cipher
 		}
 	}
 	phraseBoxKeypress(46) // clear box

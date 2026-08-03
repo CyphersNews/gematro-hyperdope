@@ -29,7 +29,7 @@ function removeNotMatchingPhrases() {
 		
 		for (i = 0; i < cipherList.length; i++) { // for each enabled cipher
 			if (cipherList[i].enabled) {
-				gemVal = cipherList[i].calcGematria(sHistory[x]) // value only
+				gemVal = gemForMatching(cipherList[i], sHistory[x]) // value only
 				phr_values.push(gemVal) // build an array of all gematria values of current phrase
 			}
 		}
@@ -65,7 +65,7 @@ function removeNotMatchingPhrases() {
 				match = false
 				
 				for (x = 0; x < sHistory.length; x++) { // for each phrase
-					ciph_values.push(cipherList[i].calcGematria(sHistory[x]))
+					ciph_values.push(gemForMatching(cipherList[i], sHistory[x]))
 				}
 				
 				for (z = 0; z < highlt_num.length; z++) { // for each value to be highlighted
@@ -127,7 +127,7 @@ function removeNotMatchingPhrases() {
 				var ciph_matches = [] // frequency of matches in one cipher
 				
 				for (x = 0; x < sHistory.length; x++) { // for each phrase
-					ciph_values.push(cipherList[i].calcGematria(sHistory[x])) // add value for that phrase
+					ciph_values.push(gemForMatching(cipherList[i], sHistory[x])) // add value for that phrase
 				}
 				
 				ciph_matches = countMatches(ciph_values) // number of occurrences of values
@@ -138,8 +138,8 @@ function removeNotMatchingPhrases() {
 				for (n = 0; n < ciph_matches.length; n++) { // for each value in cipher column
 					if (ciph_matches[n][1] > 1) { // if 2 or more matches are available
 						for (x = 0; x < sHistory.length; x++) { // for each phrase
-							if (cipherList[i].calcGematria(sHistory[x]) == ciph_matches[n][0] &&
-							highlt_num.indexOf(cipherList[i].calcGematria(sHistory[x])) > -1) { // if gematria for phrase matches given number and number is in highlight box
+							if (gemForMatching(cipherList[i], sHistory[x]) == ciph_matches[n][0] &&
+							highlt_num.indexOf(gemForMatching(cipherList[i], sHistory[x])) > -1) { // if gematria for phrase matches given number and number is in highlight box
 								phrase_match[x] = true // mark phrase as matching
 								cipher_has_no_matches = false // cipher doesn't need to be disabled
 								//console.log(sHistory[x]+" ("+ciphersOn[i].Nickname+") = "+ciphersOn[i].Gematria(sHistory[x], 2, false, true)+" - marked as 'true'")
@@ -181,7 +181,7 @@ function removeNotMatchingPhrases() {
 			if (cipherList[n].enabled) {
 				tmp_arr = [] // reset
 				for (z = 0; z < sHistory.length; z++) { // for each phrase
-					tmp_arr.push(cipherList[n].calcGematria(sHistory[z])) // add each gematria value for that phrase
+					tmp_arr.push(gemForMatching(cipherList[n], sHistory[z])) // add each gematria value for that phrase
 				}
 				v_grid_col.push(tmp_arr) // add row with all values for current phrase
 			}
@@ -245,7 +245,7 @@ function updateHistoryTableSameCiphMatch() {
 		if (cipherList[n].enabled) {
 			tmp_arr = [] // reset
 			for (z = 0; z < sHistory.length; z++) { // for each phrase
-				tmp_arr.push(cipherList[n].calcGematria(sHistory[z])) // add each gematria value for that phrase
+				tmp_arr.push(gemForMatching(cipherList[n], sHistory[z])) // add each gematria value for that phrase
 			}
 			v_grid_col.push(tmp_arr) // add row with all values for current phrase
 		}
@@ -342,7 +342,7 @@ function updateHistoryTableAutoHlt() {
 		for (y = 0; y < cipherList.length; y++) {
 			if (cipherList[y].enabled) { // for each enabled cipher
 				for (x = 0; x < sHistory.length; x++) { // calculate gematria for all phrases
-					gemVal = cipherList[y].calcGematria(sHistory[x]) // value only
+					gemVal = gemForMatching(cipherList[y], sHistory[x]) // value only
 					cipher_values.push(gemVal) // append all values of this phrase
 				}
 			cols_arr.push(cipher_values) // append all values of each phrase
@@ -393,7 +393,7 @@ function updateHistoryTableAutoHlt() {
 		for (y = 0; y < cipherList.length; y++) {
 			if (cipherList[y].enabled) {
 				aCipher = cipherList[y]
-				gemVal = aCipher.calcGematria(sHistory[x]) // value only
+				gemVal = gemForMatching(aCipher, sHistory[x]) // value only
 				phrase_values.push(gemVal) // append all values of this phrase
 			}
 		}
@@ -501,7 +501,7 @@ function buildHistMatchOrder() {
 	for (i = 0; i < sHistory.length; i++) {
 		var vals = []
 		for (y = 0; y < cipherList.length; y++) {
-			if (cipherList[y].enabled) vals.push(cipherList[y].calcGematria(sHistory[i]))
+			if (cipherList[y].enabled) vals.push(gemForMatching(cipherList[y], sHistory[i]))
 		}
 		rows.push(vals)
 	}
@@ -588,10 +588,45 @@ function buildHistMatchOrder() {
 	return { order: order, snapshot: sHistory.slice(), hidden: unmatched.length }
 }
 
+// Flashes the Find Matches tab itself, so a click registers even when the
+// table is offscreen or the search turns up nothing.
+function findMatchesFlash(btn) {
+	if (!btn) return
+	btn.classList.remove("findMatchesFlash")
+	void btn.offsetWidth // restart the animation rather than letting it no-op
+	btn.classList.add("findMatchesFlash")
+	setTimeout(function () { btn.classList.remove("findMatchesFlash") }, 700)
+}
+
+// A green sweep across the History Table when matches land, so the reorder
+// reads as something that just happened rather than the table silently
+// rearranging itself. Purely decorative and self-removing.
+function findMatchesFx() {
+	var host = document.getElementById("HistoryTableArea")
+	if (host === null) return
+
+	$("#findMatchesFx").remove()
+	var fx = document.createElement("div")
+	fx.id = "findMatchesFx"
+	fx.className = "findMatchesFx"
+	host.style.position = "relative"
+	host.appendChild(fx)
+
+	// matched rows pulse once as the sweep passes over them
+	$(".HistoryTable tr").removeClass("fxMatchPulse")
+	setTimeout(function () { $(".HistoryTable tr").addClass("fxMatchPulse") }, 90)
+
+	setTimeout(function () {
+		$("#findMatchesFx").remove()
+		$(".HistoryTable tr").removeClass("fxMatchPulse")
+	}, 1100)
+}
+
 // Applies the match ordering and tells the user how many phrases dropped out,
 // so a suddenly shorter table is never mistaken for lost data.
 function applyHistMatchOrder() {
 	histDisplayOrder = buildHistMatchOrder()
+	setTimeout(findMatchesFx, 0) // after the table has been rebuilt
 	if (histDisplayOrder !== null && histDisplayOrder.hidden > 0) {
 		var n = histDisplayOrder.hidden
 		displayCalcNotification(n + (n === 1 ? " phrase hidden" : " phrases hidden") + " with no matches", 2200)

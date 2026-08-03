@@ -23,7 +23,7 @@ function queryDatabase() {
 	for (i = 0; i < cipherList.length; i++) {
 		if (cipherList[i].enabled) {
 			if (!numericalMode) {
-				val = cipherList[i].calcGematria(sVal())
+				val = gemForMatching(cipherList[i], sVal())
 				// if (val == 0) val = "n/a"
 				gemArr.push(val) // value for current phrase in each enabled cipher
 			} else { // numerical mode
@@ -264,7 +264,8 @@ function updateDatabaseQueryTable(stPos = 0, dItems, scrollBarEvent = false) { /
 				curCiphCol = (optColoredCiphers) ? 'hsl('+curCiph.H+' '+curCiph.S+'% '+curCiph.L+'% / '+alphaHlt+')' : 'hsl(0 0% 50% / '+alphaHlt+')'
 				ms += '<span style="color: '+curCiphCol+'"'
 			}
-			ms += ' class="gVQ"> '+gemVal+' </span></td>' // number properties are available
+			// number properties are available, except for wheel ciphers - see calc.js
+			ms += ' class="'+(curCiph.wheelCipher ? 'gVQW' : 'gVQ')+'"> '+gemVal+' </span></td>'
 		}
 		ms += '</tr>'
 	}
@@ -390,7 +391,7 @@ function calcLiveDatabase(arr) {
 		tmpArr.push(arr[i]) // add phrase
 		for (n = 0; n < cipherList.length; n++) {
 			if (cipherList[n].enabled) {
-				tmpArr.push(cipherList[n].calcGematria(arr[i])) // gematria value for each enabled cipher
+				tmpArr.push(gemForMatching(cipherList[n], arr[i])) // gematria value for each enabled cipher
 			}
 		}
 		userDB.push(tmpArr) // add row with phrase and gematria for enabled ciphers

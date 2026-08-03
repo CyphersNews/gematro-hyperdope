@@ -17,8 +17,13 @@
 </head>
 
 <body>
-<div class="authPage">
+<canvas id="canv"></canvas>
+
+	<a class="authBackBtn" href="index.html" onclick="authBackFlash(this)">&#8592; Back to the calculator</a>
+
+<div class="authPage authPageWide">
 	<div class="authCard">
+		<img class="authLogo" src="res/cyphers-logo.png" alt="Cyphers">
 
 		<div class="authTitle">Create an account</div>
 		<div class="authSubtitle">Save your work and sync it across devices.</div>
@@ -62,10 +67,18 @@
 		<div class="authFoot">
 			Already have an account? <a href="login.html">Sign in</a>
 		</div>
-		<div class="authFoot" style="margin-top: 1.4em;">
-			<a href="index.html">&#8592; Back to the calculator</a>
-		</div>
 
+	</div>
+
+	<div class="authPerks">
+		<div class="authPerksTitle">Why make a <span class="authFree">FREE</span> account?</div>
+		<ul class="authPerksList">
+			<li><span class="authPerkIcon">💾</span><b>Your history is saved.</b> Phrases survive a refresh instead of vanishing, and follow you to every device you sign in on.</li>
+			<li><span class="authPerkIcon">⚙️</span><b>Your workspace is default.</b> Ciphers, colours, custom ciphers and code rain settings load exactly as you left them.</li>
+			<li><span class="authPerkIcon">🔍</span><b>Search what you decoded.</b> Look back through every term you have run instead of typing it out again.</li>
+			<li><span class="authPerkIcon">🏆</span><b>Climb the leaderboard.</b> Publish phrases you choose and see the top contributors ranked.</li>
+		</ul>
+		<div class="authPerksFoot">No cost, no card, <b>cancel anytime</b>. The calculator itself stays free to use without an account.</div>
 	</div>
 </div>
 
@@ -138,5 +151,15 @@ function doDiscord() {
 		authShowMessage("authMsg", authFriendlyError(err), "error");
 	});
 }
+</script>
+<script src="auth/auth-rain.js"></script>
+<script src="calc/coderain.js"></script>
+<script>
+// honour a saved style/intensity if the visitor has used the calculator
+if (window.coderainStyleSaved) { coderainStyle = window.coderainStyleSaved }
+if (window.coderainDensitySaved) { coderainDensity = window.coderainDensitySaved }
+if (window.coderainSpeedSaved) { coderainSpeedMul = window.coderainSpeedSaved }
+toggleCodeRain();
+$(window).on("resize", function () { if (optMatrixCodeRain) toggleCodeRain(); });
 </script>
 </body>

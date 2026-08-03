@@ -13,6 +13,80 @@ class cipher { // cipher constructor class
 		this.caseSensitive = caseSensitive // capital letters have different values
 		this.enabled = ciphEnabled // cipher state on/off
 		this.cp = []; this.cv = []; this.sumArr = [] // cp - character position, cv - character value, sumArr - phrase gematria value
+
+		// A "wheel" cipher substitutes symbols rather than adding numbers, so its
+		// values are strings: "12.", "E", "☉". Detected rather than declared,
+		// so imported ciphers work without an extra constructor argument.
+		this.wheelCipher = false
+		for (var wi = 0; wi < ciphValues.length; wi++) {
+			if (typeof ciphValues[wi] !== "number") { this.wheelCipher = true; break }
+		}
+		if (this.wheelCipher) this.buildWheelSequences()
+	}
+
+	// Wheel ciphers can map multi-character units ("ch", "sch", "qu"), which a
+	// flat cArr cannot express. Those are encoded as a leading sequence length
+	// followed by fixed-width groups of codepoints padded with 0, so
+	// [2, 99,104, 100,0] means "ch" then "d". A plain one-codepoint-per-value
+	// array is left as it is.
+	buildWheelSequences() {
+		var seqLen = this.cArr[0]
+		var body = this.cArr.slice(1)
+		this.wheelSeq = []
+
+		if (seqLen >= 1 && seqLen <= 6 && body.length === seqLen * this.vArr.length) {
+			for (var i = 0; i < this.vArr.length; i++) {
+				var unit = ""
+				for (var j = 0; j < seqLen; j++) {
+					var cp = body[i * seqLen + j]
+					if (cp > 0) unit += String.fromCodePoint(cp) // 0 is padding
+				}
+				this.wheelSeq.push(unit)
+			}
+		} else { // not sequence-encoded, one codepoint per value
+			for (var k = 0; k < this.cArr.length; k++) {
+				this.wheelSeq.push(String.fromCodePoint(this.cArr[k]))
+			}
+		}
+
+		this.wheelMaxLen = 1
+		for (var m = 0; m < this.wheelSeq.length; m++) {
+			if (this.wheelSeq[m].length > this.wheelMaxLen) this.wheelMaxLen = this.wheelSeq[m].length
+		}
+	}
+
+	// The cipher chart draws one column per unit, which is not the same as one
+	// column per cArr entry: a sequence-encoded cipher stores a length header
+	// and NUL padding that must never be drawn, and its multi-character units
+	// ("ch", "sch") span several codepoints. wheelSeq already holds the real
+	// units, so charts pair up with vArr the way they always did.
+	chartChars() {
+		if (this.wheelCipher && this.wheelSeq) return this.wheelSeq
+		var out = []
+		for (var i = 0; i < this.cArr.length; i++) out.push(String.fromCodePoint(this.cArr[i]))
+		return out
+	}
+
+	// Greedy longest-match substitution. Longest first so "ch" wins over "c"
+	// when both are defined.
+	calcWheel(gemPhrase) {
+		var out = ""
+		var i = 0
+		while (i < gemPhrase.length) {
+			var hit = -1, len = 0
+			for (var L = this.wheelMaxLen; L >= 1; L--) {
+				var idx = this.wheelSeq.indexOf(gemPhrase.substr(i, L))
+				if (idx > -1) { hit = idx; len = L; break }
+			}
+            if (hit > -1) {
+				out += this.vArr[hit]
+				i += len
+			} else {
+				if (gemPhrase.charAt(i) === " ") out += " " // keep word breaks
+				i++
+			}
+		}
+		return out
 	}
 
 	calcGematria(gemPhrase) { // calculate gematria of a phrase
@@ -23,6 +97,10 @@ class cipher { // cipher constructor class
 		if (optAllowPhraseComments == true) { gemPhrase = gemPhrase.replace(/\[.+\]/g, '').trim() } // remove [...], leading/trailing spaces
 		if (this.diacriticsAsRegular) gemPhrase = gemPhrase.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
 		if (this.caseSensitive == false) gemPhrase = gemPhrase.toLowerCase()
+
+		// substitution ciphers return text, so they bypass every numeric path
+		// below, including the digit handling at the end
+		if (this.wheelCipher) return this.calcWheel(gemPhrase)
 
 		if (optGemSubstitutionMode) { // each character is substituted with a correspondent value
 			for (i = 0; i < gemPhrase.length; i++) {
@@ -92,6 +170,18 @@ class cipher { // cipher constructor class
 
 		// character positions, character values, current number (if char is a digit)
 		this.cp = []; this.cv = []; this.curNum = ""; this.LetterCount = 0
+
+		if (this.wheelCipher) {
+			// No per-character grid for a substitution cipher: wordSum starts at 0
+			// and would concatenate onto the symbols. The compact line shows the
+			// substituted phrase instead, which is the useful readout.
+			var src = (this.caseSensitive === false) ? gemPhrase.toLowerCase() : gemPhrase
+			if (this.diacriticsAsRegular) src = src.normalize('NFD').replace(/[̀-ͯ]/g, "")
+			this.LetterCount = src.replace(/\s/g, "").length
+			this.WordCount = src.trim().length ? src.trim().split(/\s+/).length : 0
+			this.sumArr = [this.calcWheel(src)]
+			return
+		}
 
 		this.sumArr = []; wordSum = 0
 		for (i = 0; i < gemPhrase.length; i++) {
@@ -216,4 +306,14 @@ class cipher { // cipher constructor class
 		}
 	}
 
+}
+
+// Value used wherever gematria is compared numerically: Find Matches, the
+// database query, the encoder. Wheel ciphers return text, so they yield NaN,
+// which never equals anything, including another NaN. That keeps their column
+// present and aligned with enabledCiphCount while making it unmatchable,
+// rather than skipping them and desynchronising every column index.
+function gemForMatching(ciph, phrase) {
+	if (ciph.wheelCipher) return NaN
+	return ciph.calcGematria(phrase)
 }
