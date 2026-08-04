@@ -15,23 +15,29 @@
 <script src="auth/auth.js"></script>
 <script src="auth/auth-ui.js"></script>
 <script src="auth/history-sync.js"></script>
+<script src="auth/profile-features.js"></script>
 </head>
 
 <body>
+
+	<a class="authBackBtn" href="index.html" onclick="authBackFlash(this)">&#8592; Back to the calculator</a>
+
 <div class="authPage">
 	<div class="authCard">
 
 		<div id="profileHead" class="authProfileHead"></div>
 
+		<p id="setupIntro" class="authHint hideValue" style="text-align:center;padding-bottom:0.6em">Welcome in. Pick a display name and you are set &mdash; this page only appears the first time.</p>
+
 		<div id="authMsg" class="authMsg hideValue"></div>
 
-		<div class="authField">
+		<div class="authField authNameField">
 			<label class="authLabel" for="username">Display name</label>
 			<input class="authInput" type="text" id="username" maxlength="32" autocomplete="nickname">
 			<div id="usernameErr" class="authFieldErr hideValue"></div>
 			<div class="authHint">Shown instead of your email. 2&ndash;32 characters.</div>
 		</div>
-		<button class="authBtn" type="button" id="saveBtn" onclick="doSave()">Save</button>
+		<button class="authBtn authBtnPrimary" type="button" id="saveBtn" onclick="doSave()">Save and start</button>
 
 		<div class="authDivider">account</div>
 
@@ -45,20 +51,22 @@
 			<div class="authHint" style="text-align: center; padding-top: 0.5em;">Sign in with Discord next time, using this same account.</div>
 		</div>
 
-		<div class="authDivider">saved history</div>
-
-		<div id="histArea">
-			<div class="authProfileRow">
-				<span class="authProfileKey">Saved phrases</span>
-				<span class="authProfileVal" id="histCount">&hellip;</span>
-			</div>
-			<div class="authHint" style="padding-top: 0.5em;">
-				Your History Table is saved to your account and restored on any device you sign in to.
-			</div>
-			<button class="authBtn" type="button" id="clearHistBtn" style="margin-top: 0.7em;" onclick="doClearHist()">Clear saved history</button>
-		</div>
-
 		<button class="authBtn" type="button" style="margin-top: 1.4em;" onclick="authNavSignOut(event)">Sign out</button>
+
+		<div class="profileDanger" style="margin-top: 1.6em;">
+			<div class="profileDangerTitle">Close your account</div>
+			<div class="authHint">
+				This permanently deletes your account and everything attached to it: your email
+				and login, saved history, workspace, presets, published phrases and profile
+				picture. It cannot be undone.
+			</div>
+			<div class="profileDangerRow">
+				<input class="authInput" type="text" id="deleteConfirm" placeholder="Type DELETE to confirm"
+				       autocomplete="off" spellcheck="false" oninput="deleteGate()">
+				<button class="authBtn" type="button" id="deleteBtn" onclick="doDeleteAccount()" disabled>Delete my account</button>
+			</div>
+			<div id="deleteMsg" class="authHint hideValue"></div>
+		</div>
 
 		<div class="authFoot" style="margin-top: 1.4em;">
 			<a href="index.html">&#8592; Back to the calculator</a>
@@ -73,11 +81,26 @@ requireAuth("login.html");
 $(document).ready(function () {
 	onAuthReady(function (user) {
 		if (user === null) return; // requireAuth is redirecting
-		syncProfile().then(renderProfile).catch(function (err) {
+		syncProfile().then(function () {
+			// This page is a welcome, not a gate. Once it has been through once
+			// there is nothing here a member needs on the way in, so later
+			// sign-ins go straight to the calculator. ?stay=1 is how the nav
+			// link and the profile panel open it deliberately.
+			var deliberate = new URLSearchParams(window.location.search).get("stay") === "1";
+			var seen = !!(authProfile && authProfile.setup_done);
+			if (seen && !deliberate) { window.location.replace("index.html"); return; }
+			if (!seen) {
+				document.getElementById("setupIntro").classList.remove("hideValue");
+				// Marked on sight, not on save. Tying it to the Save button meant
+				// anyone who already had a name, or who just left, was sent back
+				// through this page on every single sign-in.
+				updateProfile({ setup_done: true }).catch(function () { /* they can still use the page */ });
+			}
+			renderProfile();
+		}).catch(function (err) {
 			authShowMessage("authMsg", authFriendlyError(err), "error");
 			renderProfile();
 		});
-		refreshHistCount();
 	});
 });
 
@@ -101,10 +124,12 @@ function renderProfile() {
 	var rows = "";
 	rows += row("Email", authEsc(u.email || "&mdash;") +
 		(u.email ? '<span class="authBadge ' + (verified ? "authBadgeOk" : "") + '">' + (verified ? "verified" : "unverified") + "</span>" : ""));
+	// Whether Discord is connected is the useful fact. The Discord display name
+	// and the numeric ID are neither, and showing an account identifier back to
+	// its owner just puts it on screen for anyone looking over their shoulder.
 	rows += row("Discord", hasDiscord
-		? authEsc(authProfile.discord_username || "linked") + '<span class="authBadge authBadgeOk">linked</span>'
+		? '<span class="authBadge authBadgeOk">linked</span>'
 		: "not linked");
-	if (hasDiscord && authProfile.discord_id) rows += row("Discord ID", authEsc(authProfile.discord_id));
 	rows += row("Member since", authProfile && authProfile.created_at
 		? new Date(authProfile.created_at).toLocaleDateString()
 		: new Date(u.created_at).toLocaleDateString());
@@ -131,11 +156,12 @@ function doSave() {
 
 	authSetLoading("saveBtn", true);
 	updateProfile({ username: name === "" ? null : name }).then(function () {
-		authSetLoading("saveBtn", false, "Save");
-		authShowMessage("authMsg", "Profile saved.", "success");
+		authSetLoading("saveBtn", false, "Save and start");
+		authShowMessage("authMsg", "Saved. Taking you to the calculator…", "success");
 		renderProfile();
+		setTimeout(function () { window.location.href = "index.html"; }, 900);
 	}).catch(function (err) {
-		authSetLoading("saveBtn", false, "Save");
+		authSetLoading("saveBtn", false, "Save and start");
 		var m = (err.message || "").toLowerCase();
 		if (m.indexOf("duplicate") > -1 || m.indexOf("unique") > -1) {
 			authFieldError("username", "That display name is already taken.");
@@ -145,25 +171,25 @@ function doSave() {
 	});
 }
 
-function refreshHistCount() {
-	histSyncCount().then(function (n) {
-		document.getElementById("histCount").textContent = n === 0 ? "none yet" : String(n);
-		document.getElementById("clearHistBtn").disabled = (n === 0);
-	}).catch(function () {
-		document.getElementById("histCount").textContent = "unavailable";
-	});
+
+
+// The button stays disabled until the word is typed exactly. Deleting an
+// account cannot be undone, so a single click is not enough to trigger it.
+function deleteGate() {
+	document.getElementById("deleteBtn").disabled =
+		document.getElementById("deleteConfirm").value.trim().toUpperCase() !== "DELETE";
 }
 
-function doClearHist() {
-	if (!window.confirm("Delete your saved history? The phrases currently on the calculator page are not affected.")) return;
+function doDeleteAccount() {
+	if (document.getElementById("deleteConfirm").value.trim().toUpperCase() !== "DELETE") return;
+	if (!window.confirm("Permanently delete your account and all of its data?\n\nThis cannot be undone.")) return;
+
 	authClearMessage("authMsg");
-	authSetLoading("clearHistBtn", true);
-	histSyncClearSaved().then(function () {
-		authSetLoading("clearHistBtn", false, "Clear saved history");
-		authShowMessage("authMsg", "Saved history cleared.", "success");
-		refreshHistCount();
+	authSetLoading("deleteBtn", true);
+	accountDelete().then(function () {
+		window.location.href = "index.html";
 	}).catch(function (err) {
-		authSetLoading("clearHistBtn", false, "Clear saved history");
+		authSetLoading("deleteBtn", false, "Delete my account");
 		authShowMessage("authMsg", authFriendlyError(err), "error");
 	});
 }

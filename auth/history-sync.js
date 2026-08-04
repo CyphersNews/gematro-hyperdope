@@ -153,6 +153,18 @@ function histSqlQuote(s) {
 
 var histSyncQuietUntil = 0
 
+// Writes any pending edit immediately, skipping the quiet period.
+//
+// The tick deliberately waits for typing to stop so a burst of edits becomes
+// one write. That is right in the background and wrong the moment something
+// wants to read the list back, so anywhere that displays saved phrases calls
+// this first and waits for it.
+function histSyncFlush() {
+	if (!histSyncEnabled || !histSyncLoaded) return Promise.resolve()
+	histSyncQuietUntil = 0
+	return histSyncSave()
+}
+
 function histSyncTick() {
 	if (!histSyncEnabled || !histSyncLoaded || typeof sHistory === "undefined") return
 	var hash = histHash(sHistory)
@@ -208,13 +220,68 @@ function histSyncCount() {
 
 // ---- wiring -----------------------------------------------------------
 
+// ---- clearing by refreshing twice --------------------------------------
+//
+// There is otherwise no quick way to empty the History Table: it is restored
+// from the account on every load, so reloading to start fresh does the exact
+// opposite of what it looks like it should.
+//
+// Two reloads inside this window is a deliberate enough gesture to mean it,
+// and rare enough by accident that it will not surprise anyone. A single
+// reload behaves exactly as before.
+var HIST_DOUBLE_REFRESH_MS = 5000
+var HIST_REFRESH_KEY = "histLastLoad"
+
+// Returns true when this load is the second of a pair, and consumes the mark
+// so a third reload starts counting again rather than clearing repeatedly.
+function histDoubleRefresh() {
+	var now = Date.now()
+	var last = 0
+	try { last = Number(window.sessionStorage.getItem(HIST_REFRESH_KEY)) || 0 } catch (e) { return false }
+
+	var quick = (last > 0 && now - last < HIST_DOUBLE_REFRESH_MS)
+	try { window.sessionStorage.setItem(HIST_REFRESH_KEY, quick ? "0" : String(now)) } catch (e) {}
+	return quick
+}
+
+// Empties the table here and on the account, so the next load does not simply
+// restore what was just cleared.
+function histClearOnDoubleRefresh() {
+	sHistory = []
+	if (typeof histDisplayOrder !== "undefined") histDisplayOrder = null
+	if (typeof updateTables === "function") updateTables()
+
+	histSyncLastHash = null
+	histSyncClearSaved().catch(function () { /* offline: the local clear still stands */ })
+	if (typeof displayCalcNotification === "function") {
+		displayCalcNotification("History Table cleared — refreshed twice", 2600)
+	}
+}
+
 $(document).ready(function () {
 	// only the calculator page has a History Table to sync
 	if (typeof sHistory === "undefined") return
 
+	var doubleRefresh = histDoubleRefresh()
+
 	onAuthReady(function (user) {
-		if (user === null) return
+		if (user === null) {
+			// signed out, so there is nothing to restore - just empty the table
+			if (doubleRefresh) {
+				sHistory = []
+				if (typeof updateTables === "function") updateTables()
+			}
+			return
+		}
 		histSyncEnabled = true
+		if (doubleRefresh) {
+			// skip the restore entirely, or it would load the rows and then
+			// delete them, with the table flickering in between
+			histSyncLoaded = true
+			histClearOnDoubleRefresh()
+			histSyncStart()
+			return
+		}
 		histSyncLoad().then(histSyncStart)
 	})
 

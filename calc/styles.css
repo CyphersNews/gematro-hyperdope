@@ -791,6 +791,9 @@ body {
 	right: 0;
 	left: auto !important;
 }
+/* Held open by JS while the pointer is on its way to a control, or while the
+   OS colour dialog has focus - see rainTuneOpen() in coderain.js */
+.rainTuneDropdown.rainTuneStuck .rainTuneContent { display: block; }
 .rainTunePanel { padding: 0.55em 0.7em 0.5em 0.7em; }
 .rainTuneRow {
 	display: flex;
@@ -813,6 +816,11 @@ body {
 }
 .rainTuneSlider {
 	flex: 1;
+	/* a range input has an intrinsic minimum width, and flex items refuse to
+	   shrink past their content by default - together that pushed the row wider
+	   than the panel on a narrow screen and the colour swatch was clipped off
+	   the right edge */
+	min-width: 0;
 	-webkit-appearance: none;
 	appearance: none;
 	height: 3px;
@@ -1261,6 +1269,23 @@ body {
 	font-size: 88%;
 	line-height: 1.25;
 	overflow-wrap: anywhere;
+	cursor: text;
+}
+/* While editing, the cell grows with what is typed rather than forcing the
+   text to wrap inside the old corner width - the field is sized in JS from its
+   own content. */
+.mPEdit {
+	box-sizing: content-box;
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 100%;
+	color: var(--font-white-1);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.15em 0.35em;
+	outline: none;
+	text-align: center;
+	min-width: 6em;
+	max-width: 22em;
 }
 .mPQ { /* query table - top left cell */
 	/*width: 300px;*/
@@ -1354,6 +1379,43 @@ body {
     text-align: center; /* Center-align the text */
     line-height: 1.2; /* Line height for readability */
     min-height: auto; /* Allow dynamic height */
+}
+
+/* Cyphers menu: category list beside the cypher checkboxes, tools underneath.
+   The columns were inline percentage floats, which on a narrow screen left the
+   category column too small for its own labels. A min-width keeps the names
+   readable and the detail column takes whatever is left. */
+.ciphersContent { width: 380px; }
+.ciphCatCol {
+	float: left;
+	width: 30%;
+	min-width: 108px;
+}
+.ciphDetailCol {
+	float: left;
+	width: 70%;
+}
+.ciphDetailCol #menuCiphCatDetailsArea { margin: 0em 0.25em 0em 1.25em; }
+.ciphToolRow {
+	clear: both;
+	padding-top: 0.5em;
+	margin-top: 0.4em;
+	border-top: 1px solid var(--separator-accent2);
+}
+
+@media (max-width: 911px) { /* mobile */
+	/* Use the width that is actually available rather than shrink-to-fit, so
+	   the category column gets its min-width instead of being squeezed.
+	   Qualified with .dropdown-content to outrank the generic mobile rule
+	   below, which sets width:auto !important at the same specificity and
+	   would otherwise win by coming later in the file. */
+	.dropdown-content.ciphersContent {
+		width: calc(100vw - 1em) !important;
+		max-width: calc(100vw - 1em) !important;
+	}
+	.ciphCatCol { width: 38%; }
+	.ciphDetailCol { width: 62%; }
+	.ciphDetailCol #menuCiphCatDetailsArea { margin-left: 0.6em; }
 }
 
 /* Long category names, sized down just enough to fit the fixed-width column */
@@ -1569,9 +1631,20 @@ body {
 		overflow-x: hidden;
 		box-sizing: border-box;
 	}
-	.dropdown-about {
-		transform: none !important;
+	/* About used to opt out of the shared centring with transform: none, which
+	   left it starting at the middle of the screen and running off the right
+	   edge. It centres like every other menu now. */
+	/* The rain panel pins itself to the toggle's right edge on desktop. On
+	   mobile that fights the centring above - right:0 stayed set while left
+	   became 50%, so the box was measured from the wrong side and the colour
+	   swatch fell off the screen. Centre it like every other menu. */
+	.rainTuneContent {
+		right: auto !important;
+		width: auto !important;
+		max-width: calc(100vw - 1em) !important;
+		box-sizing: border-box;
 	}
+	.rainTunePanel { min-width: 0; }
 }
 .dropdown-content-opt {
 	padding: 0.5em;
@@ -2187,6 +2260,12 @@ body {
 		width: 80% !important;
 		height: 80% !important;
 	}
+	/* the contact form is short, so it should not be stretched to 80% of the
+	   screen with the rest left empty */
+	.quickGuide.contactPanel {
+		height: auto !important;
+		max-height: 80% !important;
+	}
 }
 /* Quickstart Guide topic picker */
 .qgIntro {
@@ -2220,6 +2299,51 @@ body {
 	overflow-y: auto;
 	padding: 0.2em 0.1em 0.4em 0.1em;
 }
+
+/* Contact panel - reuses the guide's overlay, but it is a short form so it
+   sizes to its content instead of filling the screen */
+.quickGuide.contactPanel {
+	height: auto;
+	max-height: 80%;
+	top: 12%;
+}
+/* balance stops the last line of a short paragraph being a single stranded
+   word, which is what these are: two or three lines each */
+.contactPanel .qgIntro,
+.contactPanel .contactFoot,
+.contactPanel .contactLabel {
+	text-wrap: pretty;
+	text-wrap: balance;
+	max-width: 46ch;
+}
+.contactField { padding-bottom: 0.8em; }
+.contactLabel {
+	display: block;
+	font-size: 88%;
+	font-weight: 600;
+	color: var(--font-white-2);
+	padding-bottom: 0.3em;
+}
+.contactSelect, .contactTextarea {
+	width: 100%;
+	box-sizing: border-box;
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 95%;
+	color: var(--font-white-1);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.4em 0.5em;
+	outline: none;
+}
+.contactTextarea { resize: vertical; min-height: 5em; }
+.contactActions {
+	display: flex;
+	gap: 0.5em;
+	flex-wrap: wrap;
+	padding-top: 0.2em;
+}
+.contactActions .intBtn3 { width: auto; margin: 0; padding: 0.3em 0.8em; }
+.contactFoot { padding-top: 0.9em; }
 
 .qgBold, .qgBold2 {
 	font-size: 100%;

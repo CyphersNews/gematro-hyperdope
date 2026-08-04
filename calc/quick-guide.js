@@ -20,7 +20,7 @@ var quickGuideTopic = "basics" // currently open topic
 
 var quickGuideTopics = [
 
-{ id: "basics", label: "Basics", html:
+{ id: "basics", label: "🎯 Basics", html:
 	'<p class="qgMedium">Phrase Box - word, phrase or numbers</p>'
 	+ '<ul>'
 	+ '<li><span class="qgBold">Enter</span> - add phrase to history table.<br><span class="qgBold">Query</span> - search the loaded database.</li>'
@@ -49,7 +49,7 @@ var quickGuideTopics = [
 	+ '</ul>'
 },
 
-{ id: "ciphers", label: "Cyphers", html:
+{ id: "ciphers", label: "🔤 Cyphers", html:
 	'<p class="qgMedium">Choosing Cyphers</p>'
 	+ '<ul>'
 	+ '<li>The <span class="qgBold">Cyphers</span> tab groups every cypher by category. Hover a category to list it, then tick the ones you want.</li>'
@@ -107,7 +107,7 @@ var quickGuideTopics = [
 	+ '</ul>'
 },
 
-{ id: "highlighter", label: "Matching", html:
+{ id: "highlighter", label: "🔎 Matching", html:
 	'<p class="qgMedium">Highlight Box - space delimited numbers</p>'
 	+ '<ul>'
 	+ '<li><span class="qgBold">"Enter"</span> - activate the filter (removes non-matching phrases and cyphers)</li>'
@@ -135,7 +135,7 @@ var quickGuideTopics = [
 	+ '</ul>'
 },
 
-{ id: "breakdown", label: "Breakdown", html:
+{ id: "breakdown", label: "🧮 Breakdown", html:
 	'<p class="qgMedium">Cypher &amp; Breakdown Chart</p>'
 	+ '<ul>'
 	+ '<li>The <span class="qgBold">Cypher Chart</span> doubles as a virtual keyboard.</li>'
@@ -168,7 +168,7 @@ var quickGuideTopics = [
 	+ '</ul>'
 },
 
-{ id: "datecalc", label: "Dates", html:
+{ id: "datecalc", label: "📅 Dates", html:
 	'<p class="qgMedium">Date Calculator</p>'
 	+ '<ul>'
 	+ '<li>Has its own tab in the top menu.</li>'
@@ -178,7 +178,7 @@ var quickGuideTopics = [
 	+ '</ul>'
 },
 
-{ id: "astrology", label: "Astrology", html:
+{ id: "astrology", label: "🔮 Astrology", html:
 	'<p class="qgMedium">Astrology</p>'
 	+ '<ul>'
 	+ '<li>Has its own tab in the top menu. Enter a birth date, time and place to build a chart.</li>'
@@ -197,7 +197,7 @@ var quickGuideTopics = [
 	+ ' main perturbations for the Sun and Moon.</p>'
 },
 
-{ id: "coderain", label: "Code Rain", html:
+{ id: "coderain", label: "🌊 Code Rain", html:
 	'<p class="qgMedium">Background Styles</p>'
 	+ '<ul>'
 	+ '<li>The toggle at the far right of the top menu cycles'
@@ -220,7 +220,7 @@ var quickGuideTopics = [
 	+ ' thin still leaves the scheme you chose rather than snapping back to the default.</p>'
 },
 
-{ id: "profile", label: "Profile", html:
+{ id: "profile", label: "✅ Profile", html:
 	'<p class="qgMedium">Why make a FREE account?</p>'
 	+ '<p>The calculator works fully without one. An account is for keeping your work between visits and'
 	+ ' across devices. There is no cost, no card and no limit on the free features.</p>'
@@ -261,7 +261,7 @@ var quickGuideTopics = [
 	+ '</ul>'
 },
 
-{ id: "options", label: "Options", html:
+{ id: "options", label: "⚙ Options", html:
 	'<ul>'
 	+ '<li><span class="qgBold">"Number Calculation"</span>'
 	+ '<ul><li>Full (123 = 123) - <span class="qgBold">default</span></li><li>Reduced (123 = 1+2+3 = 6)</li><li>Off</li></ul></li>'
@@ -283,7 +283,7 @@ var quickGuideTopics = [
 	+ '</ul>'
 },
 
-{ id: "export", label: "Export", html:
+{ id: "export", label: "📤 Export", html:
 	'<ul>'
 	+ '<li><span class="qgBold">"Print Cipher Chart"</span> and friends - render that element as a PNG. A preview opens first.</li>'
 	+ '<li><span class="qgBold">"Image Scale"</span> - scaling factor for screenshots (1.0, 1.5, 2.0).</li>'
@@ -301,7 +301,7 @@ var quickGuideTopics = [
 	+ '<p class="qgNote">All of these are also on the right click menu, wherever you are on the page.</p>'
 },
 
-{ id: "databases", label: "Databases", html:
+{ id: "databases", label: "🗃 Databases", html:
 	'<ul>'
 	+ '<li>Import a properly formatted TXT file to turn on database query mode.</li>'
 	+ '<li><span class="qgBold">Live Database Mode</span> is used by default; a precalculated database only holds values'
@@ -381,4 +381,105 @@ function displayQuickstartGuide() {
 
 	$(o).appendTo('body'); // guide
 	$('body').addClass('noScroll') // prevent scrolling
+}
+
+// ========================== Contact panel =========================
+//
+// Opens the visitor's own mail app with the subject already set, rather than
+// posting anywhere: there is no server here to receive a form, and a mailto
+// keeps a copy in their sent items so they have a record of what they asked.
+
+var CONTACT_EMAIL = "cypherstvuk@gmail.com"
+
+var contactTopics = [
+	"Add a phrase to the database",
+	"Correction to a cypher",
+	"Delete my account",
+	"Feature request",
+	"Leaderboard or submissions",
+	"Membership or account help",
+	"Partnership or press",
+	"Report a bug",
+	"Something else",
+	"Suggest a cypher to add"
+]
+
+function displayContactPanel() {
+	$('<div id="darkOverlay" onclick="closePanel(&quot;.quickGuide&quot;)"></div>').appendTo('body');
+
+	var signedIn = (typeof authUser !== "undefined" && authUser !== null)
+
+	var o = '<div class="quickGuide contactPanel">'
+	o += '<p><span class="qgBold2">Contact Us</span></p>'
+
+	if (!signedIn) {
+		o += '<p class="qgIntro">Messages are sent from your account, so we know who to reply to and the form cannot be used for spam. Sign in and the box below will send.</p>'
+		o += '<div class="contactActions">'
+		o += '<a class="intBtn3" href="login.html">Sign in</a>'
+		o += '<a class="intBtn3" href="register.html">Create a free account</a>'
+		o += '</div>'
+		o += '<p class="qgNote contactFoot">Rather not sign in? Email us at <span class="qgBold">' + CONTACT_EMAIL + '</span></p>'
+		o += '</div>'
+		$(o).appendTo('body'); $('body').addClass('noScroll')
+		return
+	}
+
+	o += '<p class="qgIntro">Pick a topic and write your message. It is sent straight to us from here, so there is nothing else to do.</p>'
+
+	o += '<div class="contactField">'
+	o += '<label class="contactLabel" for="contactTopic">Topic</label>'
+	o += '<select id="contactTopic" class="contactSelect">'
+	for (var i = 0; i < contactTopics.length; i++) {
+		o += '<option value="' + escHtml(contactTopics[i]) + '">' + escHtml(contactTopics[i]) + '</option>'
+	}
+	o += '</select></div>'
+
+	o += '<div class="contactField">'
+	o += '<label class="contactLabel" for="contactBody">Message</label>'
+	o += '<textarea id="contactBody" class="contactTextarea" rows="6" maxlength="4000" placeholder="Anything that helps us understand&hellip;"></textarea>'
+	o += '</div>'
+
+	o += '<div class="contactField">'
+	o += '<label class="contactLabel" for="contactReply">Reply to</label>'
+	o += '<input type="email" id="contactReply" class="contactSelect" value="' + escHtml(authUser.email || "") + '" placeholder="Where should we reply?">'
+	o += '</div>'
+
+	o += '<div class="contactActions">'
+	o += '<input class="intBtn3" id="contactSendBtn" type="button" value="Send message" onclick="contactSend()">'
+	o += '</div>'
+
+	o += '<div id="contactMsg" class="qgNote contactFoot hideValue"></div>'
+	o += '</div>'
+
+	$(o).appendTo('body');
+	$('body').addClass('noScroll')
+}
+
+function contactSend() {
+	var topicEl = document.getElementById("contactTopic")
+	var bodyEl = document.getElementById("contactBody")
+	var replyEl = document.getElementById("contactReply")
+	var btn = document.getElementById("contactSendBtn")
+	var msg = document.getElementById("contactMsg")
+
+	var show = function (t, warn) {
+		msg.className = "qgNote contactFoot" + (warn ? " profileWarn" : " profileOk")
+		msg.textContent = t
+		msg.classList.remove("hideValue")
+	}
+
+	var body = bodyEl ? bodyEl.value.trim() : ""
+	if (body === "") { show("Write a message first.", true); return }
+
+	btn.disabled = true
+	btn.value = "Sending…"
+	contactSubmit(topicEl ? topicEl.value : "", body, replyEl ? replyEl.value : "").then(function () {
+		bodyEl.value = ""
+		btn.value = "Sent"
+		show("Thanks — we have it, and will reply to " + (replyEl && replyEl.value ? replyEl.value : "your account email") + ".", false)
+	}).catch(function (err) {
+		btn.disabled = false
+		btn.value = "Send message"
+		show((err && err.message) ? err.message : "Could not send. Try again shortly.", true)
+	})
 }

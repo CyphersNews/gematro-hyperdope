@@ -155,7 +155,14 @@ function authDisplayName() {
 	return "Account"
 }
 
+// An uploaded picture wins over the one Discord supplies: it is the one the
+// user chose here, deliberately.
+//
+// avatar_url was missing from this entirely, which is why an upload showed up
+// on the leaderboard - that reads the profile row directly - and nowhere else
+// in the app.
 function authAvatarUrl() {
+	if (authProfile && authProfile.avatar_url) return authProfile.avatar_url
 	if (authProfile && authProfile.discord_avatar) return authProfile.discord_avatar
 	return null
 }

@@ -582,10 +582,49 @@ function buildHistMatchOrder() {
 		for (y = 0; y < groupList[i].members.length; y++) order.push(groupList[i].members[y].idx)
 	}
 
+	// A cipher that contributed no matched value among the surviving phrases is
+	// dead weight in the result: its column is all misses. Work out which of
+	// the enabled ciphers actually carried a match, so the table can drop the
+	// rest of the columns the same way it drops unmatched rows.
+	var ciphKeep = []
+	var ciphNames = []
+	for (y = 0; y < cipherList.length; y++) {
+		if (cipherList[y].enabled) { ciphKeep.push(false); ciphNames.push(cipherList[y].cipherName) }
+	}
+	for (i = 0; i < order.length; i++) {
+		var r = rows[order[i]]
+		for (y = 0; y < r.length; y++) {
+			v = r[y]
+			if (v > 0 && matchSet[v] === true && valPhrases[v] >= 2) ciphKeep[y] = true
+		}
+	}
+
+	var hiddenCiph = []
+	for (y = 0; y < ciphKeep.length; y++) if (!ciphKeep[y]) hiddenCiph.push(ciphNames[y])
+	// never blank the table entirely: if nothing qualified, keep every column
+	if (hiddenCiph.length === ciphKeep.length) hiddenCiph = []
+
 	// Phrases with no matches at all are left out of the display order entirely,
 	// so the table shows only what matched. They are still in sHistory and come
 	// back on Reset Order; nothing is deleted.
-	return { order: order, snapshot: sHistory.slice(), hidden: unmatched.length }
+	return {
+		order: order,
+		snapshot: sHistory.slice(),
+		hidden: unmatched.length,
+		hiddenCiphers: hiddenCiph
+	}
+}
+
+// Cipher names the current match result has nothing to show for. Empty unless
+// Find Matches is active, so the table is unaffected the rest of the time.
+function histHiddenCipherSet() {
+	if (histDisplayOrder === null) return null
+	if (typeof getHistDisplayOrder === "function" && getHistDisplayOrder() === null) return null
+	var list = histDisplayOrder.hiddenCiphers
+	if (!list || !list.length) return null
+	var set = {}
+	for (var i = 0; i < list.length; i++) set[list[i]] = true
+	return set
 }
 
 // Flashes the Find Matches tab itself, so a click registers even when the

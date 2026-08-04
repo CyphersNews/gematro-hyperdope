@@ -116,7 +116,13 @@
 	padding: 0.4em 0.85em;
 	text-decoration: none;
 }
-.authBackBtn:hover { background-color: var(--btn-hover-accent); color: var(--font-white-1); }
+/* green on the way in as well as on the click, so the button reads as the way
+   out of here rather than as another grey control */
+.authBackBtn:hover {
+	background-color: hsla(140 55% 40% / 0.45);
+	border-color: hsl(140 55% 50%);
+	color: #fff;
+}
 .authBackBtn.authBackFlash { animation: authBackFlash 0.7s ease-out; }
 @keyframes authBackFlash {
 	0%   { background-color: hsla(140 85% 55% / 0.75); color: #fff; border-color: hsl(140 70% 55%); }
@@ -416,7 +422,7 @@
 }
 .profileRowPhrase:hover { text-decoration: underline; }
 .profileRowActions { display: flex; align-items: center; gap: 0.35em; flex: 0 0 auto; }
-.profileWhen { font-size: 80%; color: var(--font-white-4); }
+.profileWhen { font-size: 80%; color: var(--font-white-3); }
 
 .profileMiniBtn {
 	font-size: 80%;
@@ -440,7 +446,100 @@
 	color: var(--font-white-3);
 }
 .profileBadge.profileBadgeOk { color: hsl(140 55% 65%); border-color: hsl(140 35% 40%); }
+
+/* The avatar is the control: clicking the circle reveals the options */
+.profileAvatarPick {
+	position: relative;
+	display: inline-block;
+	cursor: pointer;
+	border-radius: 50%;
+	overflow: hidden;
+	flex: 0 0 auto;
+	padding: 0;
+	border: none;
+	background: none;
+	line-height: 0;
+}
+.profileAvatarOpts { padding-top: 0.2em; }
+
+/* Display name on the welcome page: the one thing worth doing here, so it is
+   picked out in green rather than looking like every other field. */
+.authNameField {
+	border: 1px solid hsl(140 40% 38%);
+	background: hsla(140 55% 40% / 0.10);
+	padding: 0.8em 0.9em;
+	margin-bottom: 0.9em;
+}
+.authNameField .authLabel { color: hsl(140 60% 70%); }
+.authNameField .authInput {
+	border-color: hsl(140 35% 42%);
+	color: hsl(140 45% 88%);
+}
+.authNameField .authInput:focus {
+	border-color: hsl(140 60% 58%);
+	box-shadow: 0 0 0 2px hsla(140 60% 45% / 0.25);
+}
+.authBtn.authBtnPrimary {
+	background-color: hsl(140 45% 32%);
+	border-color: hsl(140 40% 45%);
+	color: hsl(140 30% 95%);
+}
+.authBtn.authBtnPrimary:hover:not(:disabled) { background-color: hsl(140 48% 38%); }
+.profileAvatarOverlay {
+	position: absolute;
+	left: 0; right: 0; bottom: 0;
+	text-align: center;
+	font-size: 72%;
+	padding: 0.2em 0;
+	color: #fff;
+	background: hsla(0 0% 0% / 0.55);
+	opacity: 0;
+	transition: opacity 0.12s;
+}
+.profileAvatarPick:hover .profileAvatarOverlay,
+.profileAvatarPick:focus-within .profileAvatarOverlay { opacity: 1; }
+.profileNameRow { padding-top: 0.9em; }
+
+/* Closing the account. Set apart from the rest of the tab so it cannot be
+   mistaken for one of the ordinary settings above it. */
+.profileDanger {
+	margin-top: 1.2em;
+	padding: 0.7em 0.8em;
+	border: 1px solid hsl(5 45% 40%);
+	background: hsla(5 60% 40% / 0.10);
+}
+.profileDangerTitle {
+	font-weight: 600;
+	color: hsl(5 75% 74%);
+	padding-bottom: 0.3em;
+}
+.profileDangerRow {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding-top: 0.5em;
+	flex-wrap: wrap;
+}
+.profileDangerRow .profileSearchInput { flex: 1 1 12em; min-width: 0; }
 .profileBadge.profileBadgeBad { color: hsl(5 75% 70%); border-color: hsl(5 50% 45%); }
+
+/* Which cypher a phrase is being published under */
+.profileCiphSelect {
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 78%;
+	color: var(--font-white-2);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.1em 0.2em;
+	max-width: 9em;
+	outline: none;
+}
+.profileChipCiph {
+	display: block;
+	font-size: 78%;
+	color: var(--font-white-4);
+	padding-top: 0.1em;
+}
 
 /* A submission refused by the publishing rules. The row turns red and keeps
    the reason underneath, so it survives the re-render instead of disappearing
@@ -586,3 +685,93 @@
 	.authPage { padding: 1.2em 0.7em 2em 0.7em; }
 	.authCard { padding: 1.2em 1.1em; }
 }
+
+/* ---- birth chart tab ---- */
+.pcZodiacRow { display: flex; align-items: center; gap: 0.4em; flex-wrap: wrap; padding-bottom: 0.6em; }
+.intBtn3.pcZodBtn { width: auto; margin: 0; padding: 0.25em 0.8em; }
+.intBtn3.pcZodBtn.pcZodOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
+
+.pcFields { padding-bottom: 0.6em; }
+.pcRow { display: flex; align-items: center; gap: 0.4em; padding: 0.18em 0; flex-wrap: wrap; }
+.pcLab { font-size: 82%; color: var(--font-white-1); font-weight: 600; width: 5em; flex: 0 0 auto; }
+.pcIn {
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 88%;
+	color: var(--font-white-1);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.15em 0.3em;
+	width: 4.5em;
+	outline: none;
+}
+.pcIn.pcInY { width: 5em; }
+.pcIn.pcInPlace { flex: 1 1 10em; width: auto; min-width: 0; }
+.pcChk { font-size: 80%; color: var(--font-white-3); display: inline-flex; align-items: center; gap: 0.3em; cursor: pointer; }
+.pcUnknown { font-style: italic; }
+.pcGeo { padding-bottom: 0.4em; }
+
+.pcCanvasWrap { display: flex; justify-content: center; padding: 0.4em 0 0.6em 0; }
+#pcCanvas { max-width: 100%; }
+
+.pcSectionTitle {
+	font-weight: 600; color: var(--font-white-1);
+	border-bottom: 1px solid var(--separator-accent2);
+	padding-bottom: 0.25em; margin: 0.6em 0 0.4em 0;
+}
+/* chart on the left, the reading beside it; stacks on a narrow panel */
+.pcSplit { display: flex; gap: 0.9em; align-items: flex-start; flex-wrap: wrap; }
+.pcSplit .pcCanvasWrap { flex: 0 0 auto; padding: 0; }
+.pcReading { flex: 0 1 auto; min-width: 0; }
+
+/* the reading only needs to be as wide as its longest line, so it is sized to
+   its content rather than stretching to fill whatever is left */
+.pcHouses { display: flex; flex-direction: column; }
+.pcHouseBlock {
+	border-left: 2px solid var(--border-accent);
+	border-bottom: 1px solid var(--separator-accent2);
+	padding: 0.3em 0.4em 0.35em 0.5em;
+}
+.pcHouseBlock:last-child { border-bottom: none; }
+.pcHouseHead {
+	font-size: 80%; font-weight: 700; letter-spacing: 0.03em;
+	color: var(--font-white-1); cursor: help;
+}
+.pcCell { display: flex; align-items: baseline; gap: 0.35em; font-size: 86%; cursor: help; white-space: nowrap; }
+.pcSign { color: var(--font-white-2); cursor: help; }
+.pcSign:hover { color: var(--font-white-1); }
+.pcAngles { display: flex; gap: 0.9em; padding-top: 0.5em; font-size: 84%; color: var(--font-white-1); font-weight: 600; }
+.pcAngles span { cursor: help; }
+
+/* one shared hover explanation, following the pointer */
+.pcTipBox {
+	position: fixed;
+	z-index: 4000;
+	max-width: 22em;
+	font-size: 84%;
+	line-height: 1.4em;
+	color: var(--font-white-1);
+	background-color: var(--menu-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.45em 0.6em;
+	pointer-events: none;
+	box-shadow: 0 2px 10px hsla(0 0% 0% / 0.4);
+}
+
+/* number box with its label underneath */
+.pcFieldWrap { display: inline-flex; flex-direction: column; align-items: center; }
+/* these name the boxes above them, so they have to be read, not sensed */
+.pcFieldLab { font-size: 76%; color: var(--font-white-1); padding-top: 0.15em; }
+.pcChkBox { padding-left: 0.4em; }
+.pcSaveRow { padding-bottom: 0.5em; }
+.profileMiniBtn.pcSaveBtn { background-color: hsl(140 40% 30%); border-color: hsl(140 35% 42%); color: hsl(140 25% 92%); }
+.profileMiniBtn.pcSaveBtn:hover:not(:disabled) { background-color: hsl(140 44% 36%); }
+.pcGlyph { font-size: 115%; }
+.pcBody { color: var(--font-white-2); }
+.pcPos { color: var(--font-white-2); font-family: var(--font-family-mono), monospace; font-size: 92%; }
+.pcRetro { color: hsl(15 70% 62%); font-size: 88%; }
+.pcHouse { color: var(--font-white-2); font-size: 84%; }
+
+.pcTransitList { display: flex; flex-direction: column; gap: 0.12em; }
+.pcTransit { display: flex; align-items: baseline; gap: 0.35em; font-size: 86%; flex-wrap: wrap; cursor: help; }
+.pcAspect { font-weight: 600; }
+.pcOrb { color: var(--font-white-2); font-family: var(--font-family-mono), monospace; font-size: 88%; margin-left: auto; }

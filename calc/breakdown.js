@@ -18,7 +18,14 @@ function updateWordBreakdown(impName = breakCipher, impBool = false, chartUpd = 
 	$("#BreakTableContainer").removeClass("hideValue") // unhide breakdown
 	$("#BreakdownDetails").attr("style", "") // reset padding (gematria card)
 
-	if (impBool == true) breakCipher = impName // lock to a specific cipher
+	if (impBool == true) {
+		breakCipher = impName // lock to a specific cipher
+		// Choosing a cypher puts the rain back on that cypher's colour, even if
+		// a colour was picked by hand earlier. Picking a colour is a decision
+		// about right now; picking a cypher is a decision about what you are
+		// looking at, and the rain follows what you are looking at.
+		if (typeof coderainFollowSelectedCipher === "function") coderainFollowSelectedCipher()
+	}
 		
 	if (!optShowCipherChart) $("#ChartSpot").attr("style", "border: none;"); // reset gradient for cipher chart
 	if (enabledCiphCount == 0 || breakCipher == "" && impName == "") {
@@ -373,14 +380,29 @@ function fitCipherChart() {
 	// overflowing width. The visible width is the scroll container around it.
 	var scroller = document.getElementById("ChartSpotScroll")
 	var avail = (scroller !== null ? scroller.clientWidth : spot.clientWidth)
-	avail -= 24 // the spot's own horizontal padding
+
+	// Measured rather than assumed. This was hardcoded to 24, but the padding
+	// is in em and lands on 24.32 plus the border, so the chart was left a
+	// couple of pixels too wide and the scrollbar never went away - the fit
+	// looked like it had failed even when the right scale had been applied.
+	var cs = window.getComputedStyle(spot)
+	avail -= parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
+	avail -= parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth)
+	avail -= 2 // rounding headroom
+
 	var natural = table.scrollWidth
 	if (avail <= 0 || natural <= avail) return
 
 	// zoom rather than transform: a transformed element keeps its original
 	// layout box, so the container would still report an overflow and keep its
 	// scrollbar. zoom reflows, so the row genuinely shrinks to fit.
-	var scale = Math.max(0.55, avail / natural) // never shrink past readable
+	//
+	// The floor was 0.55, which the widest charts - Alphanumeric Satanic at 62
+	// cells, the 52-cell capitals ciphers - need to go under on a phone. Being
+	// small but whole beats being cut in half and swiped sideways, so on a
+	// narrow screen the chart is allowed to shrink further.
+	var floor = (window.innerWidth <= 911) ? 0.34 : 0.55
+	var scale = Math.max(floor, avail / natural)
 	table.style.zoom = scale.toFixed(3)
 }
 

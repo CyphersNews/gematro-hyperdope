@@ -159,11 +159,13 @@ function initCodeRain() {
 		w = canvas.width = document.body.offsetWidth
 		h = canvas.height = height_html
 
-		ctx.fillStyle = "hsl("+interfaceHue+","+(22*interfaceSat)+"%,"+(16*interfaceLit)+"%)" // CSS var(--body-bg-accent)
-		ctx.fillRect(0, 0, w, h)
+		// starts clear: the fade erases alpha, so #canv's CSS background is what
+		// shows through rather than a painted copy of it
+		ctx.clearRect(0, 0, w, h)
 
 		cols = Math.floor(w / 14) + 1 // px
 		ypos = Array(cols).fill(0)
+		yglf = []; for (var q = 0; q < cols; q++) yglf.push([]) // per-column trail glyphs
 		return
 	}
 
@@ -196,12 +198,16 @@ function initCodeRain() {
 	canvas.height = Math.floor(h * coderainDPR)
 	ctx.setTransform(coderainDPR, 0, 0, coderainDPR, 0, 0)
 
-	// CCRU sits on its own green wash; the standard style fades from the
-	// interface background so it disappears into the page
-	ctx.fillStyle = (coderainStyle === "ccru")
-		? coderainCCRUBg(1)
-		: "hsl("+interfaceHue+","+(22*interfaceSat)+"%,"+(16*interfaceLit)+"%)"
-	ctx.fillRect(0, 0, w, h)
+	// CCRU sits on its own green wash. The standard style starts clear instead
+	// of filled: it fades by erasing alpha, so the page background showing
+	// through #canv is the background, and priming the canvas opaque would just
+	// leave a full-screen layer to erode away over the first few seconds.
+	if (coderainStyle === "ccru") {
+		ctx.fillStyle = coderainCCRUBg(1)
+		ctx.fillRect(0, 0, w, h)
+	} else {
+		ctx.clearRect(0, 0, w, h)
+	}
 
 	// density squeezes or widens the column grid; fewer, wider columns reads as
 	// lighter rain, more, narrower columns as heavier
@@ -216,11 +222,26 @@ function initCodeRain() {
 	coderainDrops = []
 	var maxRow = h / coderainCellH
 	for (var i = 0; i < cols; i++) {
+		var sp = coderainSpeed()
 		coderainDrops.push({
 			row: -Math.random() * maxRow * stagger,
-			speed: coderainSpeed()
+			speed: sp,
+			trail: coderainTrailRows(sp),
+			glyphs: [] // newest first, one per cell the head has entered
 		})
 	}
+}
+
+// Visible trail length in rows: how far behind the head a glyph has dimmed to
+// nothing. A cell k rows back was drawn k/speed frames ago, and each frame
+// costs it a factor of (1 - fadeAlpha), so it is invisible once that product
+// falls below CODERAIN_MIN_ALPHA. Capped so a slow drop cannot drag a trail
+// long enough to matter for the per-frame cost.
+var CODERAIN_MIN_ALPHA = 0.004 // ~1/255, the point a glyph stops registering
+
+function coderainTrailRows(speed) {
+	var frames = Math.log(CODERAIN_MIN_ALPHA) / Math.log(1 - coderainFadeAlpha)
+	return Math.max(4, Math.min(42, Math.round(frames * speed)))
 }
 
 // frame dispatcher, kept as matrix() because other modules clearInterval on it
@@ -319,13 +340,24 @@ function matrixNew() {
 
 	var maxRow = h / coderainCellH
 
-	// fade the previous frame toward the interface background colour rather
-	// than toward black, so light themes fade correctly too
+	// Cleared and redrawn every frame rather than faded in place.
+	//
+	// Fading in place cannot finish. The fade scales alpha by a constant, and
+	// integer rounding gives that a fixed point: round(4 * 0.88) is 4, so any
+	// cell that reaches an alpha of 4 keeps it for good. It is the full glyph
+	// colour at that alpha, and it only ever lands on the glyph grid, so it
+	// accumulates into the blocky green film that no amount of further fading
+	// washes out. No multiplicative fade can reach zero, and a trail longer
+	// than the screen leaves nothing for a trailing sweep to clean up either.
+	//
+	// So the trail is state, not residue: each column remembers the glyphs it
+	// has dropped and repaints them at a computed alpha. Costs a few thousand
+	// fillText calls a frame, measured at around 3ms against a 33ms budget, and
+	// the background behind the rain is exactly the page background.
+	ctx.clearRect(0, 0, w, h)
 	ctx.globalCompositeOperation = "source-over"
 	ctx.shadowBlur = 0
 	ctx.shadowColor = "hsla(0,0%,0%,0)"
-	ctx.fillStyle = "hsla("+interfaceHue+","+(22*interfaceSat)+"%,"+(16*interfaceLit)+"%,"+coderainFadeAlpha+")"
-	ctx.fillRect(0, 0, w, h)
 
 	var col = getCodeRainColor()
 	var trailCol = "hsl("+col.h+","+col.s+"%,"+(col.l * 0.8)+"%)"
@@ -336,6 +368,7 @@ function matrixNew() {
 
 	var aLen = coderainGlyphs.length
 	var slow = coderainReducedMotion ? 0.25 : 1
+	var decay = 1 - coderainFadeAlpha
 
 	for (var i = 0; i < coderainDrops.length; i++) {
 		var drop = coderainDrops[i]
@@ -343,44 +376,53 @@ function matrixNew() {
 		drop.row += drop.speed * slow
 		var newRow = Math.floor(drop.row)
 
-		if (newRow === prevRow) continue // hasn't crossed into a new cell yet
-		if (newRow < 0) continue         // still above the top edge
+		// a glyph is chosen once, when the head enters a cell, and kept - the
+		// trail should fade, not shimmer
+		for (var s = prevRow; s < newRow; s++) {
+			drop.glyphs.unshift(coderainGlyphs[rndInt(0, aLen - 1)])
+			if (drop.glyphs.length > drop.trail) drop.glyphs.pop()
+		}
 
 		var x = i * coderainCellW
-		var y = newRow * coderainCellH
+		for (var k = 0; k < drop.glyphs.length; k++) {
+			var row = newRow - k
+			if (row < 0) break        // the rest of the trail is above the top
+			if (row > maxRow) continue // head has run past the bottom edge
 
-		// dim the glyph the head just left behind, so the brightest point is
-		// always the leading edge
-		if (prevRow >= 0) {
-			ctx.fillStyle = trailCol
-			ctx.fillText(coderainGlyphs[rndInt(0, aLen - 1)], x, prevRow * coderainCellH)
+			// k rows back is k/speed frames old, so it has taken that many
+			// passes of the fade - the same curve the in-place fade produced
+			var a = Math.pow(decay, k / drop.speed)
+			if (a < CODERAIN_MIN_ALPHA) break
+			ctx.globalAlpha = a
+			ctx.fillStyle = (k === 0) ? headCol : trailCol
+			ctx.fillText(drop.glyphs[k], x, row * coderainCellH)
 		}
+		ctx.globalAlpha = 1
 
-		ctx.fillStyle = headCol
-		ctx.fillText(coderainGlyphs[rndInt(0, aLen - 1)], x, y)
-
-		// recycle the column once it runs off the bottom, after an idle gap so
-		// the columns keep drifting out of sync with each other
-		if (newRow > maxRow) {
+		// recycle once the whole trail has left the bottom, after an idle gap
+		// so the columns keep drifting out of sync with each other
+		if (newRow - drop.trail > maxRow) {
 			drop.row = -Math.random() * maxRow * 1.05
 			drop.speed = coderainSpeed()
+			drop.trail = coderainTrailRows(drop.speed)
+			drop.glyphs = []
 		}
 	}
+	ctx.globalAlpha = 1
 }
 
-// The original rain, unchanged: uniform column speed, matrix-font glyphs,
-// black fade and a glow shadow.
+// The original rain: uniform column speed, matrix-font glyphs and a glow
+// shadow. The fade erases alpha rather than painting black over the top - see
+// matrixNew() for why - which keeps the same trail length without leaving the
+// blocky residue the old "#00000010" wash baked in.
 function matrixRetro() {
 
-	// draw a semitransparent black rectangle on top of previous drawing
-	ctx.fillStyle = "#00000010"
-	if(navigator.userAgent.toLowerCase().indexOf('firefox') == -1) { // if not Firefox
-		ctx.shadowColor = "hsla(0,0%,0%,0.0)" // reset blurred shadows for old characters
-		ctx.shadowBlur = 0 // reset blurred shadows
-	}
-	ctx.fillRect(0, 0, w, h)
+	// Same story as matrixNew(): fading in place leaves a permanent sliver of
+	// colour in every cell a glyph ever touched, so the trail is kept as state
+	// and the canvas is cleared and repainted each frame.
+	ctx.clearRect(0, 0, w, h)
+	ctx.globalCompositeOperation = "source-over"
 
-	// set color and font in the drawing context
 	ctx.fillStyle = "hsl("+coderainHue+","+(coderainSat*100)+"%,"+(coderainLit*100)+"%)"
 	ctx.font = "bold 18pt matrix-font"
 	ctx.textBaseline = "alphabetic"
@@ -393,22 +435,41 @@ function matrixRetro() {
 		48,49,50,51,52,53,54,55,56,57,36,43,45,42,47,61,37,34,39,35,38,95,40,41,44,46,59,58,63,33,92,124,123,125,60,62,91,93,94,126]
 	var aLen = matrixChars.length // glyphs from matrix font
 
+	var trail = coderainRetroTrail()
+	var decay = 1 - 0.063 // the original fade, now applied per glyph
+
 	// for each column put a random character at the end
 	ypos.forEach((y, ind) => {
 
-		// choose a random character from array
-		text = String.fromCharCode(matrixChars[rndInt(0,aLen-1)])
+		// a glyph is picked once, when the column reaches that step, and kept
+		var colGlyphs = yglf[ind]
+		colGlyphs.unshift(String.fromCharCode(matrixChars[rndInt(0,aLen-1)]))
+		if (colGlyphs.length > trail) colGlyphs.pop()
 
-		// x coordinate of the column, y coordinate is already given
-		x = ind * 14 // px
-		// render the character at (x, y)
-		ctx.fillText(text, x, y)
+		var x = ind * 14 // px
+		for (var k = 0; k < colGlyphs.length; k++) {
+			var gy = y - k * 21
+			if (gy < 0) break
+			if (gy > h + 21) continue
+			var a = Math.pow(decay, k)
+			if (a < CODERAIN_MIN_ALPHA) break
+			ctx.globalAlpha = a
+			ctx.fillText(colGlyphs[k], x, gy)
+		}
+		ctx.globalAlpha = 1
 
 		// randomly reset the end of the column if it's at least 100px high
-		if (y > 100 + Math.random() * 10000) ypos[ind] = 0
+		if (y > 100 + Math.random() * 10000) { ypos[ind] = 0; yglf[ind] = [] }
 		// otherwise just move the y coordinate for the column 20px down
 		else ypos[ind] = y + 21 // px
 	});
+	ctx.globalAlpha = 1
+}
+
+// Retro trail length in 21px steps, bounded so a very long trail cannot make
+// the per-frame cost matter.
+function coderainRetroTrail() {
+	return Math.max(6, Math.min(50, Math.ceil(Math.log(CODERAIN_MIN_ALPHA) / Math.log(1 - 0.063))))
 }
 
 function rndInt(min, max) { // inclusive
@@ -552,12 +613,30 @@ function coderainSyncColorInputs() {
 // untouched on a first visit.
 function coderainApplyBackdrop() {
 	var root = document.documentElement
-	if (!coderainColorPicked) {
+	// The standard style is meant to sit on the page's own background - tinting
+	// it as well made picking a colour feel like it was recolouring the site
+	// rather than the rain. Retro and CCRU are full-screen looks of their own,
+	// so they still carry the colour behind them.
+	if (!coderainColorPicked || coderainStyle === "new") {
 		root.style.removeProperty("--rain-backdrop")
 		return
 	}
 	var sat = Math.min(30, Math.round(coderainSat * 100))
 	root.style.setProperty("--rain-backdrop", "hsl(" + coderainHue + " " + sat + "% 11%)")
+}
+
+// Called when a cypher is selected: the rain goes back to following it.
+//
+// Picking a colour by hand turns following off, which is right until the next
+// cypher is chosen - at that point the manual colour is stale and the rain
+// should track the new selection again. Only the standard style is switched
+// back; Retro and CCRU are colour schemes in their own right.
+function coderainFollowSelectedCipher() {
+	if (coderainStyle !== "new") return
+	if (typeof optCoderainFollowCipher !== "undefined" && optCoderainFollowCipher) return // already following
+	coderainSetFollow(true)
+	var fc = document.getElementById("rainFollowChk")
+	if (fc !== null) fc.checked = true
 }
 
 function coderainSetFollow(on) {
@@ -571,6 +650,49 @@ function coderainSetFollow(on) {
 		coderainApplyBackdrop()
 	}
 }
+
+// ---- keeping the tuning panel open ------------------------------------
+//
+// CSS :hover alone is not enough here. The toggle is a narrow button at the
+// end of the nav row and the panel hangs 250px to its left, so the natural
+// move towards a slider cuts the corner, leaves both boxes for a moment and
+// the panel vanishes mid-reach.
+//
+// A short grace period on the way out fixes that: re-entering cancels the
+// close. The colour swatch needs more than a grace period, though - opening
+// the OS colour dialog takes the pointer out of the window entirely, so the
+// panel is pinned while that input has focus and released when it does not.
+
+var rainTuneCloseTimer = null
+var rainTunePinned = false
+
+function rainTuneOpen() {
+	clearTimeout(rainTuneCloseTimer)
+	var dd = document.querySelector(".rainTuneDropdown")
+	if (dd !== null) dd.classList.add("rainTuneStuck")
+}
+
+function rainTuneClose(delay) {
+	clearTimeout(rainTuneCloseTimer)
+	rainTuneCloseTimer = setTimeout(function () {
+		if (rainTunePinned) return // colour dialog is up, leave it alone
+		var dd = document.querySelector(".rainTuneDropdown")
+		if (dd !== null) dd.classList.remove("rainTuneStuck")
+	}, delay === undefined ? 420 : delay)
+}
+
+function rainTunePin(on) {
+	rainTunePinned = !!on
+	if (rainTunePinned) rainTuneOpen()
+	else rainTuneClose(250)
+}
+
+$(document).ready(function () {
+	$("body").on("mouseenter", ".rainTuneDropdown", function () { rainTuneOpen() })
+	$("body").on("mouseleave", ".rainTuneDropdown", function () { rainTuneClose() })
+	// tap to open on touch devices, where there is no hover at all
+	$("body").on("click", "#bgToggleBtn", function () { rainTuneOpen() })
+})
 
 // The panel that drops down when hovering the nav toggle. Deliberately terse:
 // three sliders, a follow toggle and a reset, no prose.
@@ -590,7 +712,7 @@ function coderainIntensityPanel() {
 	// swatches in Color Controls for picking an exact shade
 	o += '<div class="rainTuneRow"><span class="rainTuneLabel">Colour</span>'
 	o += '<input type="range" id="rainHueSlider" class="rainTuneSlider rainHueSlider" min="0" max="359" step="1" value="'+coderainHue+'" oninput="coderainSetHue(this.value)">'
-	o += '<span class="rainTuneVal"><input type="color" id="rainColorPicker" class="rainColorPicker" value="'+hslToHex(coderainHue, coderainSat * 100, 55)+'" title="Pick a rain colour" oninput="coderainSetColorFromPicker(this.value)"></span></div>'
+	o += '<span class="rainTuneVal"><input type="color" id="rainColorPicker" class="rainColorPicker" value="'+hslToHex(coderainHue, coderainSat * 100, 55)+'" title="Pick a rain colour" oninput="coderainSetColorFromPicker(this.value)" onfocus="rainTunePin(true)" onblur="rainTunePin(false)"></span></div>'
 
 	o += '<div class="rainTuneRow rainTuneFoot">'
 	o += '<label class="rainFollowLabel"><input type="checkbox" id="rainFollowChk"'+(follow ? " checked" : "")+' onchange="coderainSetFollow(this.checked)"> Follow cipher</label>'

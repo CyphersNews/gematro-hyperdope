@@ -7,7 +7,7 @@
 // calculator itself never requires an account.
 
 var profileMenuOpened = false
-var profileTabActive = "entries"
+var profileTabActive = "presets" // presets first: it is the tab you act from
 var profileSubmitMap = {}   // phrase -> submission id, for rows already published
 
 function toggleProfileMenu() {
@@ -47,11 +47,13 @@ function renderProfilePanel() {
 	}
 
 	o += '<div class="profileTabs">'
-	o += profileTabBtn("entries", "Saved Entries")
-	o += profileTabBtn("presets", "Presets")
-	o += profileTabBtn("submissions", "My Submissions")
-	o += profileTabBtn("leaderboard", "Leaderboard")
-	o += profileTabBtn("account", "Account")
+	o += profileTabBtn("presets", "✅ Presets")
+	o += profileTabBtn("csv", "📄 CSV")
+	o += profileTabBtn("entries", "💾 Saved")
+	o += profileTabBtn("submissions", "📤 Submit")
+	o += profileTabBtn("leaderboard", "🏆 Leaders")
+	o += profileTabBtn("chart", "🔮 Chart")
+	o += profileTabBtn("account", "⚙ Account")
 	o += '</div>'
 
 	o += '<div id="profileBody" class="profileBody"><div class="profileLoading">Loading…</div></div>'
@@ -63,6 +65,8 @@ function renderProfilePanel() {
 
 	if (profileTabActive === "entries") renderProfileEntries()
 	else if (profileTabActive === "presets") renderProfilePresets()
+	else if (profileTabActive === "csv") renderProfileCsv()
+	else if (profileTabActive === "chart") renderProfileChart()
 	else if (profileTabActive === "submissions") renderProfileSubmissions()
 	else if (profileTabActive === "leaderboard") renderProfileLeaderboard()
 	else renderProfileAccount()
@@ -101,7 +105,13 @@ function renderProfileEntries() {
 	var box = document.getElementById("profileSearch")
 	if (box !== null) term = box.value
 
-	entriesSearch(term, 200).then(function (rows) {
+	// Push anything typed since the last sync before reading the list back.
+	// The sync is on a timer, so without this a phrase entered moments ago is
+	// simply not on the server yet and the tab looks like it has missed it -
+	// which is why it took a second open to show up.
+	var ready = (typeof histSyncFlush === "function") ? histSyncFlush() : Promise.resolve()
+
+	ready.then(function () { return entriesSearch(term, 200) }).then(function (rows) {
 		var o = ''
 		o += '<div class="profileSearchRow">'
 		o += '<input type="text" id="profileSearch" class="profileSearchInput" placeholder="Search your saved phrases…" value="'+authEsc(term)+'" oninput="profileSearchDebounced()">'
@@ -129,9 +139,12 @@ function renderProfileEntries() {
 				} else if (refused) {
 					o += '<span class="profileBadge profileBadgeBad" title="'+authEsc(refused)+'">blocked</span>'
 				} else {
-					o += '<button class="profileMiniBtn" onclick="profileSubmit(&quot;'+authEsc(r.phrase).replace(/"/g,'&quot;')+'&quot;)" title="Publish this phrase to the leaderboard">Submit</button>'
+					// the cipher arrives prefilled from whatever is selected, so
+					// publishing stays one click unless you want to change it
+					o += profileCipherSelect(r.id)
+					o += '<button class="profileMiniBtn" onclick="profileSubmit(&quot;'+authEsc(r.phrase).replace(/"/g,'&quot;')+'&quot;,&quot;'+r.id+'&quot;)" title="Publish this phrase to the leaderboard">Submit</button>'
 				}
-				o += '<button class="profileMiniBtn profileMiniDanger" onclick="profileDeleteEntry(&quot;'+r.id+'&quot;)" title="Remove from your saved history">&#215;</button>'
+				o += '<button class="profileMiniBtn profileMiniDanger" onclick="profileDeleteEntry(&quot;'+r.id+'&quot;,&quot;'+authEsc(r.phrase).replace(/"/g,'&quot;')+'&quot;)" title="Remove from your saved history">&#215;</button>'
 				o += '</span>'
 				if (refused) o += '<div class="profileRowWhy">'+authEsc(refused)+'</div>'
 				o += '</div>'
@@ -150,29 +163,89 @@ function profileSearchDebounced() {
 	profileSearchTimer = setTimeout(renderProfileEntries, 250)
 }
 
-function profileUsePhrase(p) {
+// Loads a phrase into the input and stops there.
+//
+// It used to recompute the enabled-cipher summary and the word breakdown as
+// well, which rewrote the workspace to describe a phrase the user had only
+// clicked on, not entered. Nothing is committed until they press Enter, so
+// nothing else should move: the history table, its Find Matches ordering and
+// the current breakdown all stay exactly as they were.
+function profileUsePhrase(p, keepPanel) {
 	var box = document.getElementById("phraseBox")
 	if (box === null) return
 	box.value = p
-	updateEnabledCipherTable()
-	updateWordBreakdown(breakCipher, false, false)
-	closeAllOpenedMenus()
-	box.focus()
+	// Browsing someone's contributions is a list you work through, so picking
+	// one leaves the leaderboard up rather than closing the panel out from
+	// under you. Everywhere else, closing puts the input back in reach.
+	if (!keepPanel) {
+		closeAllOpenedMenus()
+		box.focus()
+		box.select()
+	}
+	displayCalcNotification("Loaded: " + p + " — press Enter to add it", 2200)
 }
 
-function profileDeleteEntry(id) {
+// Deleting the row on its own does not stick. The sync mirrors the local
+// history table up to the server, so a phrase still sitting in sHistory is
+// simply re-uploaded on the next pass and the entry reappears - which is why
+// saved entries could not be deleted at all. Clearing histSyncLastHash made it
+// worse by forcing that pass to run immediately.
+//
+// So the phrase goes from the local history first, and the row follows.
+function profileDeleteEntry(id, phrase) {
+	if (typeof sHistory !== "undefined" && phrase !== undefined) {
+		var keep = []
+		for (var i = 0; i < sHistory.length; i++) {
+			if (sHistory[i] !== phrase) keep.push(sHistory[i])
+		}
+		if (keep.length !== sHistory.length) {
+			sHistory = keep
+			if (typeof updateHistoryTable === "function") updateHistoryTable()
+		}
+	}
 	entriesDelete(id).then(function () {
-		if (typeof histSyncLastHash !== "undefined") histSyncLastHash = null // let the sync notice
 		renderProfileEntries()
 	}).catch(function (err) { profileBody(profileErr(err)) })
+}
+
+// A cipher picker for one row, preselected to whatever is currently active so
+// the usual case is still a single click. Enabled ciphers are listed first
+// because they are the ones being worked in.
+function profileCipherSelect(rowId) {
+	if (typeof cipherList === "undefined") return ""
+	var pick = (typeof submissionCipherDefault === "function") ? submissionCipherDefault() : null
+
+	var on = [], off = []
+	for (var i = 0; i < cipherList.length; i++) {
+		(cipherList[i].enabled ? on : off).push(cipherList[i].cipherName)
+	}
+
+	var opt = function (n) {
+		return '<option value="'+authEsc(n)+'"'+(n === pick ? ' selected' : '')+'>'+authEsc(n)+'</option>'
+	}
+	var o = '<select class="profileCiphSelect" id="ciph_'+rowId+'" title="Which cypher makes this interesting?">'
+	if (on.length) {
+		o += '<optgroup label="On now">'
+		for (var a = 0; a < on.length; a++) o += opt(on[a])
+		o += '</optgroup>'
+	}
+	if (off.length) {
+		o += '<optgroup label="All cyphers">'
+		for (var b = 0; b < off.length; b++) o += opt(off[b])
+		o += '</optgroup>'
+	}
+	o += '</select>'
+	return o
 }
 
 // phrase -> why it was refused, so the row can stay red after the re-render
 var profileSubmitRejected = {}
 
-function profileSubmit(phrase) {
+function profileSubmit(phrase, rowId) {
 	delete profileSubmitRejected[phrase]
-	submissionSubmit(phrase).then(function () {
+	var sel = (rowId !== undefined) ? document.getElementById("ciph_" + rowId) : null
+	var cipherName = (sel !== null) ? sel.value : undefined
+	submissionSubmit(phrase, cipherName).then(function () {
 		displayCalcNotification("Submitted to the leaderboard", 1800)
 		renderProfileEntries()
 	}).catch(function (err) {
@@ -279,6 +352,9 @@ function renderProfileSubmissions() {
 			o += '<div class="profileRow">'
 			o += '<span class="profileRowPhrase" onclick="profileUsePhrase(&quot;'+authEsc(r.phrase).replace(/"/g,'&quot;')+'&quot;)">'+authEsc(r.phrase)+'</span>'
 			o += '<span class="profileRowActions">'
+			if (r.cipher) {
+				o += '<span class="profileBadge" title="Published under this cypher">'+authEsc(r.cipher)+(r.value !== null && r.value !== undefined ? ' ' + r.value : '')+'</span>'
+			}
 			o += '<span class="profileWhen">'+new Date(r.created_at).toLocaleDateString()+'</span>'
 			o += '<button class="profileMiniBtn profileMiniDanger" onclick="profileWithdraw(&quot;'+r.id+'&quot;)" title="Withdraw this submission">Withdraw</button>'
 			o += '</span></div>'
@@ -333,7 +409,10 @@ function profileShowContributor(userId, name) {
 		else {
 			o += '<div class="profileChips">'
 			rows.forEach(function (r) {
-				o += '<span class="profileChip" onclick="profileUsePhrase(&quot;'+authEsc(r.phrase).replace(/"/g,'&quot;')+'&quot;)" title="Send to the calculator">'+authEsc(r.phrase)+'</span>'
+				var why = r.cipher ? (r.cipher + (r.value !== null && r.value !== undefined ? ' = ' + r.value : '')) : 'Send to the calculator'
+				o += '<span class="profileChip" onclick="profileUsePhrase(&quot;'+authEsc(r.phrase).replace(/"/g,'&quot;')+'&quot;, true)" title="'+authEsc(why)+'">'+authEsc(r.phrase)
+				if (r.cipher) o += '<span class="profileChipCiph">'+authEsc(r.cipher)+'</span>'
+				o += '</span>'
 			})
 			o += '</div>'
 		}
@@ -347,34 +426,133 @@ function profileShowContributor(userId, name) {
 function renderProfileAccount() {
 	var av = authAvatarUrl()
 	var o = ''
+	// The picture is a button. Clicking it opens the choices; the file input
+	// itself is never on show, because "Choose file / no file chosen" is the
+	// browser's widget, not ours, and it says nothing useful sitting there.
 	o += '<div class="profileAccountHead">'
+	o += '<button type="button" class="profileAvatarPick" onclick="profileAvatarMenu(true)" title="Change your picture">'
 	o += av ? '<img class="profileBigAvatar" src="'+authEsc(av)+'" alt="">'
 	        : '<div class="profileBigAvatar profileLbFallback">'+authEsc(authDisplayName().charAt(0).toUpperCase())+'</div>'
+	o += '<span class="profileAvatarOverlay">Change</span>'
+	o += '</button>'
 	o += '<div><div class="profileAccountName">'+authEsc(authDisplayName())+'</div>'
 	o += '<div class="profileAccountSub">'+authEsc(authUser.email || "Discord account")+'</div></div>'
 	o += '</div>'
 
-	o += '<div class="profileNote">Profile picture &mdash; PNG, JPEG, WebP or GIF, up to 2 MB.</div>'
+	// hidden until the picture is clicked
+	o += '<div id="profileAvatarOpts" class="profileAvatarOpts hideValue">'
+	o += '<div class="profileNote">PNG, JPEG, WebP or GIF. Large photos are resized for you.</div>'
 	o += '<div class="profileAvatarRow">'
-	o += '<input type="file" id="profileAvatarFile" accept="image/png,image/jpeg,image/webp,image/gif" class="profileFileInput" onchange="profileAvatarPick()">'
-	o += '<button class="profileMiniBtn" id="profileAvatarBtn" onclick="profileAvatarUpload()">Upload</button>'
+	o += '<button class="profileMiniBtn" id="profileAvatarBtn" onclick="profileAvatarBrowse()">Upload a picture</button>'
 	if (authProfile && authProfile.avatar_url) {
-		o += '<button class="profileMiniBtn profileMiniDanger" onclick="profileAvatarRemove()">Remove</button>'
+		o += '<button class="profileMiniBtn profileMiniDanger" onclick="profileAvatarRemove()">Remove current</button>'
 	}
-	o += '</div>'
+	o += '<button class="profileMiniBtn" onclick="profileAvatarMenu(false)">Cancel</button>'
+	o += '</div></div>'
+	o += '<input type="file" id="profileAvatarFile" accept="image/png,image/jpeg,image/webp,image/gif" class="hideValue" onchange="profileAvatarPickAndUpload()">'
 	o += '<div id="profileAvatarMsg" class="profileNote hideValue"></div>'
 
-	o += '<div class="profileNote profileFoot">More settings, including your display name and saved history, are on the <a class="authLink" href="profile.html">full profile page</a>.</div>'
+	// display name lives here now that the panel is the whole profile, rather
+	// than sending people off to a separate page for one field
+	o += '<div class="profileNameRow">'
+	o += '<label class="contactLabel" for="profileDisplayName">Display name</label>'
+	o += '<div class="profileSearchRow">'
+	o += '<input type="text" id="profileDisplayName" class="profileSearchInput" maxlength="32" placeholder="Shown on the leaderboard" value="'+authEsc((authProfile && authProfile.username) ? authProfile.username : "")+'">'
+	o += '<button class="profileMiniBtn" onclick="profileSaveName()">Save</button>'
+	o += '</div>'
+	o += '<div id="profileNameMsg" class="profileNote hideValue"></div>'
+	o += '</div>'
+
+	// Closing the account. Deliberately last, visually separated, and asks for
+	// the word to be typed rather than relying on a single click - this cannot
+	// be undone and there is no backup to restore from.
+	o += '<div class="profileDanger">'
+	o += '<div class="profileDangerTitle">Close your account</div>'
+	o += '<div class="profileNote">This permanently deletes your account and everything attached to it: your email and login, saved history, workspace, presets, published phrases and profile picture. It cannot be undone.</div>'
+	o += '<div class="profileDangerRow">'
+	o += '<input type="text" id="profileDeleteConfirm" class="profileSearchInput" placeholder="Type DELETE to confirm" autocomplete="off" spellcheck="false" oninput="profileDeleteGate()">'
+	o += '<button class="profileMiniBtn profileMiniDanger" id="profileDeleteBtn" onclick="profileDeleteAccount()" disabled>Delete my account</button>'
+	o += '</div>'
+	o += '<div id="profileDeleteMsg" class="profileNote hideValue"></div>'
+	o += '</div>'
+
 	profileBody(o)
 }
 
-function profileAvatarPick() {
+// The button only wakes up once the word is typed exactly.
+function profileDeleteGate() {
+	var box = document.getElementById("profileDeleteConfirm")
+	var btn = document.getElementById("profileDeleteBtn")
+	if (box === null || btn === null) return
+	btn.disabled = (box.value.trim().toUpperCase() !== "DELETE")
+}
+
+function profileDeleteAccount() {
+	var box = document.getElementById("profileDeleteConfirm")
+	if (box === null || box.value.trim().toUpperCase() !== "DELETE") return
+	if (!window.confirm("Permanently delete your account and all of its data?\n\nThis cannot be undone.")) return
+
+	var btn = document.getElementById("profileDeleteBtn")
+	var msg = document.getElementById("profileDeleteMsg")
+	if (btn !== null) btn.disabled = true
+	if (msg !== null) {
+		msg.className = "profileNote"
+		msg.textContent = "Deleting…"
+		msg.classList.remove("hideValue")
+	}
+
+	accountDelete().then(function () {
+		window.location.href = "index.html"
+	}).catch(function (err) {
+		if (msg !== null) {
+			msg.className = "profileNote profileWarn"
+			msg.textContent = (err && err.message) ? err.message : "Could not delete the account"
+		}
+		if (btn !== null) btn.disabled = false
+	})
+}
+
+// Shows or hides the picture options. They start hidden so the account tab is
+// just the picture and the name until you ask to change it.
+function profileAvatarMenu(show) {
+	var el = document.getElementById("profileAvatarOpts")
+	if (el !== null) el.classList.toggle("hideValue", !show)
+}
+
+function profileAvatarBrowse() {
+	document.getElementById("profileAvatarFile").click()
+}
+
+// Picking a file uploads it. Choosing a picture and then having to press a
+// second button is a step with no decision in it.
+function profileAvatarPickAndUpload() {
 	var f = document.getElementById("profileAvatarFile").files[0]
-	var problem = avatarValidate(f)
-	var msg = document.getElementById("profileAvatarMsg")
-	msg.classList.toggle("hideValue", !problem)
-	msg.className = "profileNote profileWarn" + (problem ? "" : " hideValue")
-	msg.textContent = problem || ""
+	if (!f) return
+	profileAvatarUpload()
+}
+
+// Saves the name shown on the leaderboard and beside the avatar.
+function profileSaveName() {
+	var box = document.getElementById("profileDisplayName")
+	var msg = document.getElementById("profileNameMsg")
+	if (box === null) return
+	var show = function (t, warn) {
+		msg.className = "profileNote" + (warn ? " profileWarn" : " profileOk")
+		msg.textContent = t
+		msg.classList.remove("hideValue")
+	}
+	var name = box.value.trim()
+	if (name.length > 0 && (name.length < 2 || name.length > 32)) {
+		show("Use between 2 and 32 characters.", true); return
+	}
+	updateProfile({ username: name === "" ? null : name }).then(function () {
+		show("Saved.", false)
+		renderAuthNav()
+	}).catch(function (err) {
+		var m = (err && err.message) ? err.message : "Could not save"
+		if (m.toLowerCase().indexOf("duplicate") > -1) m = "That name is taken."
+		show(m, true)
+	})
 }
 
 function profileAvatarUpload() {
@@ -412,3 +590,96 @@ function profileAvatarRemove() {
 		msg.classList.remove("hideValue")
 	})
 }
+
+// ---- saved CSVs -------------------------------------------------------
+//
+// The History Table kept as the app's own CSV, so a saved copy loads back
+// through the ordinary import path rather than a second reader.
+
+function renderProfileCsv() {
+	var tok = profileRenderSeq
+	csvList().then(function (rows) {
+		var count = (typeof sHistory !== "undefined") ? sHistory.length : 0
+		var o = ''
+		o += '<div class="profileNote">Save the History Table as a CSV against your account, and load it back whenever you want. Load adds the saved phrases to the table you have open; Replace clears it first.</div>'
+
+		o += '<div class="profileSearchRow">'
+		o += '<input type="text" id="csvName" class="profileSearchInput" maxlength="60" placeholder="Name this CSV&hellip;" onkeydown="profileCsvNameKey(event)">'
+		o += '<button class="profileMiniBtn" onclick="profileCsvSave()"' + (count === 0 ? ' disabled title="The History Table is empty"' : '') + '>Save ' + count + ' row' + (count === 1 ? '' : 's') + '</button>'
+		o += '</div>'
+
+		if (rows.length === 0) {
+			o += '<div class="profileNote">Nothing saved yet.</div>'
+			profileBody(o, tok); return
+		}
+
+		o += '<div class="profileList">'
+		rows.forEach(function (r) {
+			var nm = authEsc(r.name).replace(/"/g, '&quot;')
+			o += '<div class="profileRow">'
+			o += '<span class="profileRowPhrase" onclick="profileCsvLoad(&quot;' + r.id + '&quot;,false)" title="Load into the History Table">' + authEsc(r.name) + '</span>'
+			o += '<span class="profileRowActions">'
+			o += '<span class="profileWhen">' + r.rows + ' rows</span>'
+			o += '<button class="profileMiniBtn" onclick="profileCsvLoad(&quot;' + r.id + '&quot;,false)">Load</button>'
+			o += '<button class="profileMiniBtn" onclick="profileCsvLoad(&quot;' + r.id + '&quot;,true)" title="Clear the table first, then load">Replace</button>'
+			o += '<button class="profileMiniBtn" onclick="profileCsvDownload(&quot;' + r.id + '&quot;)" title="Download as a file">&#8595;</button>'
+			o += '<button class="profileMiniBtn profileMiniDanger" onclick="profileCsvDelete(&quot;' + r.id + '&quot;,&quot;' + nm + '&quot;)">&#215;</button>'
+			o += '</span></div>'
+		})
+		o += '</div>'
+		profileBody(o, tok)
+	}).catch(function (err) { profileBody(profileErr(err), tok) })
+}
+
+function profileCsvNameKey(e) {
+	if (e.key === "Enter") { e.preventDefault(); profileCsvSave() }
+}
+
+function profileCsvSave() {
+	var box = document.getElementById("csvName")
+	var name = (box === null) ? "" : box.value.trim()
+	if (name === "") { displayCalcNotification("Give the CSV a name", 1800); return }
+	if (typeof sHistory === "undefined" || sHistory.length === 0) {
+		displayCalcNotification("The History Table is empty", 1800); return
+	}
+	var text = buildHistoryCSV(sHistory)
+	csvSave(name, text, sHistory.length).then(function (what) {
+		displayCalcNotification(what === "updated" ? "CSV updated" : "CSV saved", 1800)
+		renderProfileCsv()
+	}).catch(function (err) {
+		displayCalcNotification(err.message || "Could not save", 2400)
+	})
+}
+
+function profileCsvLoad(id, clearFirst) {
+	csvLoad(id).then(function (row) {
+		if (clearFirst) {
+			sHistory = []
+			if (typeof histDisplayOrder !== "undefined") histDisplayOrder = null
+		}
+		importFileAction(row.csv, true) // the app's own CSV reader, given the text directly
+		closeAllOpenedMenus()
+		displayCalcNotification("Loaded " + row.name, 2000)
+	}).catch(function (err) {
+		displayCalcNotification(err.message || "Could not load", 2400)
+	})
+}
+
+function profileCsvDownload(id) {
+	csvLoad(id).then(function (row) {
+		download(row.name.replace(/[^\w.-]+/g, "_") + ".txt",
+			'data:text/plain;charset=utf-8,' + encodeURIComponent(row.csv))
+	}).catch(function (err) {
+		displayCalcNotification(err.message || "Could not download", 2400)
+	})
+}
+
+function profileCsvDelete(id, name) {
+	if (!window.confirm('Delete the saved CSV "' + name + '"?')) return
+	csvDelete(id).then(renderProfileCsv)
+		.catch(function (err) { profileBody(profileErr(err)) })
+}
+
+// Birth charts live in profile-chart.js: the tab grew its own inputs, two
+// zodiacs and a transit list, which is more than belongs in here.
+

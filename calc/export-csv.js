@@ -252,9 +252,11 @@ function dragOverHandler(ev) {
 	ev.preventDefault() // Prevent default drag behavior (Prevent file from being opened)
 }
 
-function exportHistoryCSV(arr, dbMode = false, addCiphers = '') {
-	if (arr.length == 0) return
-	
+// The CSV text on its own, so it can be saved to an account as well as
+// downloaded. Same format either way, which is what lets a saved copy be
+// loaded back through the ordinary import path.
+function buildHistoryCSV(arr, dbMode = false, addCiphers = '') {
+	var i, n
 	var t = ""
 	updateEnabledCipherCount()
 
@@ -269,7 +271,7 @@ function exportHistoryCSV(arr, dbMode = false, addCiphers = '') {
 		}
 		t += "\n" // line break
 	}
-	
+
 	// table contents
 	for (i = 0; i < arr.length; i++) {
 		t += arr[i].replace(";", "") // add phrase, remove semicolons (it is a separator)
@@ -281,7 +283,14 @@ function exportHistoryCSV(arr, dbMode = false, addCiphers = '') {
 		if (i+1 < arr.length) t += "\n" // line break, exclude last line
 	}
 	if (dbMode) t += "\n"+addCiphers // include ciphers inside database
-	
+	return t
+}
+
+function exportHistoryCSV(arr, dbMode = false, addCiphers = '') {
+	if (arr.length == 0) return
+
+	var t = buildHistoryCSV(arr, dbMode, addCiphers)
+
 	t = 'data:text/plain;charset=utf-8,'+encodeURIComponent(t) // format as text file
 	if (dbMode) {
 		download(getTimestamp()+"_GEMATRO_DB.txt", t); // download database

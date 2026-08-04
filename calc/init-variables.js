@@ -26,7 +26,7 @@ $(document).ready(function(){
 
 var code_rain; // var to clear interval
 var height_html, canvas, ctx
-var w, h, ypos
+var w, h, ypos, yglf // yglf - retro rain trail glyphs, one array per column
 
 // ==================================================================
 // highlighter.js
