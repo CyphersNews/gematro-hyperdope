@@ -20,18 +20,57 @@ var ctxExportItems = [
 	{ label: "Export DB Query (CSV)",  btn: "#btn-export-db-query",             need: "#QueryTable" },
 	{ sep: true },
 	{ label: "Edit Table Caption",     action: "editTableCaption",              need: ".HistoryTable" },
-	{ label: "Clear History Table",    action: "clearHistoryTable",             need: ".HistoryTable", danger: true }
+	{ label: "Clear History Table",    action: "clearHistoryTable",             need: ".HistoryTable", danger: true },
+	{ label: "Reset Settings to Default", action: "resetDefaults",              need: "#calcOptionsPanel", danger: true,
+	  confirm: "Sure? Code rain is kept" }
 ]
 
 function closeExportContextMenu() {
 	$("#ctxExportMenu").remove()
 }
 
-function runExportContextItem(idx) {
-	closeExportContextMenu()
+// hovering anything else cancels the arming, so a second click always lands on
+// the item the pointer is actually over
+function ctxExportDisarmOthers(idx) {
+	$("#ctxExportMenu .ctxExportArmed").each(function () {
+		if (Number($(this).attr("data-idx")) === idx) return
+		var item = ctxExportItems[Number($(this).attr("data-idx"))]
+		$(this).removeClass("ctxExportArmed").text(item ? item.label : "")
+	})
+}
+
+// puts an armed item back to its own label, so moving to another entry does not
+// leave "Sure?" sitting there ready to fire
+function ctxExportDisarm() {
+	$("#ctxExportMenu .ctxExportArmed").each(function () {
+		var item = ctxExportItems[Number($(this).attr("data-idx"))]
+		$(this).removeClass("ctxExportArmed").text(item ? item.label : "")
+	})
+}
+
+function runExportContextItem(idx, el) {
 	var item = ctxExportItems[idx]
 	if (!item || item.sep) return
 	if (item.need && $(item.need).length === 0) return
+
+	// Throwing away every cypher, colour and option is too much to do on a
+	// mis-click, so an item carrying `confirm` asks first and stays open to be
+	// clicked a second time. Nothing else in this menu loses anything that
+	// cannot be got back, which is why they still fire straight away.
+	if (item.confirm && el) {
+		var $el = $(el)
+		if (!$el.hasClass("ctxExportArmed")) {
+			ctxExportDisarm()
+			$el.addClass("ctxExportArmed").text(item.confirm)
+			return
+		}
+	}
+
+	closeExportContextMenu()
+	if (item.action === "resetDefaults") {
+		if (typeof resetCalcToDefaults === "function") resetCalcToDefaults(false)
+		return
+	}
 	if (item.action === "clearHistoryTable") {
 		phraseBoxKeypress(36) // "Home" keystroke, the app's own clear-history path
 		return
@@ -52,8 +91,8 @@ function showExportContextMenu(px, py) {
 		var item = ctxExportItems[i]
 		if (item.sep) { o += '<div class="ctxExportSep"></div>'; continue }
 		var avail = $(item.need).length > 0
-		o += '<div class="ctxExportItem'+(avail ? '' : ' ctxExportDisabled')+(item.danger ? ' ctxExportDanger' : '')+'"'
-		o += avail ? ' onclick="runExportContextItem('+i+')"' : ' title="Not available right now"'
+		o += '<div class="ctxExportItem'+(avail ? '' : ' ctxExportDisabled')+(item.danger ? ' ctxExportDanger' : '')+'" data-idx="'+i+'"'
+		o += avail ? ' onclick="runExportContextItem('+i+', this)" onmouseenter="ctxExportDisarmOthers('+i+')"' : ' title="Not available right now"'
 		o += '>'+item.label+'</div>'
 	}
 	o += '</div>'

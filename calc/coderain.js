@@ -613,11 +613,12 @@ function coderainSyncColorInputs() {
 // untouched on a first visit.
 function coderainApplyBackdrop() {
 	var root = document.documentElement
-	// The standard style is meant to sit on the page's own background - tinting
-	// it as well made picking a colour feel like it was recolouring the site
-	// rather than the rain. Retro and CCRU are full-screen looks of their own,
-	// so they still carry the colour behind them.
-	if (!coderainColorPicked || coderainStyle === "new") {
+	// With the rain running, the colour belongs to the rain: tinting the page
+	// as well made picking a colour feel like it was recolouring the whole
+	// site. With the rain off there is nothing else for the colour to apply
+	// to, so it becomes the background - which is the only way to change the
+	// page colour without turning the rain on.
+	if (!coderainColorPicked || optMatrixCodeRain) {
 		root.style.removeProperty("--rain-backdrop")
 		return
 	}

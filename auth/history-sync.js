@@ -234,7 +234,12 @@ var HIST_REFRESH_KEY = "histLastLoad"
 
 // Returns true when this load is the second of a pair, and consumes the mark
 // so a third reload starts counting again rather than clearing repeatedly.
+//
+// reset-defaults.js normally does the detecting, because the same gesture also
+// resets the settings and the mark can only be read once. This is the fallback
+// for a page that loads the history sync without it.
 function histDoubleRefresh() {
+	if (typeof calcDoubleRefresh !== "undefined") return calcDoubleRefresh
 	var now = Date.now()
 	var last = 0
 	try { last = Number(window.sessionStorage.getItem(HIST_REFRESH_KEY)) || 0 } catch (e) { return false }
@@ -253,7 +258,9 @@ function histClearOnDoubleRefresh() {
 
 	histSyncLastHash = null
 	histSyncClearSaved().catch(function () { /* offline: the local clear still stands */ })
-	if (typeof displayCalcNotification === "function") {
+	// the settings reset runs on the same gesture and announces it for both, so
+	// this only speaks up when it is the whole of what happened
+	if (typeof resetCalcToDefaults !== "function" && typeof displayCalcNotification === "function") {
 		displayCalcNotification("History Table cleared — refreshed twice", 2600)
 	}
 }

@@ -140,7 +140,16 @@ var calcOptionsArr = [ // used to export/import settings
 ]
 
 var runOnceRestoreCalcSet = true
-function initCalc(defSet = false) { // run after page has finished loading
+// keepSelection: the caller has just loaded a cipher selection of its own -
+// a preset, a saved workspace, an imported file - and it must survive this.
+//
+// enableDefaultCiphers() used to be harmless here: it read defaultCipherArray,
+// which initCiphers() had just rebuilt from whatever happened to be enabled,
+// so it re-enabled the very ciphers it found. Now that Default means the
+// built-in base-4 - which is what makes the Default button work after a preset
+// exists - this line genuinely resets the selection, and every restore path
+// was landing on Ordinal/Reduction/Reverse Ordinal/Reverse Reduction.
+function initCalc(defSet = false, keepSelection = false) { // run after page has finished loading
 	configureCalcInterface(true)
 	if (defSet && typeof calcOpt !== 'undefined') importCalcOptions(calcOptions); // load settings from ciphers.js
 	generateRndColors()
@@ -149,7 +158,7 @@ function initCalc(defSet = false) { // run after page has finished loading
 	saveInitialCiphers()
 	initCiphers() // update default ciphers
 	createCalcMenus()
-	enableDefaultCiphers()
+	if (!keepSelection) enableDefaultCiphers()
 	saveCalcSettingsLocalStorage(true) // save default settings
 	showWelcomeMessage("Query To Search Database")
 }

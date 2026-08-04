@@ -258,6 +258,40 @@ function profileSubmit(phrase, rowId) {
 	})
 }
 
+// ---- confirming a destructive click ------------------------------------
+//
+// window.confirm() is suppressed in ordinary use - a browser told to stop a
+// page opening dialogs returns false immediately without asking - so every
+// delete button that leant on it silently did nothing.
+//
+// The confirmation lives in the page instead: the first click arms the button
+// and the second carries it out. Nothing outside this file can switch it off,
+// and it behaves the same on a phone.
+var profileArmedBtn = null
+var profileArmedTimer = null
+
+function profileDisarm() {
+	if (profileArmedBtn !== null) {
+		profileArmedBtn.innerHTML = profileArmedBtn.dataset.idleLabel || "&#215;"
+		profileArmedBtn.classList.remove("profileArmed")
+		profileArmedBtn = null
+	}
+	clearTimeout(profileArmedTimer)
+}
+
+// Returns true when the click should go through.
+function profileConfirmClick(btn, label) {
+	if (btn === profileArmedBtn) { profileDisarm(); return true }
+	profileDisarm()
+	profileArmedBtn = btn
+	btn.dataset.idleLabel = btn.innerHTML
+	btn.textContent = label || "Sure?"
+	btn.classList.add("profileArmed")
+	// disarms itself, so a stray click is never left primed
+	profileArmedTimer = setTimeout(profileDisarm, 4000)
+	return false
+}
+
 // ---- presets ----------------------------------------------------------
 //
 // A preset is a whole named setup - which cyphers are enabled, their colours,
@@ -268,10 +302,21 @@ function renderProfilePresets() {
 	var tok = profileRenderSeq
 	presetsList().then(function (rows) {
 		var o = ''
-		o += '<div class="profileNote">A preset stores your enabled cyphers, colours, custom cyphers and code rain settings under a name. Loading one replaces what you have open now.</div>'
+		// One line at the panel's width. "under a name" went: it ran 10px over,
+		// which stranded "open." on a line of its own, and the naming field
+		// directly below makes the point anyway.
+		o += '<div class="profileNote profileNoteOneLine">&#128190; Saves your cyphers, colours and code rain. &#128260; Loading one replaces what you have open.</div>'
 
-		o += '<div class="profileSearchRow">'
-		o += '<input type="text" id="presetName" class="profileSearchInput" maxlength="60" placeholder="Name this setup&hellip;" onkeydown="if(event.key===\'Enter\'){profilePresetSave();return false}">'
+		// A way back to the state the calculator ships in, without needing a
+		// preset saved for it. Nothing stored is touched - this only resets what
+		// is open.
+		o += '<div class="profileDefaultRow">'
+		o += '<button class="profileMiniBtn profileDefaultBtn" onclick="profilePresetDefaults(this)" title="Base-4 cyphers and the stock code rain">&#8634; Back to defaults</button>'
+		o += '<span class="profileWhen">&#9989; Base-4 and stock rain. Saved presets untouched.</span>'
+		o += '</div>'
+
+		o += '<div class="profileSearchRow profilePresetSaveRow">'
+		o += '<input type="text" id="presetName" class="profileSearchInput" maxlength="60" placeholder="&#127991; Name this setup&hellip;" onkeydown="if(event.key===\'Enter\'){profilePresetSave();return false}">'
 		o += '<button class="profileMiniBtn" onclick="profilePresetSave()" title="Save the current setup under this name">Save</button>'
 		o += '</div>'
 
@@ -288,12 +333,32 @@ function renderProfilePresets() {
 			o += '<span class="profileWhen">'+new Date(r.updated_at).toLocaleDateString()+'</span>'
 			o += '<button class="profileMiniBtn" onclick="profilePresetLoad(&quot;'+r.id+'&quot;)">Load</button>'
 			o += '<button class="profileMiniBtn" onclick="profilePresetOverwrite(&quot;'+authEsc(r.name).replace(/"/g,'&quot;')+'&quot;)" title="Replace this preset with the current setup">Overwrite</button>'
-			o += '<button class="profileMiniBtn profileMiniDanger" onclick="profilePresetDelete(&quot;'+r.id+'&quot;,&quot;'+authEsc(r.name).replace(/"/g,'&quot;')+'&quot;)" title="Delete this preset">&#215;</button>'
+			o += '<button class="profileMiniBtn profileMiniDanger" onclick="profilePresetDelete(this,&quot;'+r.id+'&quot;)" title="Delete this preset">&#215;</button>'
 			o += '</span></div>'
 		})
 		o += '</div>'
 		profileBody(o, tok)
 	}).catch(function (err) { profileBody(profileErr(err), tok) })
+}
+
+// Restores the calculator to how it arrives on a first visit: the built-in
+// base-4 cyphers and the stock code rain. Deliberately not a saved preset -
+// there is nothing to lose if it is never saved, and nothing to go stale.
+function profilePresetDefaults(btn) {
+	if (!profileConfirmClick(btn, "Reset?")) return
+
+	if (typeof enableDefaultCiphers === "function") enableDefaultCiphers()
+	if (typeof coderainResetIntensity === "function") coderainResetIntensity()
+	if (typeof coderainStyle !== "undefined") {
+		coderainStyle = "new"
+		optMatrixCodeRain = true
+		if (typeof toggleCodeRain === "function") toggleCodeRain()
+	}
+	if (typeof updateTables === "function") updateTables()
+	if (typeof wsSyncLastHash !== "undefined") wsSyncLastHash = null // let the sync notice
+
+	displayCalcNotification("Back to the default cyphers and code rain", 2200)
+	renderProfilePresets()
 }
 
 function profilePresetSave() {
@@ -330,10 +395,10 @@ function profilePresetLoad(id) {
 	})
 }
 
-function profilePresetDelete(id, name) {
-	if (!window.confirm('Delete the preset "' + name + '"?')) return
+function profilePresetDelete(btn, id) {
+	if (!profileConfirmClick(btn)) return
 	presetDelete(id).then(renderProfilePresets)
-		.catch(function (err) { profileBody(profileErr(err), tok) })
+		.catch(function (err) { profileBody(profileErr(err)) })
 }
 
 // ---- my submissions ---------------------------------------------------
@@ -366,7 +431,7 @@ function renderProfileSubmissions() {
 
 function profileWithdraw(id) {
 	submissionWithdraw(id).then(renderProfileSubmissions)
-		.catch(function (err) { profileBody(profileErr(err), tok) })
+		.catch(function (err) { profileBody(profileErr(err)) })
 }
 
 // ---- leaderboard ------------------------------------------------------
@@ -490,7 +555,8 @@ function profileDeleteGate() {
 function profileDeleteAccount() {
 	var box = document.getElementById("profileDeleteConfirm")
 	if (box === null || box.value.trim().toUpperCase() !== "DELETE") return
-	if (!window.confirm("Permanently delete your account and all of its data?\n\nThis cannot be undone.")) return
+	// no window.confirm here: suppressed in ordinary use, it returns false and
+	// would block the deletion outright. Typing the word is the gate.
 
 	var btn = document.getElementById("profileDeleteBtn")
 	var msg = document.getElementById("profileDeleteMsg")
@@ -623,7 +689,7 @@ function renderProfileCsv() {
 			o += '<button class="profileMiniBtn" onclick="profileCsvLoad(&quot;' + r.id + '&quot;,false)">Load</button>'
 			o += '<button class="profileMiniBtn" onclick="profileCsvLoad(&quot;' + r.id + '&quot;,true)" title="Clear the table first, then load">Replace</button>'
 			o += '<button class="profileMiniBtn" onclick="profileCsvDownload(&quot;' + r.id + '&quot;)" title="Download as a file">&#8595;</button>'
-			o += '<button class="profileMiniBtn profileMiniDanger" onclick="profileCsvDelete(&quot;' + r.id + '&quot;,&quot;' + nm + '&quot;)">&#215;</button>'
+			o += '<button class="profileMiniBtn profileMiniDanger" onclick="profileCsvDelete(this,&quot;' + r.id + '&quot;)">&#215;</button>'
 			o += '</span></div>'
 		})
 		o += '</div>'
@@ -674,8 +740,8 @@ function profileCsvDownload(id) {
 	})
 }
 
-function profileCsvDelete(id, name) {
-	if (!window.confirm('Delete the saved CSV "' + name + '"?')) return
+function profileCsvDelete(btn, id) {
+	if (!profileConfirmClick(btn)) return
 	csvDelete(id).then(renderProfileCsv)
 		.catch(function (err) { profileBody(profileErr(err)) })
 }

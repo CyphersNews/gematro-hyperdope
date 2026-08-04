@@ -352,7 +352,7 @@ function unloadDatabase() {
 	userDBlive = [] // clear live DB
 
 	document.getElementById("calcOptionsPanel").innerHTML = "" // clear menu panel
-	initCalc() // reinit
+	initCalc(false, true) // reinit; the selection is set from the database below
 	defaultCipherArray = [...defaultCipherArraySaved] // restore default ciphers choice
 	disableAllCiphers()
 

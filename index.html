@@ -8,17 +8,17 @@
 <!-- Android Web App - Add to Home Screen -->
 <link rel="manifest" href="manifest.json">
 
-<script src="lib/jquery.min.js"></script>
-<script src="lib/supabase.min.js"></script>
+<script src="lib/jquery.min.js?v=20260804b"></script>
+<script src="lib/supabase.min.js?v=20260804b"></script>
 <!-- html2canvas v1.0.0-alpha.12 -->
 
-<script src="calc/gematria.js"></script>
-<script src="calc/calc.js"></script>
-<script src="calc/init-variables.js"></script>
-<script src="calc/ciphers.js"></script>
+<script src="calc/gematria.js?v=20260804b"></script>
+<script src="calc/calc.js?v=20260804b"></script>
+<script src="calc/init-variables.js?v=20260804b"></script>
+<script src="calc/ciphers.js?v=20260804b"></script>
 
-<link rel="stylesheet" type="text/css" href="calc/styles.css">
-<link rel="stylesheet" type="text/css" href="auth/auth.css">
+<link rel="stylesheet" type="text/css" href="calc/styles.css?v=20260804b">
+<link rel="stylesheet" type="text/css" href="auth/auth.css?v=20260804b">
 
 <script>
 window.onpaint = function() {
@@ -80,37 +80,55 @@ $(window).load(function(){
 
 <span id="loadPanel"></span>
 
-<script src="calc/breakdown.js"></script>
+<script src="calc/breakdown.js?v=20260804b"></script>
 
-<script src="calc/highlighter.js"></script>
-<script src="calc/export.js"></script>
-<script src="calc/export-csv.js"></script>
-<script src="calc/num-prop.js"></script>
-<script src="calc/edit-ciphers.js"></script>
-<script src="calc/date-calc.js"></script>
-<script src="calc/astrology.js"></script>
-<script src="calc/profile-tab.js"></script>
-<script src="calc/profile-chart.js"></script>
-<script src="calc/database.js"></script>
-<script src="calc/quick-guide.js"></script>
+<script src="calc/highlighter.js?v=20260804b"></script>
+<script src="calc/export.js?v=20260804b"></script>
+<script src="calc/export-csv.js?v=20260804b"></script>
+<script src="calc/num-prop.js?v=20260804b"></script>
+<script src="calc/edit-ciphers.js?v=20260804b"></script>
+<script src="calc/date-calc.js?v=20260804b"></script>
+<script src="calc/astrology.js?v=20260804b"></script>
+<script src="calc/profile-tab.js?v=20260804b"></script>
+<script src="calc/profile-chart.js?v=20260804b"></script>
+<script src="calc/database.js?v=20260804b"></script>
+<script src="calc/quick-guide.js?v=20260804b"></script>
 
-<script src="calc/localstorage.js"></script>
-<script src="calc/encoding.js"></script>
-<script src="calc/encoding-ciphers.js"></script>
+<script src="calc/localstorage.js?v=20260804b"></script>
+<script src="calc/encoding.js?v=20260804b"></script>
+<script src="calc/encoding-ciphers.js?v=20260804b"></script>
 
-<script src="calc/coderain.js"></script>
+<script src="calc/coderain.js?v=20260804b"></script>
 
-<script src="auth/supabase-config.js"></script>
-<script src="auth/auth.js"></script>
-<script src="auth/auth-ui.js"></script>
-<script src="auth/history-sync.js"></script>
-<script src="auth/workspace-sync.js"></script>
-<script src="auth/profile-features.js"></script>
-<script src="lib/html2canvas.min.js"></script>
+<!-- after every script that declares an option, before anything that restores one -->
+<script src="calc/reset-defaults.js?v=20260804b"></script>
+
+<script src="auth/supabase-config.js?v=20260804b"></script>
+<script src="auth/auth.js?v=20260804b"></script>
+<script src="auth/auth-ui.js?v=20260804b"></script>
+<script src="auth/history-sync.js?v=20260804b"></script>
+<script src="auth/workspace-sync.js?v=20260804b"></script>
+<script src="auth/profile-features.js?v=20260804b"></script>
+<script src="lib/html2canvas.min.js?v=20260804b"></script>
 
 <!-- Initialzie the calculator.  This needs to run before loading a database or theme. -->
 <script>
 	initCalc(true);
+
+	// Signing in lands here, on the calculator. The welcome page is reached
+	// from exactly one place - a member who has not been through it yet - so
+	// there is no path that can send a returning member back to it.
+	//
+	// It used to be the other way round: every sign-in went to the welcome and
+	// that page decided whether to bounce back, which meant any failure to
+	// record "already seen" left a member stuck behind it on every visit.
+	if (typeof onAuthReady === "function") {
+		onAuthReady(function (user) {
+			if (user === null || !authProfile) return;
+			if (authProfile.setup_done !== false) return; // seen it, or column absent
+			window.location.replace("profile.html");
+		});
+	}
 </script>
 
 <!-- AUTO LOAD DATABASE (DB) -->

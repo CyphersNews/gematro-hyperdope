@@ -640,24 +640,30 @@ function findMatchesFlash(btn) {
 // A green sweep across the History Table when matches land, so the reorder
 // reads as something that just happened rather than the table silently
 // rearranging itself. Purely decorative and self-removing.
-function findMatchesFx() {
+function findMatchesFx(found) {
 	var host = document.getElementById("HistoryTableArea")
 	if (host === null) return
+	if (found === undefined) found = true
 
 	$("#findMatchesFx").remove()
 	var fx = document.createElement("div")
 	fx.id = "findMatchesFx"
-	fx.className = "findMatchesFx"
+	fx.className = "findMatchesFx" + (found ? "" : " findMatchesFxNone")
 	host.style.position = "relative"
 	host.appendChild(fx)
 
-	// matched rows pulse once as the sweep passes over them
-	$(".HistoryTable tr").removeClass("fxMatchPulse")
-	setTimeout(function () { $(".HistoryTable tr").addClass("fxMatchPulse") }, 90)
+	// matched rows pulse once as the sweep passes over them; with nothing to
+	// show for it the sweep passes alone
+	$(".HistoryTable tr").removeClass("fxMatchPulse fxMatchPulseNone")
+	if (found) {
+		setTimeout(function () { $(".HistoryTable tr").addClass("fxMatchPulse") }, 90)
+	} else {
+		setTimeout(function () { $(".HistoryTable tr").addClass("fxMatchPulseNone") }, 90)
+	}
 
 	setTimeout(function () {
 		$("#findMatchesFx").remove()
-		$(".HistoryTable tr").removeClass("fxMatchPulse")
+		$(".HistoryTable tr").removeClass("fxMatchPulse fxMatchPulseNone")
 	}, 1100)
 }
 
@@ -665,7 +671,11 @@ function findMatchesFx() {
 // so a suddenly shorter table is never mistaken for lost data.
 function applyHistMatchOrder() {
 	histDisplayOrder = buildHistMatchOrder()
-	setTimeout(findMatchesFx, 0) // after the table has been rebuilt
+	// green when something matched, red when nothing did - the sweep is the
+	// answer to the question, so it should not look the same either way
+	var found = (histDisplayOrder !== null && histDisplayOrder.order.length > 0)
+	setTimeout(function () { findMatchesFx(found) }, 0) // after the table has been rebuilt
+	if (!found) displayCalcNotification("No matches found", 2000)
 	if (histDisplayOrder !== null && histDisplayOrder.hidden > 0) {
 		var n = histDisplayOrder.hidden
 		displayCalcNotification(n + (n === 1 ? " phrase hidden" : " phrases hidden") + " with no matches", 2200)

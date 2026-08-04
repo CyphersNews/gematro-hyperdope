@@ -104,7 +104,7 @@ function importFileAction(file, hasLocalFile) {
 			}
 			document.getElementById("calcOptionsPanel").innerHTML = "" // clear menu panel
 			
-			initCalc() // reinit.
+			initCalc(false, true) // reinit, keeping the imported cipher selection
 			
 			updateTables() // update tables
 			updateInterfaceColor(true) // update interface color (first run)
@@ -153,7 +153,7 @@ function importFileAction(file, hasLocalFile) {
 				cipherList.push(eval("new cipher("+ciph[n].slice(1,-1)+")")) // remove parethesis, evaluate string as javascript code
 			}
 			document.getElementById("calcOptionsPanel").innerHTML = "" // clear menu panel
-			initCalc() // reinit
+			initCalc(false, true) // reinit, keeping the imported cipher selection
 			updateTables() // update tables
 			updateInterfaceColor() // update interface color
 

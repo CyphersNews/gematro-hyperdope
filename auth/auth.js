@@ -203,7 +203,7 @@ function authSignInWithDiscord() {
 	return client.auth.signInWithOAuth({
 		provider: "discord",
 		options: {
-			redirectTo: authSiteUrl("profile.html"),
+			redirectTo: authSiteUrl("index.html"),
 			scopes: "identify email"
 		}
 	}).then(function (res) {
@@ -221,7 +221,7 @@ function authLinkDiscord() {
 	if (!client.auth.linkIdentity) return Promise.reject(new Error("This Supabase version does not support identity linking."))
 	return client.auth.linkIdentity({
 		provider: "discord",
-		options: { redirectTo: authSiteUrl("profile.html") }
+		options: { redirectTo: authSiteUrl("index.html") }
 	}).then(function (res) {
 		if (res.error) throw res.error
 		return res.data
@@ -286,7 +286,7 @@ function requireAuth(redirectTo) {
 
 function redirectIfAuthed(target) {
 	onAuthReady(function (user) {
-		if (user !== null) window.location.replace(target || "profile.html")
+		if (user !== null) window.location.replace(target || "index.html")
 	})
 }
 

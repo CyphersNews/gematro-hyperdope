@@ -262,6 +262,12 @@ body {
 .ctxExportItem.ctxExportDanger { color: hsl(5 70% 68%); }
 .ctxExportItem.ctxExportDanger:hover { background-color: hsla(5 60% 45% / 0.25); color: hsl(5 80% 78%); }
 .ctxExportItem.ctxExportDanger.ctxExportDisabled { color: var(--font-white-4); }
+/* armed: asked once, one more click does it */
+.ctxExportItem.ctxExportArmed {
+	background-color: hsla(5 60% 45% / 0.35);
+	color: hsl(5 85% 82%);
+	font-weight: 600;
+}
 .ctxExportSep {
 	height: 1px;
 	background-color: var(--separator-accent2);
@@ -610,8 +616,29 @@ body {
 	30%  { box-shadow: inset 0 0 14px 0 hsla(140 90% 60% / 0.28); }
 	100% { box-shadow: inset 0 0 0 0 hsla(140 90% 60% / 0); }
 }
+/* nothing matched: the same sweep in red, so the result reads at a glance */
+.findMatchesFx.findMatchesFxNone {
+	background: linear-gradient(100deg,
+		hsla(5 80% 55% / 0) 0%,
+		hsla(5 85% 60% / 0.20) 45%,
+		hsla(5 95% 68% / 0.34) 50%,
+		hsla(5 85% 60% / 0.20) 55%,
+		hsla(5 80% 55% / 0) 100%);
+	background-size: 220% 100%;
+	background-repeat: no-repeat;
+}
+.HistoryTable tr.fxMatchPulseNone td {
+	animation: fxMatchPulseNone 0.8s ease-out;
+}
+@keyframes fxMatchPulseNone {
+	0%   { box-shadow: inset 0 0 0 0 hsla(5 90% 60% / 0); }
+	30%  { box-shadow: inset 0 0 14px 0 hsla(5 90% 60% / 0.26); }
+	100% { box-shadow: inset 0 0 0 0 hsla(5 90% 60% / 0); }
+}
 @media (prefers-reduced-motion: reduce) {
-	.findMatchesFx, .HistoryTable tr.fxMatchPulse td { animation: none; }
+	.findMatchesFx,
+	.HistoryTable tr.fxMatchPulse td,
+	.HistoryTable tr.fxMatchPulseNone td { animation: none; }
 }
 
 .intBtn3.ciphToolBtn { /* Color Controls / Edit Ciphers / Encoding, in the Cyphers tab */

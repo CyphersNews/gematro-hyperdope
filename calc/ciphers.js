@@ -466,7 +466,7 @@ cipherList = [
 
 	new cipher(
 		"Alphanumeric Satanic",
-		"CCRU",
+		"Alphanumeric",
 		32, 68, 62,
 		[48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90],
 		[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61],
@@ -477,7 +477,7 @@ cipherList = [
 
 	new cipher(
 		"Alphanumeric Primes",
-		"CCRU",
+		"Alphanumeric",
 		34, 53, 73,
 		[48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122],
 		[1,2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149],
@@ -488,7 +488,7 @@ cipherList = [
 
 	new cipher(
 		"Alphanumeric Squares",
-		"CCRU",
+		"Alphanumeric",
 		175, 19, 61,
 		[48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122],
 		[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400,441,484,529,576,625,676,729,784,841,900,961,1024,1089,1156,1225],
@@ -499,7 +499,7 @@ cipherList = [
 
 	new cipher(
 		"Alphanumeric Trigonal",
-		"CCRU",
+		"Alphanumeric",
 		101, 22, 64,
 		[48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122],
 		[0,1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190,210,231,253,276,300,325,351,378,406,435,465,496,528,561,595,630],
@@ -511,7 +511,7 @@ cipherList = [
 
 		new cipher(
 		"Archaic Alphanumeric",
-		"CCRU",
+		"Alphanumeric",
 		33, 67, 67,
 		[48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122],
 		[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,18,19,20,21,22,23,24,25,26,27,28,29,29,30,31,32,33],
@@ -525,7 +525,7 @@ cipherList = [
 
 	new cipher(
 		"Numeric QWERTY Primes", // cipher name
-		"CCRU", // category
+		"Alphanumeric", // category
 		44, 56, 62, // hue, saturation, lightness
 		[49,50,51,52,53,54,55,56,57,48,113,119,101,114,116,121,117,105,111,112,97,115,100,102,103,104,106,107,108,122,120,99,118,98,110,109], // starts with numeric characters followed by uppercase QWERTY, then lowercase in random order
 		[1,2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149], // values corresponding to each character
@@ -682,7 +682,7 @@ cipherList = [
 
 	new cipher(
 		"Alphanumeric Halves",
-		"CCRU",
+		"Alphanumeric",
 		59, 21, 57,
 		[48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122],
 		[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0],
@@ -2000,7 +2000,7 @@ function normaliseCipherCategories() {
 // tab order. Stable sort, so the order inside each category is untouched.
 // Anything not listed keeps its relative position at the end.
 var cipherCategoryOrder = [
-	"English", "Reverse", "Gematria", "CCRU", "Conspiracy",
+	"English", "Reverse", "Gematria", "CCRU", "Alphanumeric", "Conspiracy",
 	"Cryptography", "Extra", "Maths", "Archaic", "Thelemic",
 	"Languages", "Latin", "Hebrew", "Greek"
 ]
@@ -2041,7 +2041,8 @@ function sortCipherCategoriesAlphabetically() {
 // relative order it was saved with - which means arranging these in the file
 // alone would only ever be right for a first-time visitor.
 var cipherPinnedOrder = [
-	{ category: "Gematria", names: ["Single Reduction", "KV Exception", "SKV Exception", "Capitals Added"] }
+	{ category: "Gematria", names: ["Single Reduction", "KV Exception", "SKV Exception", "Capitals Added"] },
+	{ category: "Alphanumeric", names: ["Alphanumeric Satanic", "Alphanumeric Primes", "Alphanumeric Squares", "Alphanumeric Trigonal", "Archaic Alphanumeric", "Numeric QWERTY Primes", "Alphanumeric Halves"] }
 ]
 
 function pinCipherOrder() {

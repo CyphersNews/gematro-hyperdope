@@ -438,6 +438,36 @@
 .profileMiniBtn:disabled { opacity: 0.5; cursor: default; }
 .profileMiniBtn.profileMiniDanger { color: hsl(5 70% 68%); }
 .profileMiniBtn.profileMiniDanger:hover { background-color: hsla(5 60% 45% / 0.3); }
+/* the reset sits apart from the naming row below it, so the two are not read
+   as one control */
+/* Sized to sit on one line at the panel's width. Where it cannot - a phone -
+   balance splits it evenly rather than dropping one word onto the second
+   line, which is what looked wrong in the first place. */
+.profileNoteOneLine {
+	text-wrap: pretty;
+	text-wrap: balance;
+}
+
+.profileDefaultRow {
+	display: flex;
+	align-items: center;
+	gap: 0.6em;
+	flex-wrap: wrap;
+	padding: 0.5em 0 0.9em 0;
+	margin-bottom: 0.6em;
+	border-bottom: 1px solid var(--separator-accent2);
+}
+.profileMiniBtn.profileDefaultBtn { padding: 0.25em 0.7em; }
+.profilePresetSaveRow { padding-top: 0.2em; }
+
+/* armed: one more click carries it out. Replaces window.confirm, which the
+   browser suppresses, so the button has to say so itself. */
+.profileMiniBtn.profileArmed {
+	background-color: hsl(5 60% 42%);
+	border-color: hsl(5 65% 58%);
+	color: #fff;
+	font-weight: 600;
+}
 
 .profileBadge {
 	font-size: 78%;
@@ -711,17 +741,52 @@
 .pcGeo { padding-bottom: 0.4em; }
 
 .pcCanvasWrap { display: flex; justify-content: center; padding: 0.4em 0 0.6em 0; }
-#pcCanvas { max-width: 100%; }
+/* The element is square by rule, not by measurement. Setting both dimensions
+   in JS meant a later reflow could clamp the width through max-width while the
+   inline height stood, and the chart was drawn into a tall rectangle. */
+#pcCanvas {
+	display: block;
+	width: 100%;
+	max-width: 440px;
+	height: auto;
+	aspect-ratio: 1 / 1;
+}
 
 .pcSectionTitle {
 	font-weight: 600; color: var(--font-white-1);
 	border-bottom: 1px solid var(--separator-accent2);
 	padding-bottom: 0.25em; margin: 0.6em 0 0.4em 0;
 }
+/* Transits are a separate reading from the birth chart above them, and the two
+   were running together. A rule and real space make the break obvious. */
+#pcTransits {
+	margin-top: 1.1em;
+	padding-top: 0.9em;
+	border-top: 2px solid var(--border-accent);
+}
+#pcTransits .pcSectionTitle { margin-top: 0; }
+.pcAngles {
+	margin-top: 0.5em;
+	padding-top: 0.5em;
+	border-top: 1px solid var(--separator-accent2);
+}
 /* chart on the left, the reading beside it; stacks on a narrow panel */
 .pcSplit { display: flex; gap: 0.9em; align-items: flex-start; flex-wrap: wrap; }
-.pcSplit .pcCanvasWrap { flex: 0 0 auto; padding: 0; }
-.pcReading { flex: 0 1 auto; min-width: 0; }
+/* The reading is as wide as its longest line and no wider; the wheel expands
+   into whatever is left.
+   flex-basis is 0, not the content: with a content basis the wrapper is sized
+   by the canvas inside it and the canvas is sized from the wrapper, so each
+   waits on the other and the first paint settles on the wrong answer. */
+.pcSplit .pcCanvasWrap { flex: 1 1 0; padding: 0; min-width: 180px; justify-content: center; }
+/* Sized to its own lines, but capped: the notes underneath are full sentences
+   and were stretching the column to 404px, leaving the chart 250px and a
+   square drawn into a tall rectangle. */
+.pcReading { flex: 0 1 auto; min-width: 0; max-width: 44%; }
+/* The notes are sentences; the rows above them are short. Left to itself the
+   column takes the width of the longest sentence, which is what was squeezing
+   the chart. They wrap to the width the rows need instead. */
+.pcReading .profileNote { white-space: normal; max-width: 20em; }
+.pcAyan { font-style: italic; }
 
 /* the reading only needs to be as wide as its longest line, so it is sized to
    its content rather than stretching to fill whatever is left */
@@ -739,7 +804,7 @@
 .pcCell { display: flex; align-items: baseline; gap: 0.35em; font-size: 86%; cursor: help; white-space: nowrap; }
 .pcSign { color: var(--font-white-2); cursor: help; }
 .pcSign:hover { color: var(--font-white-1); }
-.pcAngles { display: flex; gap: 0.9em; padding-top: 0.5em; font-size: 84%; color: var(--font-white-1); font-weight: 600; }
+.pcAngles { display: flex; gap: 0.9em; font-size: 84%; font-weight: 600; }
 .pcAngles span { cursor: help; }
 
 /* one shared hover explanation, following the pointer */

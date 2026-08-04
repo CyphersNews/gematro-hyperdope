@@ -68,7 +68,7 @@ function applyCalcSettingsString(file, silentMode = false) {
 	// grouping, blank-category cleanup and alphabetical sorting are reapplied here
 	if (typeof applyCipherOrdering === "function") applyCipherOrdering()
 	document.getElementById("calcOptionsPanel").innerHTML = "" // clear menu panel
-	initCalc() // reinit
+	initCalc(false, true) // reinit, keeping the cipher selection just restored
 	updateTables() // update tables
 	updateInterfaceColor(true) // update interface color (first run)
 	// a restored blob can carry a picked rain colour, which drives the backdrop

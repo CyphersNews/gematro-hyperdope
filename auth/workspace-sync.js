@@ -169,10 +169,29 @@ function wsSyncStop() {
 $(document).ready(function () {
 	if (typeof exportCiphersDB !== "function") return // not the calculator page
 
+	// Reloading twice resets the settings. It has to happen here, at the end of
+	// the load, because it is a reset of whatever was just restored - running it
+	// earlier would only be undone by the restore that followed.
+	//
+	// The workspace is loaded first even on a double refresh, rather than
+	// skipped: the code rain settings are meant to survive, and for someone who
+	// has never pressed Save Settings the account row is the only place they
+	// exist. So it restores, then resets everything except the rain.
+	function wsDoubleRefreshReset() {
+		if (typeof calcDoubleRefresh === "undefined" || !calcDoubleRefresh) return false
+		if (typeof resetCalcToDefaults !== "function") return false
+		resetCalcToDefaults(false)
+		return true
+	}
+
 	onAuthReady(function (user) {
-		if (user === null) return
+		if (user === null) { wsDoubleRefreshReset(); return }
 		wsSyncEnabled = true
-		wsSyncLoad().then(wsSyncStart)
+		wsSyncLoad().then(function () {
+			// forced, so a single reload afterwards keeps the defaults rather
+			// than restoring the workspace the reset just replaced
+			if (wsDoubleRefreshReset()) return wsSyncSave(true)
+		}).then(wsSyncStart)
 	})
 
 	var client = getAuthClient()

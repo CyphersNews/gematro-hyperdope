@@ -217,14 +217,18 @@ function renderProfileChart() {
 				o += '<span class="profileRowActions">'
 				o += '<span class="profileWhen">' + authEsc(r.birth_date) + (r.time_known === false ? ' (no time)' : '') + '</span>'
 				o += '<button class="profileMiniBtn" onclick="pcOpen(&quot;' + r.id + '&quot;)">Open</button>'
-				o += '<button class="profileMiniBtn profileMiniDanger" onclick="pcDelete(&quot;' + r.id + '&quot;,&quot;' + nm + '&quot;)">&#215;</button>'
+				o += '<button class="profileMiniBtn profileMiniDanger" onclick="pcDelete(this,&quot;' + r.id + '&quot;)">&#215;</button>'
 				o += '</span></div>'
 			})
 			o += '</div>'
 		}
 
 		profileBody(o, tok)
-		pcDraw()
+		// on the next frame, so the row has actually laid out - measuring the
+		// space for the chart in the same tick as the markup is written gives
+		// the width the panel had a moment ago, not the one it has now
+		if (typeof requestAnimationFrame === "function") requestAnimationFrame(pcDraw)
+		else pcDraw()
 	}).catch(function (err) { profileBody(profileErr(err), tok) })
 }
 
@@ -250,13 +254,25 @@ function pcDraw() {
 		return
 	}
 
-	// smaller than it was: the reading now sits beside it rather than under it,
-	// so the chart only needs to be legible, not the whole width of the panel
+	// The chart takes the width the reading does not use.
+	//
+	// Measured from the row and the reading rather than from the canvas's own
+	// wrapper, which is circular: the wrapper is a flex item sized partly by
+	// the canvas inside it, so reading its width before sizing the canvas gives
+	// last frame's answer. When that came out too large, "max-width: 100%"
+	// clamped the rendered width while the inline height stood, and the chart
+	// was drawn into 250x440 - a square squashed to a tall rectangle.
+	var wrap = cvs.parentNode
 	var split = cvs.closest(".pcSplit")
-	var room = split ? split.clientWidth : 360
-	var size = Math.max(190, Math.min(Math.round(room * 0.46), 300))
+	var reading = split ? split.querySelector(".pcReading") : null
+
+	// CSS decides the box - width: 100% of the wrapper, capped, aspect-ratio 1 -
+	// so this only has to match the backing store to whatever that came out as.
+	// Nothing here sets a dimension, so nothing here can make it non-square.
+	var size = Math.round(cvs.getBoundingClientRect().width)
+	if (!size || size < 60) size = 300
+
 	var dpr = window.devicePixelRatio || 1
-	cvs.style.width = size + "px"; cvs.style.height = size + "px"
 	cvs.width = Math.floor(size * dpr); cvs.height = Math.floor(size * dpr)
 	var c = cvs.getContext("2d")
 	c.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -296,7 +312,7 @@ function pcDrawWheel(c, size, chart) {
 		c.beginPath(); c.moveTo(p0.x, p0.y); c.lineTo(p1.x, p1.y); c.stroke()
 
 		var mid = astroPolar(cx, cy, (rSign + rOuter) / 2, astroWheelAngle(i * 30 + 15, rot))
-		c.fillStyle = faint
+		c.fillStyle = pcSignColor(i)
 		c.fillText(astroSigns[i].glyph, mid.x, mid.y)
 	}
 
@@ -324,11 +340,11 @@ function pcDrawWheel(c, size, chart) {
 		var body = chart.bodies[b]
 		var pa = astroWheelAngle(body.lon, rot)
 		var pt = astroPolar(cx, cy, rSign - 14, pa)
-		c.fillStyle = astroPlanetColor(body.key)
+		c.fillStyle = pcPlanetColor(body.key)
 		c.font = "15px " + (window.coderainFontStack || "sans-serif")
 		c.fillText(body.glyph, pt.x, pt.y)
 		var tick = astroPolar(cx, cy, rInner, pa), tick2 = astroPolar(cx, cy, rInner + 6, pa)
-		c.strokeStyle = astroPlanetColor(body.key)
+		c.strokeStyle = pcPlanetColor(body.key)
 		c.beginPath(); c.moveTo(tick.x, tick.y); c.lineTo(tick2.x, tick2.y); c.stroke()
 	}
 
@@ -372,15 +388,15 @@ function pcDrawSquare(c, size, chart) {
 		c.strokeStyle = line
 		c.strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1)
 
-		c.fillStyle = faint
-		c.font = "11px " + (window.coderainFontStack || "sans-serif")
+		c.fillStyle = pcSignColor(i)
+		c.font = "12px " + (window.coderainFontStack || "sans-serif")
 		c.textBaseline = "top"
 		c.fillText(astroSigns[i].glyph, x + cell / 2, y + 4)
 
 		var here = inSign[i] || []
 		c.font = "13px " + (window.coderainFontStack || "sans-serif")
 		for (var k = 0; k < here.length; k++) {
-			c.fillStyle = astroPlanetColor(here[k].key)
+			c.fillStyle = pcPlanetColor(here[k].key)
 			c.fillText(here[k].glyph, x + cell / 2, y + 20 + k * 15)
 		}
 
@@ -435,6 +451,47 @@ var pcAspectMeaning = {
 	"Semisextile": "Mild adjustment.",
 	"Semisquare": "Low-level irritation that builds.",
 	"Sesquiquadrate": "Delayed friction, surfacing under pressure."
+}
+
+// Traditional colours for each body. pcPlanetColor() in astrology.js is
+// tuned for the 3D solar system - realistic planet surfaces, and no entry for
+// the Sun at all, which fell through to grey - so the chart carries its own.
+var pcPlanetColors = {
+	sun:     "hsl(45 95% 62%)",   // gold
+	moon:    "hsl(210 18% 86%)",  // silver
+	mercury: "hsl(30 70% 66%)",   // quicksilver orange
+	venus:   "hsl(150 55% 62%)",  // green
+	mars:    "hsl(5 80% 62%)",    // red
+	jupiter: "hsl(275 55% 70%)",  // royal purple
+	saturn:  "hsl(35 30% 55%)",   // lead brown
+	uranus:  "hsl(185 75% 62%)",  // electric turquoise
+	neptune: "hsl(225 70% 68%)",  // sea blue
+	pluto:   "hsl(345 45% 52%)"   // dark maroon
+}
+
+function pcPlanetColor(key) {
+	return pcPlanetColors[key] || "hsl(0 0% 80%)"
+}
+
+// One colour per sign rather than one per element: the elements only give four
+// and the wheel has twelve slices to tell apart.
+var pcSignColors = [
+	"hsl(0 75% 62%)",    // Aries - red
+	"hsl(120 40% 58%)",  // Taurus - green
+	"hsl(52 85% 65%)",   // Gemini - yellow
+	"hsl(200 35% 78%)",  // Cancer - moonlit silver-blue
+	"hsl(38 90% 60%)",   // Leo - gold
+	"hsl(95 35% 55%)",   // Virgo - earth green
+	"hsl(330 60% 72%)",  // Libra - rose
+	"hsl(350 60% 48%)",  // Scorpio - deep crimson
+	"hsl(280 60% 68%)",  // Sagittarius - purple
+	"hsl(25 25% 48%)",   // Capricorn - brown
+	"hsl(175 70% 58%)",  // Aquarius - teal
+	"hsl(255 45% 72%)"   // Pisces - violet
+]
+
+function pcSignColor(idx) {
+	return pcSignColors[idx] || "hsl(0 0% 70%)"
 }
 
 // Reading order. The luminaries first, then the personal planets, then the
@@ -521,14 +578,17 @@ function pcListPlanets(chart) {
 
 	if (chart.houses) {
 		o += '<div class="pcAngles">'
-		o += '<span' + pcTip("Ascendant - the sign rising on the eastern horizon at birth. How you meet the world.") + '>ASC ' + authEsc(astroSigns[chart.ascSign.idx].name) + '</span>'
-		o += '<span' + pcTip("Midheaven - the highest point of the chart. Career, reputation, what you are known for.") + '>MC ' + authEsc(astroSigns[chart.mcSign.idx].name) + '</span>'
+		o += '<span style="color:' + pcSignColor(chart.ascSign.idx) + '"' + pcTip("Ascendant - the sign rising on the eastern horizon at birth. How you meet the world.") + '>ASC ' + authEsc(astroSigns[chart.ascSign.idx].name) + '</span>'
+		o += '<span style="color:' + pcSignColor(chart.mcSign.idx) + '"' + pcTip("Midheaven - the highest point of the chart. Career, reputation, what you are known for.") + '>MC ' + authEsc(astroSigns[chart.mcSign.idx].name) + '</span>'
 		o += '</div>'
 	} else {
 		o += '<div class="profileNote">No birth time, so no houses and no Ascendant. Everything above is still accurate to a fraction of a degree, apart from the Moon.</div>'
 	}
 	if (chart.sidereal) {
-		o += '<div class="profileNote">Sidereal, Lahiri ayanamsa &mdash; ' + chart.ayanamsa.toFixed(2) + '&deg; behind tropical at this date.</div>'
+		// Short enough not to set the column's width. The full sentence was the
+		// widest thing in the reading, so it alone decided how much room was
+		// left for the chart beside it.
+		o += '<div class="profileNote pcAyan">Lahiri ayanamsa ' + chart.ayanamsa.toFixed(2) + '&deg;</div>'
 	}
 	host.innerHTML = o
 }
@@ -536,11 +596,11 @@ function pcListPlanets(chart) {
 function pcBodyLine(b) {
 	var tip = (pcPlanetMeaning[b.key] || "") + (b.retro ? " Retrograde: turned inward, working in reverse." : "")
 	var o = '<div class="pcCell"' + pcTip(tip) + '>'
-	o += '<span class="pcGlyph" style="color:' + astroPlanetColor(b.key) + '">' + b.glyph + '</span>'
+	o += '<span class="pcGlyph" style="color:' + pcPlanetColor(b.key) + '">' + b.glyph + '</span>'
 	o += '<span class="pcBody">' + authEsc(b.name) + '</span>'
 	var signName = astroSigns[b.signIdx].name
 	o += '<span class="pcPos">' + b.deg + '&deg;' + (b.min < 10 ? "0" : "") + b.min + "'</span>"
-	o += '<span class="pcSign"' + pcTip(signName + " - " + (pcSignMeaning[signName] || "")) + '>' + authEsc(signName) + '</span>'
+	o += '<span class="pcSign" style="color:' + pcSignColor(b.signIdx) + '"' + pcTip(signName + " - " + (pcSignMeaning[signName] || "")) + '>' + authEsc(signName) + '</span>'
 	if (b.retro) o += '<span class="pcRetro">&#8479;</span>'
 	o += '</div>'
 	return o
@@ -564,10 +624,10 @@ function pcListTransits(chart) {
 			" Transiting " + h.t.name + " is contacting your natal " + h.n.name + ". " +
 			(pcPlanetMeaning[h.n.key] || "")
 		o += '<div class="pcTransit"' + pcTip(tip) + '>'
-		o += '<span class="pcGlyph" style="color:' + astroPlanetColor(h.t.key) + '">' + h.t.glyph + '</span>'
+		o += '<span class="pcGlyph" style="color:' + pcPlanetColor(h.t.key) + '">' + h.t.glyph + '</span>'
 		o += '<span class="pcBody">' + authEsc(h.t.name) + '</span>'
 		o += '<span class="pcAspect" style="color:' + astroAspectColor(h.aspect.ang) + '">' + authEsc(h.aspect.name) + '</span>'
-		o += '<span class="pcGlyph" style="color:' + astroPlanetColor(h.n.key) + '">' + h.n.glyph + '</span>'
+		o += '<span class="pcGlyph" style="color:' + pcPlanetColor(h.n.key) + '">' + h.n.glyph + '</span>'
 		o += '<span class="pcBody">natal ' + authEsc(h.n.name) + '</span>'
 		o += '<span class="pcOrb">' + h.orb.toFixed(1) + '&deg;</span>'
 		o += '</div>'
@@ -729,8 +789,8 @@ function pcNew() {
 	renderProfileChart()
 }
 
-function pcDelete(id, name) {
-	if (!window.confirm('Delete the saved chart "' + name + '"?')) return
+function pcDelete(btn, id) {
+	if (!profileConfirmClick(btn)) return
 	chartDelete(id).then(function () {
 		if (pcEditingId === id) { pcEditingId = null }
 		renderProfileChart()
