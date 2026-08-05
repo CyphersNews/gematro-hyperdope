@@ -95,6 +95,61 @@ function buildCodeRainGlyphs() {
 	}
 }
 
+// ---- the film's alphabet ----------------------------------------------
+//
+// The title sequence is half-width katakana with a scattering of digits and a
+// few latin capitals, and the whole field is mirrored - which is why the
+// katakana never quite read as katakana. matrixFilm() does the mirroring with
+// one transform for the frame rather than per glyph.
+
+var coderainFilmGlyphs = []
+
+function buildFilmGlyphs() {
+	if (coderainFilmGlyphs.length) return
+
+	var cvs = document.createElement("canvas")
+	cvs.width = 22; cvs.height = 22
+	var probe = cvs.getContext("2d", { willReadFrequently: true })
+	probe.font = "16px " + coderainFontStack
+	probe.textBaseline = "top"
+	probe.fillStyle = "#fff"
+	var blankSig = coderainGlyphSignature(probe, null)
+	var tofuSig = coderainGlyphSignature(probe, "￿")
+
+	// half-width katakana first; if the font has none, full-width stands in
+	var kata = [0xFF66, 0xFF9D]
+	var sig = coderainGlyphSignature(probe, String.fromCodePoint(0xFF76))
+	if (sig === tofuSig || sig === blankSig) kata = [0x30A1, 0x30F6]
+
+	var c
+	for (c = kata[0]; c <= kata[1]; c++) coderainFilmGlyphs.push(String.fromCodePoint(c))
+	for (c = 0x30; c <= 0x39; c++) coderainFilmGlyphs.push(String.fromCharCode(c)) // digits
+	// the handful of latin and symbols visible in the sequence
+	var extra = "ZTHEKMNPRSUVWXY:=*+-<>|_"
+	for (c = 0; c < extra.length; c++) coderainFilmGlyphs.push(extra.charAt(c))
+
+	if (!coderainFilmGlyphs.length) {
+		for (c = 0x30; c <= 0x39; c++) coderainFilmGlyphs.push(String.fromCharCode(c))
+	}
+}
+
+// The film's green, hsl(135 100% 50%) - #00FF41. Used unless the rain colour
+// has actually been picked, in which case the slider and the swatch drive this
+// style too.
+//
+// Only the hue and saturation are taken from the pick. The shared lightness is
+// tuned for rain sitting behind a lit page - 19% - and this style is drawn on
+// black, where that is very nearly unlit. Saturation is floored for the same
+// reason: the default 20% is right for a texture behind text and reads as grey
+// against black.
+function coderainFilmColor() {
+	if (typeof coderainColorPicked !== "undefined" && coderainColorPicked) {
+		var c = getCodeRainColor()
+		return { h: c.h, s: Math.max(c.s, 55), l: 50 }
+	}
+	return { h: 135, s: 100, l: 50 }
+}
+
 // ---- colour -----------------------------------------------------------
 
 // When optCoderainFollowCipher is on, the rain borrows the hue and saturation
@@ -135,6 +190,7 @@ var coderainReducedMotion = false
 function coderainFrameInterval() {
 	if (coderainStyle === "retro") return 50
 	if (coderainStyle === "ccru") return 28
+	if (coderainStyle === "matrix") return 33
 	return 33
 }
 
@@ -176,6 +232,15 @@ function initCodeRain() {
 		coderainFadeAlpha = 0.16
 		coderainSpeedMin = 0.70
 		coderainSpeedVar = 0.85
+	} else if (coderainStyle === "matrix") {
+		buildFilmGlyphs()
+		// tight columns and long trails: on screen the film's columns run most
+		// of the height, which a fast fade cannot produce
+		coderainCellW = 14
+		coderainCellH = 16
+		coderainFadeAlpha = 0.055
+		coderainSpeedMin = 0.40
+		coderainSpeedVar = 0.85
 	} else {
 		buildCodeRainGlyphs()
 		// tighter grid and longer trails than before, so the standard style
@@ -202,8 +267,14 @@ function initCodeRain() {
 	// of filled: it fades by erasing alpha, so the page background showing
 	// through #canv is the background, and priming the canvas opaque would just
 	// leave a full-screen layer to erode away over the first few seconds.
+	// Matrix is black, not "the page background with rain on it" - the film has
+	// no other colour in frame, and letting the theme show through behind it is
+	// the one thing that stops it reading as the film.
 	if (coderainStyle === "ccru") {
 		ctx.fillStyle = coderainCCRUBg(1)
+		ctx.fillRect(0, 0, w, h)
+	} else if (coderainStyle === "matrix") {
+		ctx.fillStyle = "#000"
 		ctx.fillRect(0, 0, w, h)
 	} else {
 		ctx.clearRect(0, 0, w, h)
@@ -249,6 +320,7 @@ function matrix() {
 	if (!ctx) return
 	if (coderainStyle === "retro") matrixRetro()
 	else if (coderainStyle === "ccru") matrixCCRU()
+	else if (coderainStyle === "matrix") matrixFilm()
 	else matrixNew()
 }
 
@@ -411,6 +483,100 @@ function matrixNew() {
 	ctx.globalAlpha = 1
 }
 
+// ---- the film ---------------------------------------------------------
+//
+// What actually makes the title sequence recognisable, in order of how much it
+// matters:
+//
+//   1. the leading glyph is white, not bright green. Everything behind it is
+//      green. Nothing else in the sequence is any other colour.
+//   2. the whole field is mirrored, which is why the katakana look like
+//      katakana until you try to read them.
+//   3. glyphs in the trail change while they fall, so a column shimmers rather
+//      than sliding down as a fixed word.
+//   4. black. Not dark - black.
+//
+// Trails are state and the frame is repainted, the same as matrixNew(): see
+// the note there for why a multiplicative fade can never reach zero. Heads are
+// drawn in a second pass so the glow is set up once for the frame instead of
+// switched on and off a few thousand times.
+function matrixFilm() {
+
+	var maxRow = h / coderainCellH
+
+	// mirrored in one go, rather than per glyph. x' = w - x, so the columns
+	// mirror with the characters and the whole field reads reversed.
+	ctx.setTransform(-coderainDPR, 0, 0, coderainDPR, w * coderainDPR, 0)
+	ctx.globalCompositeOperation = "source-over"
+	ctx.shadowBlur = 0
+	ctx.globalAlpha = 1
+	ctx.fillStyle = "#000"
+	ctx.fillRect(0, 0, w, h)
+
+	var col = coderainFilmColor()
+	var body = "hsl("+col.h+","+col.s+"%,"+col.l+"%)"
+	var head = "hsl("+col.h+",68%,88%)" // white with just enough green left in it
+	var glow = "hsl("+col.h+","+col.s+"%,"+Math.min(col.l + 12, 62)+"%)"
+
+	ctx.font = "500 15px " + coderainFontStack
+	ctx.textBaseline = "top"
+
+	var fLen = coderainFilmGlyphs.length
+	var slow = coderainReducedMotion ? 0.25 : 1
+	var decay = 1 - coderainFadeAlpha
+	var heads = []
+
+	ctx.fillStyle = body
+	for (var i = 0; i < coderainDrops.length; i++) {
+		var drop = coderainDrops[i]
+		var prevRow = Math.floor(drop.row)
+		drop.row += drop.speed * slow
+		var newRow = Math.floor(drop.row)
+
+		for (var s = prevRow; s < newRow; s++) {
+			drop.glyphs.unshift(coderainFilmGlyphs[rndInt(0, fLen - 1)])
+			if (drop.glyphs.length > drop.trail) drop.glyphs.pop()
+		}
+
+		// one glyph somewhere down the column swaps out most frames - the
+		// shimmer, and cheap at one write per column
+		if (drop.glyphs.length > 2 && Math.random() < 0.5) {
+			drop.glyphs[1 + rndInt(0, drop.glyphs.length - 2)] = coderainFilmGlyphs[rndInt(0, fLen - 1)]
+		}
+
+		var x = i * coderainCellW
+		for (var k = 0; k < drop.glyphs.length; k++) {
+			var row = newRow - k
+			if (row < 0) break
+			if (row > maxRow) continue
+
+			var a = Math.pow(decay, k / drop.speed)
+			if (a < CODERAIN_MIN_ALPHA) break
+			if (k === 0) { heads.push({ g: drop.glyphs[0], x: x, y: row * coderainCellH }); continue }
+			ctx.globalAlpha = a
+			ctx.fillText(drop.glyphs[k], x, row * coderainCellH)
+		}
+
+		if (newRow - drop.trail > maxRow) {
+			drop.row = -Math.random() * maxRow * 1.05
+			drop.speed = coderainSpeed()
+			drop.trail = coderainTrailRows(drop.speed)
+			drop.glyphs = []
+		}
+	}
+
+	// the white leads, last and lit
+	ctx.globalAlpha = 1
+	ctx.fillStyle = head
+	ctx.shadowColor = glow
+	ctx.shadowBlur = 8
+	for (var n = 0; n < heads.length; n++) ctx.fillText(heads[n].g, heads[n].x, heads[n].y)
+	ctx.shadowBlur = 0
+
+	ctx.setTransform(coderainDPR, 0, 0, coderainDPR, 0, 0) // leave it as found
+	ctx.globalAlpha = 1
+}
+
 // The original rain: uniform column speed, matrix-font glyphs and a glow
 // shadow. The fade erases alpha rather than painting black over the top - see
 // matrixNew() for why - which keeps the same trail length without leaving the
@@ -500,6 +666,7 @@ function coderainStateLabel() {
 	if (!optMatrixCodeRain) return coderainGlyphIcon + " Off"
 	if (coderainStyle === "retro") return coderainGlyphIcon + " Retro"
 	if (coderainStyle === "ccru") return coderainGlyphIcon + " CCRU"
+	if (coderainStyle === "matrix") return coderainGlyphIcon + " Matrix"
 	return coderainGlyphIcon + " On"
 }
 
@@ -508,11 +675,12 @@ function updateCodeRainToggleBtn() {
 	var btn = document.getElementById("bgToggleBtn")
 	if (btn !== null) {
 		btn.textContent = coderainStateLabel()
-		btn.title = "Background code rain: " + (optMatrixCodeRain ? coderainStyle : "off") + " (click to cycle Off, On, Retro, CCRU)"
-		btn.classList.remove("bgToggleOff", "bgToggleRetro", "bgToggleCCRU")
+		btn.title = "Background code rain: " + (optMatrixCodeRain ? coderainStyle : "off") + " (click to cycle On, Matrix, CCRU, Retro, Off)"
+		btn.classList.remove("bgToggleOff", "bgToggleRetro", "bgToggleCCRU", "bgToggleMatrix")
 		if (!optMatrixCodeRain) btn.classList.add("bgToggleOff")
 		else if (coderainStyle === "retro") btn.classList.add("bgToggleRetro")
 		else if (coderainStyle === "ccru") btn.classList.add("bgToggleCCRU")
+		else if (coderainStyle === "matrix") btn.classList.add("bgToggleMatrix")
 	}
 	var chk = document.getElementById("chkbox_MCR")
 	if (chk !== null) chk.checked = optMatrixCodeRain
@@ -724,11 +892,16 @@ function coderainIntensityPanel() {
 	return o
 }
 
-// nav button: Off -> On (new) -> Retro -> CCRU -> Off
+// nav button: On (standard) -> Matrix -> CCRU -> Retro -> Off -> back round
+//
+// Ordered by how far each one is from the calculator's own look, so clicking
+// through walks steadily away from the default rather than jumping about:
+// standard, then the film, then CCRU's green wash, then the original.
 function toggleCodeRainBtn() {
 	if (!optMatrixCodeRain) { optMatrixCodeRain = true; coderainStyle = "new" }
-	else if (coderainStyle === "new") { coderainStyle = "retro" }
-	else if (coderainStyle === "retro") { coderainStyle = "ccru" }
+	else if (coderainStyle === "new") { coderainStyle = "matrix" }
+	else if (coderainStyle === "matrix") { coderainStyle = "ccru" }
+	else if (coderainStyle === "ccru") { coderainStyle = "retro" }
 	else { optMatrixCodeRain = false; coderainStyle = "new" }
 	toggleCodeRain()
 }

@@ -70,8 +70,11 @@ function renderAuthNav() {
 
 	var o = ""
 	if (authUser === null) {
-		o += '<a class="authNavLink" href="login.html">Login</a>'
-		o += '<a class="authNavLink authNavPrimary" href="register.html">Register</a>'
+		// One way in, not two. Login is the door; the sign-in page carries its own
+		// "No account yet? Create one", so nobody without an account is stuck -
+		// and the pair side by side made a visitor choose before they had any
+		// reason to care which one they were.
+		o += '<a class="authNavLink authNavPrimary" href="login.html">Login</a>'
 	} else {
 		// On the calculator the name opens the profile panel in place. On the
 		// auth pages there is no panel to open, so it stays a link to the full

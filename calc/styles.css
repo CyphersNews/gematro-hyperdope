@@ -922,6 +922,11 @@ body {
 	opacity: 1;
 	color: hsl(320 70% 70%);
 }
+.dropbtn.bgToggleBtn.bgToggleMatrix { /* fifth state - the film's own green */
+	opacity: 1;
+	color: hsl(135 100% 62%);
+	text-shadow: 0 0 6px hsl(135 100% 45% / 0.55);
+}
 .ciphCheckbox {
 }
 .ciphCheckboxLabel {
@@ -1526,7 +1531,19 @@ body {
 	margin: 0em 0em 0em 0.3em;
 	min-width: 30px;
 	max-width: 30px;
-	color: var(--border-accent);
+	/* was --border-accent, which is the colour of the outline around it - the
+	   glyph inside was as dim as the box it sat in and read as decoration */
+	color: var(--font-white-3);
+	cursor: pointer;
+	line-height: 0;
+	vertical-align: middle;
+}
+#enterPhraseBtn:hover { color: var(--font-white-1); }
+#enterPhraseBtn svg {
+	width: 17px;
+	height: 17px;
+	display: inline-block;
+	vertical-align: middle;
 }
 #calcNotification {
 	position: absolute;
@@ -1675,6 +1692,17 @@ body {
 }
 .dropdown-content-opt {
 	padding: 0.5em;
+}
+/* Heading inside the About menu, separating the Cyphers links from other
+   people's calculators. A rule above it rather than a gap, because the buttons
+   are already spaced and another gap would not read as a break. */
+.aboutGroupLabel {
+	margin: 0.9em 0 0.55em 0;
+	padding-top: 0.7em;
+	border-top: 1px solid var(--separator-accent2);
+	font-size: 85%;
+	font-weight: 600;
+	color: var(--font-white-3);
 }
 
 /* Credit line at the top of the About menu - text, not a link */

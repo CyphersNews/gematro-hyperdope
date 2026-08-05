@@ -296,6 +296,17 @@ $(document).ready(function(){
 			"_"+getTimestamp()+"_table.png";
 		openImageWindow(".HistoryTable", fileName, 2.0);
 	});
+	// The chart is a canvas, so it is read straight off rather than put through
+	// html2canvas: the pixels are already there, and re-rasterising a canvas
+	// only costs sharpness. The 3D view exports whatever angle it is turned to.
+	$("body").on("click", "#btn-astro-chart-png", function () {
+		var cvs = document.getElementById("astroCanvas")
+		if (cvs === null) { displayCalcNotification("Open the Astrology tab first", 2200); return }
+		var d = [$("#astroY").val(), $("#astroM").val(), $("#astroD").val()].join("-")
+		var fileName = d + "_" + (astroViewMode === "3d" ? "3d" : "2d") + "_astrology_chart.png"
+		printCanvasImage(cvs, fileName, "btn-astro-chart-png")
+	});
+
 	$("body").on("click", "#btn-date-calc-png", function () {
 		$('#dateDesc1Area').html('<span class="dateDescription">'+dateDesc1Saved+'</span>') // input to fixed text
 		$('#dateDesc2Area').html('<span class="dateDescription">'+dateDesc2Saved+'</span>')

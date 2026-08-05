@@ -482,12 +482,33 @@ function updateHistoryTableAutoHlt() {
 }
 
 // ==================================================================
-// Match-weighted ordering of the History Table
+// Match ordering of the History Table
 //
-// Called after "Find Matches" has filled avail_match. Groups phrases by the
-// matched value they share, then floats the biggest groups to the top so the
-// most-matched phrases sit stacked together instead of scattered down the list.
+// Called after "Find Matches" has filled avail_match. Phrases that matched
+// nothing drop out; the rest are ordered by the first column of the table -
+// the leading enabled cipher - smallest value first, then alphabetically where
+// that column ties.
 // Returns an array of sHistory indices, or null when there is nothing to sort.
+
+// Alphabetical, on the phrase as it is read rather than as it is stored: a
+// bracketed comment is a note to yourself, so "cat [checked]" files under c
+// with the other cats and not somewhere else entirely. Case is ignored,
+// accents sort with their plain letters, and digit runs compare as numbers so
+// "phrase 9" comes before "phrase 10".
+function histPhraseText(p) {
+	return String(p === undefined || p === null ? "" : p)
+		.replace(/\[.*?\]/g, " ").replace(/\s+/g, " ").trim()
+}
+
+function histPhraseCompare(a, b) {
+	var x = histPhraseText(a), y = histPhraseText(b)
+	try {
+		return x.localeCompare(y, undefined, { sensitivity: "base", numeric: true })
+	} catch (e) { // engine without the options argument
+		x = x.toLowerCase(); y = y.toLowerCase()
+		return (x < y) ? -1 : (x > y) ? 1 : 0
+	}
+}
 
 function buildHistMatchOrder() {
 
@@ -527,60 +548,49 @@ function buildHistMatchOrder() {
 		phraseVals.push(mine)
 	}
 
-	// score each phrase, and pick the value that best represents it
+	// Which phrases earned a place in the result: a phrase is a match only if it
+	// shares one of its values with another phrase. A value nothing else holds
+	// is not a match, however many ciphers produce it.
 	var scored = []
 	var unmatched = []
 	for (i = 0; i < phraseVals.length; i++) {
 		if (phraseVals[i].length == 0) { unmatched.push(i); continue }
 
-		var score = 0
-		var primary = phraseVals[i][0]
-		var primaryCount = 0
+		var shared = false
 		for (y = 0; y < phraseVals[i].length; y++) {
-			v = phraseVals[i][y]
-			var c = valPhrases[v]
-			if (c < 2) continue // a value only this phrase holds is not a match
-			score += c
-			if (c > primaryCount || (c == primaryCount && v < primary)) { primary = v; primaryCount = c }
+			if (valPhrases[phraseVals[i][y]] >= 2) { shared = true; break }
 		}
 
-		if (primaryCount < 2) { unmatched.push(i); continue }
-		scored.push({ idx: i, score: score, hits: phraseVals[i].length, primary: primary, primaryCount: primaryCount })
+		if (!shared) { unmatched.push(i); continue }
+		scored.push({ idx: i })
 	}
 
 	if (scored.length == 0) return null
 
-	// bucket by shared value so those rows end up adjacent
-	var groups = {}
-	for (i = 0; i < scored.length; i++) {
-		if (groups[scored[i].primary] === undefined) groups[scored[i].primary] = []
-		groups[scored[i].primary].push(scored[i])
+	// Ordered by the first column of the table - the leading enabled cipher -
+	// smallest value first, then alphabetically where that column ties.
+	//
+	// rows[] holds the values in enabled-cipher order, so column 0 is the
+	// leftmost one on screen. Sorting on the number you are actually reading is
+	// the point: grouping by the value a phrase happened to share with the most
+	// others put rows in an order that could not be followed down the column in
+	// front of you, because the number driving it was often in a different one.
+	var leadValue = function (idx) {
+		var v = rows[idx][0]
+		// wheel ciphers substitute symbols and have no value to sort on, so
+		// their rows fall to the end rather than scattering through the middle
+		return (typeof v === "number" && isFinite(v)) ? v : Infinity
 	}
 
-	var groupList = []
-	for (var key in groups) {
-		if (!groups.hasOwnProperty(key)) continue
-		var members = groups[key]
-		members.sort(function(a, b) {
-			if (b.score !== a.score) return b.score - a.score
-			if (b.hits !== a.hits) return b.hits - a.hits
-			return a.idx - b.idx // stable: keep original order for genuine ties
-		})
-		var top = 0
-		for (i = 0; i < members.length; i++) if (members[i].score > top) top = members[i].score
-		groupList.push({ value: Number(key), members: members, size: members.length, top: top })
-	}
-
-	groupList.sort(function(a, b) {
-		if (b.size !== a.size) return b.size - a.size // biggest stack first
-		if (b.top !== a.top) return b.top - a.top     // then strongest phrase
-		return a.value - b.value
+	scored.sort(function(a, b) {
+		var va = leadValue(a.idx), vb = leadValue(b.idx)
+		if (va !== vb) return va - vb
+		var c = histPhraseCompare(sHistory[a.idx], sHistory[b.idx])
+		return (c !== 0) ? c : a.idx - b.idx // identical text: order entered
 	})
 
 	var order = []
-	for (i = 0; i < groupList.length; i++) {
-		for (y = 0; y < groupList[i].members.length; y++) order.push(groupList[i].members[y].idx)
-	}
+	for (i = 0; i < scored.length; i++) order.push(scored[i].idx)
 
 	// A cipher that contributed no matched value among the surviving phrases is
 	// dead weight in the result: its column is all misses. Work out which of

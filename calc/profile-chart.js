@@ -63,7 +63,6 @@ function pcDefaultForm() {
 		y: now.getFullYear() - 30, m: 1, d: 1,
 		hh: 12, mm: 0,
 		timeKnown: true,
-		usePlace: true,
 		place: "", lat: 51.5074, lon: -0.1278, tz: 0
 	}
 }
@@ -91,7 +90,6 @@ function pcCapture() {
 
 function pcSetZodiac(z) { pcCapture(); pcZodiac = z; renderProfileChart() }
 function pcToggleTime() { pcCapture(); pcForm.timeKnown = !pcForm.timeKnown; renderProfileChart() }
-function pcTogglePlace() { pcCapture(); pcForm.usePlace = !pcForm.usePlace; renderProfileChart() }
 function pcRedraw() { pcCapture(); pcDraw() }
 
 // ---- computing ---------------------------------------------------------
@@ -102,8 +100,8 @@ function pcRedraw() { pcCapture(); pcDraw() }
 function pcBuildChart(f, zodiac) {
 	var hh = f.timeKnown ? f.hh : 12
 	var mm = f.timeKnown ? f.mm : 0
-	var ut = hh + mm / 60 - (f.usePlace ? f.tz : 0)
-	var loc = (f.usePlace && f.timeKnown) ? { lat: f.lat, lon: f.lon, system: "whole" } : null
+	var ut = hh + mm / 60 - f.tz
+	var loc = f.timeKnown ? { lat: f.lat, lon: f.lon, system: "whole" } : null
 	var chart = astroChart(f.y, f.m, f.d, ut, loc)
 	return (zodiac === "sidereal") ? astroToSidereal(chart) : chart
 }
@@ -165,6 +163,16 @@ function renderProfileChart() {
 		o += '<span class="profileWhen">Both are worked out from the same details &mdash; switch freely, nothing is re-entered.</span>'
 		o += '</div>'
 
+		// Printing is its own row: the first two buttons above choose what you
+		// are reading, these three choose what you are saving, and mixing them
+		// made the row read as five ways of looking at the chart.
+		o += '<div class="pcPrintRow">'
+		o += '<span class="pcPrintLab">&#128438; Print</span>'
+		o += '<button class="intBtn3 pcZodBtn pcPrintBtn" onclick="pcPrintChart()" title="The wheel on its own, in the zodiac showing now">Chart</button>'
+		o += '<button class="intBtn3 pcZodBtn pcPrintBtn" onclick="pcPrintPlanets()" title="The planet positions on their own, in the zodiac showing now">Planets</button>'
+		o += '<button class="intBtn3 pcZodBtn pcPrintBtn" onclick="pcPrintBoth()" title="Tropical and sidereal side by side, each with its positions">Both charts</button>'
+		o += '</div>'
+
 		o += '<div class="pcFields">'
 		o += '<div class="pcRow"><label class="pcLab">Born</label>'
 		o += pcField("pcY", "Year", f.y, 'pcInY', "")
@@ -172,6 +180,11 @@ function renderProfileChart() {
 		o += pcField("pcD", "Day", f.d, '', ' min="1" max="31"')
 		o += '</div>'
 
+		// Time and Place are separate blocks, not two rows in a stack. They ran
+		// together before - the unknown-time tickbox sat at the end of the Time
+		// row and the birthplace tickbox at the start of the next, so the two
+		// read as one long line of options belonging to neither.
+		o += '<div class="pcBlock">'
 		o += '<div class="pcRow"><label class="pcLab">Time</label>'
 		if (f.timeKnown) {
 			o += pcField("pcHH", "Hour", f.hh, '', ' min="0" max="23"')
@@ -179,25 +192,27 @@ function renderProfileChart() {
 		} else {
 			o += '<span class="profileWhen pcUnknown">Using noon &mdash; no houses or Ascendant</span>'
 		}
+		o += '</div>'
+		o += '<div class="pcRow pcRowSub"><label class="pcLab"></label>'
 		o += '<label class="pcChk pcChkBox"><input type="checkbox"' + (f.timeKnown ? '' : ' checked') + ' onchange="pcToggleTime()"> I do not know my birth time</label>'
 		o += '</div>'
-
-		o += '<div class="pcRow"><label class="pcLab">Place</label>'
-		o += '<label class="pcChk pcChkBox"><input type="checkbox"' + (f.usePlace ? ' checked' : '') + ' onchange="pcTogglePlace()"> Use a birthplace</label>'
 		o += '</div>'
 
-		if (f.usePlace) {
-			o += '<div class="pcRow"><label class="pcLab"></label>'
-			o += '<input type="text" id="pcPlace" class="pcIn pcInPlace" value="' + authEsc(f.place) + '" placeholder="e.g. Brooklyn, New York" oninput="pcRedraw()">'
-			o += '<button class="profileMiniBtn" onclick="pcLookupPlace()">Find</button>'
-			o += '</div>'
-			o += '<div id="pcGeo" class="pcGeo"></div>'
-			o += '<div class="pcRow"><label class="pcLab"></label>'
-			o += pcField("pcLat", "Latitude", f.lat, '', ' step="0.0001"')
-			o += pcField("pcLon", "Longitude", f.lon, '', ' step="0.0001"')
-			o += pcField("pcTZ", "UTC offset", f.tz, '', ' step="0.25"')
-			o += '</div>'
-		}
+		// No tickbox: the chart needs a birthplace either way, so offering to
+		// turn it off only ever produced a worse chart. Somewhere is always
+		// filled in, and it can simply be changed.
+		o += '<div class="pcBlock">'
+		o += '<div class="pcRow"><label class="pcLab">Place</label>'
+		o += '<input type="text" id="pcPlace" class="pcIn pcInPlace" value="' + authEsc(f.place) + '" placeholder="e.g. Brooklyn, New York" oninput="pcRedraw()">'
+		o += '<button class="profileMiniBtn" onclick="pcLookupPlace()">Find</button>'
+		o += '</div>'
+		o += '<div id="pcGeo" class="pcGeo"></div>'
+		o += '<div class="pcRow pcRowSub"><label class="pcLab"></label>'
+		o += pcField("pcLat", "Latitude", f.lat, '', ' step="0.0001"')
+		o += pcField("pcLon", "Longitude", f.lon, '', ' step="0.0001"')
+		o += pcField("pcTZ", "UTC offset", f.tz, '', ' step="0.25"')
+		o += '</div>'
+		o += '</div>'
 		o += '</div>'
 
 		// chart on the left, the reading beside it
@@ -286,6 +301,223 @@ function pcDraw() {
 }
 
 function pcInk(v, fallback) { return astroCssVar(v, fallback) }
+
+// ---- printing -----------------------------------------------------------
+//
+// Three things worth having as an image: the chart on its own, the planet
+// positions on their own, and both zodiacs beside each other for comparison -
+// which the tab itself cannot show, because on screen a chart wants the whole
+// width and only one zodiac is up at a time.
+//
+// All of it is drawn onto a canvas rather than screenshotted through
+// html2canvas. The wheel already is a canvas, and drawing the positions the
+// same way means the two can share one image with a common background, which
+// a screenshot of two separate elements cannot do.
+//
+// Everything is laid out at a fixed size, so the file is identical whether it
+// was made on a phone or a desktop.
+
+var PC_PRINT = { pad: 30, head: 54, gap: 34, size: 460, line: 21, listW: 300 }
+
+function pcPrintFam() { return pcInk("--font-family", "Roboto Mono") + ", monospace" }
+function pcPad(n) { return (Number(n) < 10 ? "0" : "") + Number(n) }
+
+function pcBornLine(f) {
+	return f.y + "-" + pcPad(f.m) + "-" + pcPad(f.d) +
+		(f.timeKnown ? " " + pcPad(f.hh) + ":" + pcPad(f.mm) : " (time unknown)") +
+		"  ·  " + ((f.place || "").trim() || (f.lat + ", " + f.lon))
+}
+
+// One planet as a row of columns, so the names, degrees and signs line up down
+// the list instead of wandering with the length of the word before them.
+function pcDrawBody(c, b, x, y, fam) {
+	c.textAlign = "left"
+	c.font = "17px " + fam
+	c.fillStyle = pcPlanetColor(b.key)
+	c.fillText(b.glyph, x, y)
+
+	c.font = "13px " + fam
+	c.fillStyle = pcInk("--font-white-2", "#ccc")
+	c.fillText(b.name, x + 24, y)
+	c.fillText(b.deg + "°" + pcPad(b.min) + "'", x + 108, y)
+
+	c.fillStyle = pcSignColor(b.signIdx)
+	c.fillText(astroSigns[b.signIdx].name, x + 168, y)
+
+	if (b.house) {
+		c.fillStyle = pcInk("--font-white-4", "#889")
+		c.fillText("H" + b.house, x + 248, y)
+	}
+	if (b.retro) {
+		c.fillStyle = "hsl(15 70% 62%)"
+		c.fillText("℞", x + 278, y)
+	}
+}
+
+// Draws the positions block and returns how tall it turned out, so whatever
+// comes next knows where it starts.
+function pcDrawPositions(c, chart, x, y, fam) {
+	var line = PC_PRINT.line
+	var bodies = chart.bodies.slice()
+	// Same order the reading uses: Sun and Moon first, not alphabetical. The
+	// on-screen version groups these by house; a printed column reads better
+	// straight through, so the house is a column instead of a heading.
+	bodies.sort(function (a, b) { return pcRankOf(a) - pcRankOf(b) })
+
+	var yy = y
+	for (var i = 0; i < bodies.length; i++) {
+		pcDrawBody(c, bodies[i], x, yy, fam)
+		yy += line
+	}
+
+	if (chart.houses) {
+		yy += 6
+		c.font = "600 13px " + fam
+		c.fillStyle = pcSignColor(chart.ascSign.idx)
+		c.fillText("ASC " + astroSigns[chart.ascSign.idx].name, x, yy)
+		c.fillStyle = pcSignColor(chart.mcSign.idx)
+		c.fillText("MC " + astroSigns[chart.mcSign.idx].name, x + 150, yy)
+		yy += line
+	} else {
+		yy += 6
+		c.font = "12px " + fam
+		c.fillStyle = pcInk("--font-white-4", "#889")
+		c.fillText("No birth time, so no houses or Ascendant.", x, yy)
+		yy += line
+	}
+
+	if (chart.sidereal) {
+		c.font = "12px " + fam
+		c.fillStyle = pcInk("--font-white-4", "#889")
+		c.fillText("Lahiri ayanamsa " + chart.ayanamsa.toFixed(2) + "°", x, yy)
+		yy += line
+	}
+	return yy - y
+}
+
+function pcPrintSurface(w, h) {
+	var scale = 2
+	var out = document.createElement("canvas")
+	out.width = w * scale
+	out.height = h * scale
+	var c = out.getContext("2d")
+	c.setTransform(scale, 0, 0, scale, 0, 0)
+	c.fillStyle = window.getComputedStyle(document.body).getPropertyValue("background-color") || "#161a22"
+	c.fillRect(0, 0, w, h)
+	return { canvas: out, c: c }
+}
+
+function pcPrintHeading(c, f, w, fam) {
+	c.textAlign = "center"
+	c.fillStyle = pcInk("--font-white-1", "#eee")
+	c.font = "600 21px " + fam
+	c.fillText((f.name || "").trim() || "Natal chart", w / 2, 30)
+	// a step brighter than the on-screen equivalent: this line is the only
+	// record of what the image is a chart of, and --font-white-4 is barely there
+	c.fillStyle = pcInk("--font-white-3", "#aab")
+	c.font = "14px " + fam
+	c.fillText(pcBornLine(f), w / 2, 47)
+}
+
+function pcPrintFile(f, what) {
+	var title = (f.name || "").trim()
+	return (title ? title.replace(/[^\w]+/g, "-").replace(/^-|-$/g, "") + "_" : "") +
+		f.y + "-" + pcPad(f.m) + "-" + pcPad(f.d) + "_" + what + ".png"
+}
+
+function pcPrintChart()   { pcPrintImage("chart") }
+function pcPrintPlanets() { pcPrintImage("planets") }
+function pcPrintBoth()    { pcPrintImage("both") }
+
+function pcPrintImage(kind) {
+	if (typeof pcDrawWheel !== "function") return
+	var f = pcCapture()
+
+	var tro, sid, cur
+	try {
+		tro = pcBuildChart(f, "tropical")
+		sid = pcBuildChart(f, "sidereal")
+		cur = (pcZodiac === "sidereal") ? sid : tro
+	} catch (e) {
+		displayCalcNotification("Check the date before printing", 2400)
+		return
+	}
+
+	var P = PC_PRINT
+	var fam = pcPrintFam()
+	var zodName = (pcZodiac === "sidereal") ? "□ Sidereal (Lahiri)" : "○ Tropical"
+	var surf, c, w, h
+
+	if (kind === "chart") {
+		w = P.size + P.pad * 2
+		h = P.head + 26 + P.size + P.pad
+		surf = pcPrintSurface(w, h); c = surf.c
+		pcPrintHeading(c, f, w, fam)
+
+		c.textAlign = "center"
+		c.font = "600 15px " + fam
+		c.fillStyle = pcInk("--font-white-2", "#ccc")
+		c.fillText(zodName, w / 2, P.head + 16)
+
+		c.save(); c.translate(P.pad, P.head + 26)
+		if (pcZodiac === "sidereal") pcDrawSquare(c, P.size, cur); else pcDrawWheel(c, P.size, cur)
+		c.restore()
+
+	} else if (kind === "planets") {
+		// measured first, on a throwaway context, so the canvas is exactly as
+		// tall as the list rather than a guess with a gap at the bottom
+		var probe = document.createElement("canvas").getContext("2d")
+		var listH = pcDrawPositions(probe, cur, 0, 0, fam)
+
+		w = P.listW + P.pad * 2
+		h = P.head + 26 + listH + P.pad
+		surf = pcPrintSurface(w, h); c = surf.c
+		pcPrintHeading(c, f, w, fam)
+
+		c.textAlign = "center"
+		c.font = "600 15px " + fam
+		c.fillStyle = pcInk("--font-white-2", "#ccc")
+		c.fillText("Planets at birth · " + zodName, w / 2, P.head + 16)
+
+		pcDrawPositions(c, cur, P.pad, P.head + 42, fam)
+
+	} else { // both: title over each column, chart, then that zodiac's positions
+		var probe2 = document.createElement("canvas").getContext("2d")
+		var hTro = pcDrawPositions(probe2, tro, 0, 0, fam)
+		var hSid = pcDrawPositions(probe2, sid, 0, 0, fam)
+		var listMax = Math.max(hTro, hSid)
+
+		var colW = Math.max(P.size, P.listW)
+		w = colW * 2 + P.gap + P.pad * 2
+		h = P.head + 26 + P.size + 24 + listMax + P.pad
+
+		surf = pcPrintSurface(w, h); c = surf.c
+		pcPrintHeading(c, f, w, fam)
+
+		var cols = [
+			{ x: P.pad, chart: tro, label: "○ Tropical", square: false },
+			{ x: P.pad + colW + P.gap, chart: sid, label: "□ Sidereal (Lahiri)", square: true }
+		]
+		for (var i = 0; i < cols.length; i++) {
+			var col = cols[i]
+			c.textAlign = "center"
+			c.font = "600 16px " + fam
+			c.fillStyle = pcInk("--font-white-2", "#ccc")
+			c.fillText(col.label, col.x + colW / 2, P.head + 16)
+
+			c.save(); c.translate(col.x + (colW - P.size) / 2, P.head + 26)
+			if (col.square) pcDrawSquare(c, P.size, col.chart); else pcDrawWheel(c, P.size, col.chart)
+			c.restore()
+
+			pcDrawPositions(c, col.chart, col.x + (colW - P.listW) / 2, P.head + 26 + P.size + 24, fam)
+		}
+	}
+
+	var what = (kind === "chart") ? "astro_chart" : (kind === "planets") ? "planets" : "astro_charts"
+	showPrintImagePreview(surf.canvas.toDataURL("image/png"), pcPrintFile(f, what), "", 1)
+	// Refresh is hard-wired to openImageWindow, which cannot rebuild these
+	$(".refreshImgBtn").attr("onclick", "closePrintImagePreview();pcPrintImage('" + kind + "')")
+}
 
 // Tropical: the familiar round wheel.
 function pcDrawWheel(c, size, chart) {
@@ -741,13 +973,13 @@ function pcSave() {
 	chartSave(f.name.trim(), {
 		birth_date: f.y + "-" + pad(f.m) + "-" + pad(f.d),
 		birth_time: f.timeKnown ? (pad(f.hh) + ":" + pad(f.mm)) : "",
-		place: f.usePlace ? f.place : "",
-		latitude: f.usePlace ? f.lat : null,
-		longitude: f.usePlace ? f.lon : null,
-		tz_offset: f.usePlace ? f.tz : null,
+		place: f.place,
+		latitude: f.lat,
+		longitude: f.lon,
+		tz_offset: f.tz,
 		zodiac: pcZodiac,
 		time_known: f.timeKnown,
-		use_place: f.usePlace
+		use_place: true // kept for the column; a birthplace is no longer optional
 	}).then(function (what) {
 		displayCalcNotification(what === "updated" ? "Chart updated" : "Chart saved", 1800)
 		renderProfileChart()
@@ -769,7 +1001,6 @@ function pcOpen(id) {
 			y: Number(parts[0]) || 2000, m: Number(parts[1]) || 1, d: Number(parts[2]) || 1,
 			hh: Number(time[0]) || 12, mm: Number(time[1]) || 0,
 			timeKnown: r.time_known !== false,
-			usePlace: r.use_place !== false,
 			place: r.place || "",
 			lat: (r.latitude === null || r.latitude === undefined) ? 51.5074 : r.latitude,
 			lon: (r.longitude === null || r.longitude === undefined) ? -0.1278 : r.longitude,

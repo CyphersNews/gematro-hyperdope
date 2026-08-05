@@ -14,6 +14,7 @@ var ctxExportItems = [
 	{ label: "Print Cyphers Card",     btn: "#btn-print-breakdown-details-png", need: "#BreakdownDetails" },
 	{ label: "Print Number Properties",btn: "#btn-num-props-png",               need: ".numPropTooltip" },
 	{ label: "Print Date Durations",   btn: "#btn-date-calc-png",               need: ".dateCalcTable2" },
+	{ label: "Print Astrology Chart",  btn: "#btn-astro-chart-png",             need: "#astroCanvas" },
 	{ sep: true },
 	{ label: "Export History (CSV)",   btn: "#btn-export-history-png",          need: ".HistoryTable" },
 	{ label: "Export Matches (TXT)",   btn: "#btn-export-matches-txt",          need: ".HistoryTable" },
@@ -22,7 +23,7 @@ var ctxExportItems = [
 	{ label: "Edit Table Caption",     action: "editTableCaption",              need: ".HistoryTable" },
 	{ label: "Clear History Table",    action: "clearHistoryTable",             need: ".HistoryTable", danger: true },
 	{ label: "Reset Settings to Default", action: "resetDefaults",              need: "#calcOptionsPanel", danger: true,
-	  confirm: "Sure? Code rain is kept" }
+	  confirm: "Sure? Clears the table too" }
 ]
 
 function closeExportContextMenu() {
@@ -298,6 +299,35 @@ function showPrintImagePreview(imageDataURL, imgName, element, sRatio) {
 	btnH = Math.ceil( $('.prevBtnArea').outerHeight() )
 	o = 'height: calc(100% - '+btnH+'px);'
 	$('.imgDataArea').attr("style", o)
+}
+
+// Shows a canvas in the print preview without going through html2canvas.
+//
+// Everything else here is HTML and has to be rasterised first, but a chart is
+// already pixels - re-rendering it would only lose sharpness. A canvas also
+// draws on transparency, so the page background is painted in behind it or the
+// saved PNG is unreadable on anything pale.
+//
+// `again` is the id of the button that produced it, so Refresh - which is
+// hard-wired to call openImageWindow - is repointed at that button instead.
+function printCanvasImage(cvs, imgName, again) {
+	if (!cvs || !cvs.width) return
+	var out = document.createElement("canvas")
+	var pad = Math.round(cvs.width * 0.03)
+	out.width = cvs.width + pad * 2
+	out.height = cvs.height + pad * 2
+
+	var c = out.getContext("2d")
+	c.fillStyle = window.getComputedStyle(document.body).getPropertyValue("background-color") || "#161a22"
+	c.fillRect(0, 0, out.width, out.height)
+	c.drawImage(cvs, pad, pad)
+
+	showPrintImagePreview(out.toDataURL("image/png"), imgName, "", 1)
+	if (again) {
+		$(".refreshImgBtn").attr("onclick", "closePrintImagePreview();document.getElementById('"+again+"').click()")
+	} else {
+		$(".refreshImgBtn").remove() // nothing to refresh from
+	}
 }
 
 function closePrintImagePreview() {

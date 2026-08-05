@@ -8,17 +8,17 @@
 <!-- Android Web App - Add to Home Screen -->
 <link rel="manifest" href="manifest.json">
 
-<script src="lib/jquery.min.js?v=20260804b"></script>
-<script src="lib/supabase.min.js?v=20260804b"></script>
+<script src="lib/jquery.min.js?v=20260805l"></script>
+<script src="lib/supabase.min.js?v=20260805l"></script>
 <!-- html2canvas v1.0.0-alpha.12 -->
 
-<script src="calc/gematria.js?v=20260804b"></script>
-<script src="calc/calc.js?v=20260804b"></script>
-<script src="calc/init-variables.js?v=20260804b"></script>
-<script src="calc/ciphers.js?v=20260804b"></script>
+<script src="calc/gematria.js?v=20260805l"></script>
+<script src="calc/calc.js?v=20260805l"></script>
+<script src="calc/init-variables.js?v=20260805l"></script>
+<script src="calc/ciphers.js?v=20260805l"></script>
 
-<link rel="stylesheet" type="text/css" href="calc/styles.css?v=20260804b">
-<link rel="stylesheet" type="text/css" href="auth/auth.css?v=20260804b">
+<link rel="stylesheet" type="text/css" href="calc/styles.css?v=20260805l">
+<link rel="stylesheet" type="text/css" href="auth/auth.css?v=20260805l">
 
 <script>
 window.onpaint = function() {
@@ -60,7 +60,10 @@ $(window).load(function(){
 		<div id="inputArea">
 		  <input id="queryDBbtn" class="hideValue" type="button" onclick="queryDatabase()" value="Query">
 		  <input id="phraseBox" autofocus type="text" spellcheck="false" autocomplete="off" oninput="updateEnabledCipherTable(); updateWordBreakdown(breakCipher,false,false);" onkeydown="phraseBoxKeypress(event.keyCode)" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
-		  <input id="enterPhraseBtn" type="button" onclick="phraseBoxKeypress(13);document.getElementById('phraseBox').focus()" value="&#x270E;">
+		  <!-- a <button> rather than an <input>, so the return arrow can be drawn:
+		       Montserrat has no glyph for U+23CE or U+21B5, so a text one fell back
+		       to whatever the system had and came out thin and undersized -->
+		  <button id="enterPhraseBtn" type="button" title="Add this phrase to the table (Enter)" aria-label="Add phrase" onclick="phraseBoxKeypress(13);document.getElementById('phraseBox').focus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 10 5 14 9 18"></polyline><path d="M20 6v4a4 4 0 0 1-4 4H5"></path></svg></button>
 		  <input id="highlightBox" type="text" spellcheck="false" autocomplete="off"><span id="clearFilterButton"></span>
 		</div>
 
@@ -80,36 +83,36 @@ $(window).load(function(){
 
 <span id="loadPanel"></span>
 
-<script src="calc/breakdown.js?v=20260804b"></script>
+<script src="calc/breakdown.js?v=20260805l"></script>
 
-<script src="calc/highlighter.js?v=20260804b"></script>
-<script src="calc/export.js?v=20260804b"></script>
-<script src="calc/export-csv.js?v=20260804b"></script>
-<script src="calc/num-prop.js?v=20260804b"></script>
-<script src="calc/edit-ciphers.js?v=20260804b"></script>
-<script src="calc/date-calc.js?v=20260804b"></script>
-<script src="calc/astrology.js?v=20260804b"></script>
-<script src="calc/profile-tab.js?v=20260804b"></script>
-<script src="calc/profile-chart.js?v=20260804b"></script>
-<script src="calc/database.js?v=20260804b"></script>
-<script src="calc/quick-guide.js?v=20260804b"></script>
+<script src="calc/highlighter.js?v=20260805l"></script>
+<script src="calc/export.js?v=20260805l"></script>
+<script src="calc/export-csv.js?v=20260805l"></script>
+<script src="calc/num-prop.js?v=20260805l"></script>
+<script src="calc/edit-ciphers.js?v=20260805l"></script>
+<script src="calc/date-calc.js?v=20260805l"></script>
+<script src="calc/astrology.js?v=20260805l"></script>
+<script src="calc/profile-tab.js?v=20260805l"></script>
+<script src="calc/profile-chart.js?v=20260805l"></script>
+<script src="calc/database.js?v=20260805l"></script>
+<script src="calc/quick-guide.js?v=20260805l"></script>
 
-<script src="calc/localstorage.js?v=20260804b"></script>
-<script src="calc/encoding.js?v=20260804b"></script>
-<script src="calc/encoding-ciphers.js?v=20260804b"></script>
+<script src="calc/localstorage.js?v=20260805l"></script>
+<script src="calc/encoding.js?v=20260805l"></script>
+<script src="calc/encoding-ciphers.js?v=20260805l"></script>
 
-<script src="calc/coderain.js?v=20260804b"></script>
+<script src="calc/coderain.js?v=20260805l"></script>
 
 <!-- after every script that declares an option, before anything that restores one -->
-<script src="calc/reset-defaults.js?v=20260804b"></script>
+<script src="calc/reset-defaults.js?v=20260805l"></script>
 
-<script src="auth/supabase-config.js?v=20260804b"></script>
-<script src="auth/auth.js?v=20260804b"></script>
-<script src="auth/auth-ui.js?v=20260804b"></script>
-<script src="auth/history-sync.js?v=20260804b"></script>
-<script src="auth/workspace-sync.js?v=20260804b"></script>
-<script src="auth/profile-features.js?v=20260804b"></script>
-<script src="lib/html2canvas.min.js?v=20260804b"></script>
+<script src="auth/supabase-config.js?v=20260805l"></script>
+<script src="auth/auth.js?v=20260805l"></script>
+<script src="auth/auth-ui.js?v=20260805l"></script>
+<script src="auth/history-sync.js?v=20260805l"></script>
+<script src="auth/workspace-sync.js?v=20260805l"></script>
+<script src="auth/profile-features.js?v=20260805l"></script>
+<script src="lib/html2canvas.min.js?v=20260805l"></script>
 
 <!-- Initialzie the calculator.  This needs to run before loading a database or theme. -->
 <script>

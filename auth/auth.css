@@ -564,11 +564,58 @@
 	max-width: 9em;
 	outline: none;
 }
+
+/* Searchable cipher picker. The menu is parented to <body> and positioned in
+   fixed coordinates, because its row lives in a 340px scroll box that would
+   otherwise clip it. profileCiphPlace() sets left/top/width/max-height. */
+.profileCiphPick { position: relative; display: inline-block; }
+.profileCiphInput { width: 9em; }
+.profileCiphInput::placeholder { color: var(--font-white-4); }
+.profileCiphMenu {
+	position: fixed;
+	z-index: 40;
+	overflow-y: auto;
+	background-color: var(--menu-bg-accent, var(--input-bg-accent));
+	border: 1px solid var(--border-accent);
+	box-shadow: 0 6px 18px hsla(0 0% 0% / 0.45);
+	font-size: 78%;
+}
+.profileCiphGroup {
+	padding: 0.25em 0.5em 0.1em;
+	color: var(--font-white-4);
+	font-size: 88%;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	position: sticky;
+	top: 0;
+	background-color: var(--menu-bg-accent, var(--input-bg-accent));
+}
+.profileCiphOpt {
+	padding: 0.22em 0.6em;
+	color: var(--font-white-2);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.profileCiphOpt b { color: var(--font-white-1); font-weight: 700; }
+.profileCiphOpt.profileCiphOn { background-color: var(--btn-hover-accent); color: var(--font-white-1); }
+.profileCiphNone { padding: 0.4em 0.6em; color: var(--font-white-4); }
+.profileChipTerm { display: block; }
+/* The cipher and its value, in that cipher's own colour. Bold because this is
+   the reason the phrase was published, not a footnote to it - the grey it used
+   to be read as disabled text. The inline colour comes from profileCipherColor. */
 .profileChipCiph {
 	display: block;
 	font-size: 78%;
-	color: var(--font-white-4);
+	font-weight: 700;
+	color: var(--font-white-2);
 	padding-top: 0.1em;
+}
+.profileChipVal {
+	font-family: var(--font-family-mono), monospace;
+	font-weight: 700;
+	color: inherit;
 }
 
 /* A submission refused by the publishing rules. The row turns red and keeps
@@ -589,6 +636,12 @@
 
 .profileLbRow { cursor: pointer; }
 .profileLbRow:hover { background: var(--btn-hover-accent); }
+/* Which name is expanded, so a second click on it reads as "close this" rather
+   than doing nothing visible. */
+.profileLbRow.profileLbOpen {
+	background: var(--btn-hover-accent);
+	border-left: 2px solid var(--font-white-3);
+}
 .profileLbRank {
 	font-family: var(--font-family-mono), monospace;
 	font-size: 85%;
@@ -720,8 +773,18 @@
 .pcZodiacRow { display: flex; align-items: center; gap: 0.4em; flex-wrap: wrap; padding-bottom: 0.6em; }
 .intBtn3.pcZodBtn { width: auto; margin: 0; padding: 0.25em 0.8em; }
 .intBtn3.pcZodBtn.pcZodOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
+/* Printing is a separate row from the zodiac switch: those two buttons choose
+   what you are reading, these three choose what you are saving. */
+.pcPrintRow { display: flex; align-items: center; gap: 0.4em; flex-wrap: wrap; padding-bottom: 0.7em; }
+.pcPrintLab { font-size: 80%; color: var(--font-white-3); font-weight: 600; }
+.intBtn3.pcPrintBtn { border-color: var(--font-white-4); }
 
 .pcFields { padding-bottom: 0.6em; }
+/* Time and Place as separate blocks. They used to be four rows in one stack at
+   equal spacing, so the tickbox that belonged to Time sat just as close to
+   Place as to Time and the two questions read as one. */
+.pcBlock { padding-top: 0.45em; margin-top: 0.45em; border-top: 1px solid var(--separator-accent2); }
+.pcRowSub { padding-top: 0; } /* a continuation of the row above, not a new one */
 .pcRow { display: flex; align-items: center; gap: 0.4em; padding: 0.18em 0; flex-wrap: wrap; }
 .pcLab { font-size: 82%; color: var(--font-white-1); font-weight: 600; width: 5em; flex: 0 0 auto; }
 .pcIn {
@@ -736,7 +799,40 @@
 }
 .pcIn.pcInY { width: 5em; }
 .pcIn.pcInPlace { flex: 1 1 10em; width: auto; min-width: 0; }
-.pcChk { font-size: 80%; color: var(--font-white-3); display: inline-flex; align-items: center; gap: 0.3em; cursor: pointer; }
+.pcChk { font-size: 80%; color: var(--font-white-3); display: inline-flex; align-items: center; gap: 0.4em; cursor: pointer; }
+/* These were real checkboxes all along, but styles.css hides every native one
+   ("input[type=checkbox] { visibility: hidden }") on the assumption that a
+   .custChkBox span follows it. There is none here, so the box was invisible and
+   the label read as plain text with no way to tell it was on or off. Rather
+   than bolt on the span, the input itself is drawn: same look, one element,
+   and the label still toggles it. */
+.pcChk input[type=checkbox] {
+	visibility: visible;
+	-webkit-appearance: none;
+	appearance: none;
+	position: relative;
+	flex: 0 0 auto;
+	margin: 0;
+	width: 15px;
+	height: 15px;
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	cursor: pointer;
+}
+.pcChk:hover input[type=checkbox] { background-color: var(--btn-hover-accent); }
+.pcChk input[type=checkbox]:active { background-color: var(--btn-active-accent); }
+.pcChk input[type=checkbox]:checked::after { /* the tick */
+	content: "";
+	position: absolute;
+	left: 4px;
+	top: 0px;
+	width: 3px;
+	height: 8px;
+	border: solid var(--font-white-1);
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+.pcChk input[type=checkbox]:focus-visible { outline: 1px solid var(--font-white-3); outline-offset: 1px; }
 .pcUnknown { font-style: italic; }
 .pcGeo { padding-bottom: 0.4em; }
 

@@ -371,6 +371,11 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="&#128229; Cyphers Database" onclick="gotoDatabase()">'
 	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input class="intBtn" type="button" value="Cyphers Net Void" onclick="gotoNetVoid()">'
+
+	// Everything below is somebody else's calculator, which was not obvious with
+	// them sitting in the same run as the Cyphers links above.
+	o += '<div class="aboutGroupLabel">Visit other calculators:</div>'
 	o += '<input class="intBtn" type="button" value="Alektryon Calculator" onclick="gotoAlektryonCalculator()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Based Atlanteanism" onclick="gotoBasedAtlantis()">'
@@ -380,8 +385,6 @@ function createAboutMenu() { // create menu with all cipher catergories
 	o += '<input class="intBtn" type="button" value="Gematrinator Calculator" onclick="gotoGEMATRINATOR()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input class="intBtn" type="button" value="Qliphoth Calculator" onclick="gotoQliphoth()">'
-	o += '<div style="margin: 0.5em;"></div>'
-	o += '<input class="intBtn" type="button" value="Cyphers Net Void" onclick="gotoNetVoid()">'
 	o += '<div style="margin: 0.5em;"></div>'
 	
 
@@ -839,6 +842,8 @@ function createExportMenu() {
 	o += '<input id="btn-num-props-png" class="intBtn" type="button" value="Print Number Properties">' // print number properties
 	o += '<div style="margin: 0.5em;"></div>'
 	o += '<input id="btn-date-calc-png" class="intBtn" type="button" value="Print Date Durations">' // print date durations
+	o += '<div style="margin: 0.5em;"></div>'
+	o += '<input id="btn-astro-chart-png" class="intBtn" type="button" value="Print Astrology Chart">' // print the natal chart
 
 	o += '<div class="enterAsWordsLimit"><span class="optionTableLabel">Image scale</span><input id="iScaleBox" onchange="conf_iScale()" type="text" value="'+optImageScale.toFixed(1)+'"></div>' // image scale
 	
@@ -1453,10 +1458,16 @@ function enableAllCiphers() {
 	updateTables() // update
 }
 
+// The Cryptography ciphers are built on the English alphabet, so they answer to
+// the same lowercase-"a" test as everything else here - but they substitute
+// symbols rather than adding numbers up, so a run of them among the English
+// totals is a column of glyphs with nothing to compare. They are picked
+// deliberately from their own category instead.
 function enableAllEnglishCiphers() {
 	prevCiphIndex = -1 // reset cipher selection
 	var cur_chkbox
 	for (i = 0; i < cipherList.length; i++) {
+		if (cipherList[i].cipherCategory == "Cryptography") continue
 		if (cipherList[i].cipherCategory == "Extra" && optShowExtraCiphers && cipherList[i].cArr.indexOf(97) > -1) { // lowercase "a", "Extra" English ciphers only if allowed
 			cur_chkbox = document.getElementById("cipher_chkbox"+i)
 			cipherList[i].enabled = true
