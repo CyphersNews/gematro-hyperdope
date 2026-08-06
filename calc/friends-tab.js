@@ -110,7 +110,7 @@ function frCard(row, opts) {
 
 	o += frAvatar(row)
 	o += '<span class="frWho" onclick="frOpenProfile(&quot;' + id + '&quot;)" title="See their profile">'
-	o += '<span class="frName">' + authEsc(row.display_name) + frOnlineDot(row) + '</span>'
+	o += '<span class="frName">' + authEsc(row.display_name) + frAdminBadge(row.id) + frOnlineDot(row) + '</span>'
 	var sub = []
 	if (row.username && row.username !== row.display_name) sub.push('@' + row.username)
 	if (opts.since) sub.push("friends since " + new Date(row.since).toLocaleDateString())
@@ -354,7 +354,7 @@ function renderFriendProfile(id, tok) {
 		o += '<div class="frProfileHead">'
 		o += frAvatar(p).replace("frAvatar", "frAvatar frAvatarBig")
 		o += '<div class="frProfileWho">'
-		o += '<div class="frProfileName">' + authEsc(p.display_name) + frOnlineDot(p) + '</div>'
+		o += '<div class="frProfileName">' + authEsc(p.display_name) + frAdminBadge(p.id) + frOnlineDot(p) + '</div>'
 		if (p.username && p.username !== p.display_name) o += '<div class="frSub">@' + authEsc(p.username) + '</div>'
 		o += '<div class="frSub">Joined ' + new Date(p.joined_at).toLocaleDateString() + '</div>'
 		o += '</div>'
@@ -499,7 +499,7 @@ function frRenderChats(tok) {
 			o += '<div class="profileRow frRow" onclick="frOpenChat(&quot;' + r.friend_id + '&quot;)">'
 			o += frAvatar({ avatar: r.avatar, display_name: r.display_name })
 			o += '<span class="frWho">'
-			o += '<span class="frName">' + authEsc(r.display_name) + '</span>'
+			o += '<span class="frName">' + authEsc(r.display_name) + frAdminBadge(r.friend_id) + '</span>'
 			// the preview is escaped like the message itself: a thread list is
 			// no place for the one bit of unescaped text in the app
 			o += '<span class="frSub frPreview">' + (r.last_body ? authEsc(r.last_body) : "no messages yet") + '</span>'
@@ -536,7 +536,7 @@ function frRenderChatWindow(id, tok) {
 
 		var o = '<div class="frChatHead">'
 		o += '<button class="profileMiniBtn" onclick="frCloseChat()">&larr; Back</button>'
-		o += '<span class="frChatWho">' + authEsc(name) + (who ? frOnlineDot(who) : '') + '</span>'
+		o += '<span class="frChatWho">' + authEsc(name) + frAdminBadge(id) + (who ? frOnlineDot(who) : '') + '</span>'
 		o += '<span class="frChatHeadActions">'
 		o += '<button class="profileMiniBtn" onclick="frReportPrompt(this,&quot;' + id + '&quot;)" title="Report this member">Report</button>'
 		o += '<button class="profileMiniBtn profileMiniDanger" onclick="frBlockMember(this,&quot;' + id + '&quot;)" title="Block: they can no longer message you, ask to be friends, or find you">Block</button>'
@@ -566,7 +566,14 @@ function frChatLogHtml(msgs) {
 		var m = msgs[i]
 		o += '<div class="frMsgRow' + (m.mine ? ' frMsgMine' : '') + '">'
 		o += '<div class="frBubble">' + chatRenderBody(m.body) + '</div>'
-		o += '<div class="frMsgWhen">' + frWhen(m.created_at) + '</div>'
+		o += '<div class="frMsgWhen">' + frWhen(m.created_at)
+		// reporting the message rather than the person: a moderator judging
+		// "they were rude" with no idea which line cannot judge anything
+		if (!m.mine) {
+			o += ' <span class="frMsgFlag" title="Report this message" onclick="frReportMessage(this,&quot;' +
+				m.sender_id + '&quot;,&quot;' + m.id + '&quot;)">&#9873;</span>'
+		}
+		o += '</div>'
 		o += '</div>'
 	}
 	return o
@@ -676,5 +683,39 @@ function frBlockMember(btn, id) {
 		frCloseChat()
 	}).catch(function (err) {
 		displayCalcNotification(err.message || "Could not block", 2600)
+	})
+}
+
+// ---- administrator badge ----------------------------------------------
+//
+// Drawn from a cached list of admin ids rather than a column on every query,
+// so a name can be decorated wherever it appears without changing the shape of
+// whatever fetched it. Silent if admin.js is not loaded.
+
+function frAdminBadge(id) {
+	return (typeof adminBadgeHtml === "function") ? adminBadgeHtml(id) : ""
+}
+
+// Report one message. The id goes with it, so the panel can show the
+// conversation around it instead of a bare accusation.
+function frReportMessage(el, senderId, messageId) {
+	if (typeof chatReport !== "function") return
+	if (el.dataset.armed !== "1") {
+		el.dataset.armed = "1"
+		el.classList.add("frMsgFlagArmed")
+		el.title = "Click again to report"
+		setTimeout(function () {
+			el.dataset.armed = ""
+			el.classList.remove("frMsgFlagArmed")
+			el.title = "Report this message"
+		}, 4000)
+		return
+	}
+	el.dataset.armed = ""
+	el.classList.remove("frMsgFlagArmed")
+	chatReport(senderId, "chat message", null, messageId).then(function () {
+		displayCalcNotification("Reported. Thank you — an administrator will look at it.", 2800)
+	}).catch(function (err) {
+		displayCalcNotification(err.message || "Could not report", 2600)
 	})
 }

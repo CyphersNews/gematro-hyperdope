@@ -45,7 +45,9 @@ function chatSend(target, body) {
 function chatBlock(id)               { return chatRpc("member_block", { target: id }) }
 function chatUnblock(id)             { return chatRpc("member_unblock", { target: id }) }
 function chatBlockedList()           { return chatRpc("member_blocked_list").then(function (r) { return r || [] }) }
-function chatReport(id, reason, det) { return chatRpc("member_report", { target: id, reason: reason, detail: det || null }) }
+function chatReport(id, reason, det, messageId) {
+	return chatRpc("member_report", { target: id, reason: reason, detail: det || null, message: messageId || null })
+}
 
 // ---- the local pre-check ----------------------------------------------
 //

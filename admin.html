@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<head>
+<title>Admin | Cyphers</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/x-icon" href="res/favicon.png">
+
+<script src="lib/jquery.min.js?v=20260806k"></script>
+<script src="lib/supabase.min.js?v=20260806k"></script>
+
+<link rel="stylesheet" type="text/css" href="calc/styles.css?v=20260806k">
+<link rel="stylesheet" type="text/css" href="auth/auth.css?v=20260806k">
+<link rel="stylesheet" type="text/css" href="auth/admin.css?v=20260806k">
+
+<script src="auth/supabase-config.js?v=20260806k"></script>
+<script src="auth/auth.js?v=20260806k"></script>
+<script src="auth/auth-ui.js?v=20260806k"></script>
+<script src="auth/admin.js?v=20260806k"></script>
+<script src="auth/admin-ui.js?v=20260806k"></script>
+</head>
+
+<body>
+
+	<a class="authBackBtn" href="index.html" onclick="authBackFlash(this)">&#8592; Back to the calculator</a>
+
+<div id="adminGate" class="adminGate">
+	<div class="adminLoading">Checking&hellip;</div>
+</div>
+
+<div id="adminPanel" class="adminPanel hideValue">
+	<div class="adminHead">
+		<div class="adminTitle">&#128737; Admin</div>
+		<div id="adminWho" class="adminDim"></div>
+	</div>
+	<div id="adminNav" class="adminNavRow"></div>
+	<div id="adminBody" class="adminBodyArea"></div>
+</div>
+
+<div id="adminToast" class="adminToast"></div>
+
+<script>
+// The panel is not shown to anyone who is not an admin - but that is a
+// courtesy, not the control. Every function it calls checks again in the
+// database, so typing this URL in gets you a page that can fetch nothing.
+requireAuth("login.html");
+
+$(document).ready(function () {
+	onAuthReady(function (user) {
+		if (user === null) return; // requireAuth is redirecting
+		adminCheckSelf().then(function (ok) {
+			var gate = document.getElementById("adminGate");
+			if (!ok) {
+				gate.innerHTML = '<div class="adminDenied">' +
+					'<div class="adminDeniedTitle">Administrators only</div>' +
+					'<div class="adminNote">This page is for site administrators. If you think that is wrong, ask an existing admin to check your account.</div>' +
+					'<a class="adminBtn" href="index.html">Back to the calculator</a></div>';
+				return;
+			}
+			gate.classList.add("hideValue");
+			document.getElementById("adminPanel").classList.remove("hideValue");
+			document.getElementById("adminWho").textContent =
+				"Signed in as " + (authDisplayName ? authDisplayName() : "");
+			adminIds();      // warm the badge list
+			adminRender();
+		}).catch(function (err) {
+			document.getElementById("adminGate").innerHTML =
+				'<div class="adminNote adminNoteBad">' + authEsc(err.message || String(err)) + '</div>';
+		});
+	});
+});
+</script>
+</body>

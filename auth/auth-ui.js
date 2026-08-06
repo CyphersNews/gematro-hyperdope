@@ -88,6 +88,11 @@ function renderAuthNav() {
 		else o += '<span class="authNavAvatar authNavAvatarFallback">' + authEsc(authDisplayName().charAt(0).toUpperCase()) + '</span>'
 		o += '<span class="authNavName">' + authEsc(authDisplayName()) + '</span>'
 		o += '</a>'
+		// only drawn for admins, and only as a shortcut - admin.html checks for
+		// itself and every function it calls checks again in the database
+		if (typeof adminIsAdmin !== "undefined" && adminIsAdmin === true) {
+			o += '<a class="authNavLink authNavAdmin" href="admin.html" title="Admin panel">&#128737; Admin</a>'
+		}
 		o += '<a class="authNavLink" href="#" onclick="authNavSignOut(event)">Logout</a>'
 	}
 	area.innerHTML = o

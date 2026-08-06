@@ -1,0 +1,310 @@
+/* ===================== Admin panel =====================
+   Built on the same CSS variables as everything else, so the panel follows
+   whatever interface colour is set rather than being a differently-themed
+   corner of the site. Wider than the auth cards, because tables need room. */
+
+.adminGate { max-width: 560px; margin: 4em auto; padding: 0 1em; }
+.adminDenied {
+	background-color: var(--menu-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	padding: 1.6em;
+	text-align: center;
+}
+.adminDeniedTitle { font-size: 125%; font-weight: 600; color: var(--font-white-1); padding-bottom: 0.5em; }
+
+.adminPanel {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 3.2em 1em 3em 1em;
+	box-sizing: border-box;
+}
+
+.adminHead { display: flex; align-items: baseline; gap: 0.8em; flex-wrap: wrap; padding-bottom: 0.9em; }
+.adminTitle { font-size: 150%; font-weight: 600; color: var(--font-white-1); }
+/* --font-white-4 is the shade for things you are meant to skip. Half of what
+   this marks is a label or a timestamp somebody is reading on purpose. */
+.adminDim { color: var(--font-white-3); font-size: 85%; }
+
+.adminNavRow {
+	display: flex;
+	gap: 0.3em;
+	flex-wrap: wrap;
+	border-bottom: 1px solid var(--separator-accent2);
+	padding-bottom: 0.6em;
+	margin-bottom: 1em;
+}
+.adminNavBtn {
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 90%;
+	color: var(--font-white-2);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.35em 1em;
+	cursor: pointer;
+	outline: none;
+}
+.adminNavBtn:hover { background-color: var(--btn-hover-accent); }
+.adminNavBtn.adminNavOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
+
+.adminLoading { color: var(--font-white-3); font-size: 90%; padding: 1em 0; }
+.adminNote { color: var(--font-white-3); font-size: 85%; padding: 0.7em 0; line-height: 1.45em; }
+.adminNote.adminNoteBad { color: hsl(5 75% 72%); }
+
+/* ---- dashboard ---- */
+
+.adminGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(8.5em, 1fr));
+	gap: 0.5em;
+	padding-bottom: 1.2em;
+}
+.adminStat {
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	padding: 0.7em 0.5em;
+	text-align: center;
+}
+.adminStatVal {
+	font-family: var(--font-family-mono), monospace;
+	font-size: 165%;
+	font-weight: 700;
+	color: var(--font-white-1);
+	line-height: 1.1em;
+}
+.adminStatLab { font-size: 74%; color: var(--font-white-3); padding-top: 0.25em; }
+.adminStat.adminStatWarn { border-color: hsl(5 55% 45%); }
+.adminStat.adminStatWarn .adminStatVal { color: hsl(5 80% 74%); }
+.adminStat.adminStatLive .adminStatVal { color: hsl(140 60% 65%); }
+
+.adminSplit { display: grid; grid-template-columns: repeat(auto-fit, minmax(19em, 1fr)); gap: 0.8em; }
+
+.adminCard {
+	background-color: var(--menu-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	padding: 0.9em 1em;
+	margin-bottom: 0.8em;
+}
+.adminCardHead {
+	font-size: 88%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	padding-bottom: 0.5em;
+	border-bottom: 1px solid var(--separator-accent2);
+	margin-bottom: 0.5em;
+}
+
+.adminList { display: flex; flex-direction: column; }
+.adminRow {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.6em;
+	align-items: center;
+	padding: 0.3em 0;
+	font-size: 86%;
+	color: var(--font-white-2);
+	border-bottom: 1px solid var(--separator-accent2);
+}
+.adminRow:last-child { border-bottom: none; }
+.adminRowMain { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* presence, the same five-minute question the rest of the site asks */
+.adminDot {
+	display: inline-block;
+	width: 7px; height: 7px;
+	border-radius: 50%;
+	margin-right: 0.45em;
+	background-color: hsl(140 60% 50%);
+	box-shadow: 0 0 5px hsl(140 60% 45%);
+}
+.adminUserCell .adminDot { background-color: var(--font-white-4); box-shadow: none; }
+.adminUserCell .adminDot.adminDotOn { background-color: hsl(140 60% 50%); box-shadow: 0 0 5px hsl(140 60% 45%); }
+.adminLiveDot {
+	display: inline-block;
+	width: 6px; height: 6px;
+	border-radius: 50%;
+	background-color: hsl(140 60% 50%);
+	animation: adminPulse 2s ease-in-out infinite;
+}
+@keyframes adminPulse { 0%,100% { opacity: 0.35 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .adminLiveDot { animation: none; opacity: 0.8 } }
+
+/* ---- tables ---- */
+
+.adminTable {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 85%;
+	/* a wide table on a narrow screen scrolls rather than crushing every column */
+	display: block;
+	overflow-x: auto;
+	white-space: nowrap;
+}
+.adminTable thead th {
+	text-align: left;
+	font-weight: 600;
+	color: var(--font-white-3);
+	font-size: 92%;
+	padding: 0.4em 0.6em;
+	border-bottom: 1px solid var(--border-accent);
+}
+.adminTable td {
+	padding: 0.45em 0.6em;
+	color: var(--font-white-2);
+	border-bottom: 1px solid var(--separator-accent2);
+	vertical-align: middle;
+}
+.adminTable tbody tr:hover { background-color: var(--btn-hover-accent); }
+.adminTable tr.adminRowFlagged { background-color: hsla(5 60% 40% / 0.12); }
+.adminClip { max-width: 22em; overflow: hidden; text-overflow: ellipsis; }
+.adminActions { display: flex; gap: 0.25em; flex-wrap: wrap; }
+
+.adminBtn {
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 88%;
+	color: var(--font-white-2);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.2em 0.6em;
+	cursor: pointer;
+	text-decoration: none;
+	display: inline-block;
+	outline: none;
+}
+.adminBtn:hover:not(:disabled) { background-color: var(--btn-hover-accent); color: var(--font-white-1); }
+.adminBtn:disabled { opacity: 0.5; cursor: default; }
+.adminBtn.adminBtnBad { color: hsl(5 75% 72%); border-color: hsl(5 45% 42%); }
+.adminBtn.adminBtnBad:hover:not(:disabled) { background-color: hsla(5 60% 45% / 0.3); }
+.adminBtn.adminBtnGood { color: hsl(140 55% 72%); border-color: hsl(140 40% 40%); }
+.adminBtn.adminBtnGood:hover:not(:disabled) { background-color: hsla(140 50% 40% / 0.3); }
+/* asked once, one more click does it */
+.adminBtn.adminBtnArmed {
+	background-color: hsla(5 60% 45% / 0.4);
+	color: hsl(5 85% 84%);
+	font-weight: 700;
+}
+
+.adminBar { display: flex; align-items: center; gap: 0.35em; flex-wrap: wrap; padding-bottom: 0.8em; }
+.adminBarLab { font-size: 80%; color: var(--font-white-3); font-weight: 600; }
+.adminBarRight { margin-left: auto; }
+.adminChip {
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 80%;
+	color: var(--font-white-2);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.18em 0.7em;
+	cursor: pointer;
+	text-transform: capitalize;
+	outline: none;
+}
+.adminChip:hover { background-color: var(--btn-hover-accent); }
+.adminChip.adminChipOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
+
+.adminSearch {
+	flex: 1 1 14em;
+	min-width: 10em;
+	box-sizing: border-box;
+	padding: 0.25em 0.5em;
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 85%;
+	color: var(--font-white-1);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	outline: none;
+}
+.adminSearch:focus { border-color: var(--focus-outline); }
+
+/* status, as a word with a colour rather than a colour alone */
+.adminPill {
+	display: inline-block;
+	font-size: 76%;
+	font-weight: 600;
+	padding: 0.1em 0.5em;
+	border: 1px solid var(--border-accent);
+	color: var(--font-white-3);
+	text-transform: capitalize;
+}
+.adminPill-active    { color: hsl(140 55% 70%); border-color: hsl(140 40% 40%); }
+.adminPill-suspended { color: hsl(35 80% 70%);  border-color: hsl(35 50% 42%); }
+.adminPill-banned    { color: hsl(5 78% 74%);   border-color: hsl(5 50% 45%); }
+.adminPill-open      { color: hsl(5 78% 74%);   border-color: hsl(5 50% 45%); }
+.adminPill-reviewing { color: hsl(35 80% 70%);  border-color: hsl(35 50% 42%); }
+.adminPill-dismissed { color: var(--font-white-4); }
+.adminPill-actioned  { color: hsl(140 55% 70%); border-color: hsl(140 40% 40%); }
+
+/* ---- report detail ---- */
+
+.adminKV { display: flex; flex-direction: column; gap: 0.2em; }
+.adminKVRow { display: flex; gap: 0.8em; font-size: 86%; }
+.adminKVKey { flex: 0 0 8em; color: var(--font-white-3); }
+.adminKVVal { color: var(--font-white-2); overflow-wrap: anywhere; }
+
+.adminQuote {
+	background-color: var(--input-bg-accent);
+	border-left: 3px solid hsl(5 60% 50%);
+	padding: 0.6em 0.8em;
+	color: var(--font-white-1);
+	font-size: 92%;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.adminConv { display: flex; flex-direction: column; gap: 0.15em; max-height: 22em; overflow-y: auto; }
+.adminMsg {
+	display: grid;
+	grid-template-columns: 9em 1fr 5em;
+	gap: 0.6em;
+	font-size: 85%;
+	padding: 0.25em 0.4em;
+	align-items: baseline;
+}
+.adminMsg.adminMsgFlagged {
+	background-color: hsla(5 60% 45% / 0.18);
+	border-left: 2px solid hsl(5 60% 50%);
+}
+.adminMsgWho { color: var(--font-white-3); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.adminMsgBody { color: var(--font-white-2); overflow-wrap: anywhere; white-space: pre-wrap; }
+
+/* ---- the badge, used here and everywhere a name appears ---- */
+
+.adminBadge {
+	display: inline-block;
+	font-size: 74%;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	padding: 0.05em 0.4em;
+	margin-left: 0.35em;
+	color: hsl(45 85% 72%);
+	background-color: hsla(45 60% 40% / 0.22);
+	border: 1px solid hsl(45 50% 45%);
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+/* ---- toast ---- */
+
+.adminToast {
+	position: fixed;
+	left: 50%;
+	bottom: 2em;
+	transform: translate(-50%, 1.5em);
+	background-color: var(--menu-bg-accent);
+	border: 1px solid hsl(140 40% 40%);
+	color: var(--font-white-1);
+	padding: 0.7em 1.3em;
+	font-size: 92%;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.25s ease, transform 0.25s ease;
+	z-index: 300;
+}
+.adminToast.adminToastShow { opacity: 1; transform: translate(-50%, 0); }
+.adminToast.adminToastBad { border-color: hsl(5 55% 48%); color: hsl(5 80% 82%); }
+@media (prefers-reduced-motion: reduce) { .adminToast { transition: none; } }
+
+@media (max-width: 700px) {
+	.adminPanel { padding-top: 4.2em; }
+	.adminMsg { grid-template-columns: 1fr; gap: 0.1em; }
+	.adminKVRow { flex-direction: column; gap: 0; }
+	.adminKVKey { flex: none; }
+}

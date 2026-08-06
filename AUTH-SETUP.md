@@ -318,3 +318,105 @@ stop someone patient and articulate, and it never will: abuse can be spelled
 correctly and phrased politely. The AI stage narrows that gap and does not
 close it. **This is a floor, not a ceiling, and it is not a substitute for
 reading the reports.**
+
+---
+
+## Admin panel
+
+`supabase/migrations/20260806030000_admin.sql` — run after the chat one.
+The panel lives at **`/admin.html`**.
+
+### Read this bit before running it
+
+`profiles` was granted `UPDATE` at the **table** level, and its policy only
+checks which *row* you are touching, not which *column*. Adding an `is_admin`
+column to that table and changing nothing else would have meant any member
+could run:
+
+```js
+supabase.from("profiles").update({ is_admin: true }).eq("id", myOwnId)
+```
+
+...and the policy would have allowed it, because it is their own row. So this
+migration **revokes the table-wide grant** and replaces it with a grant on
+exactly the columns a member may edit:
+
+`username`, `avatar_url`, `setup_done`, `friend_policy`, `show_online`,
+`show_last_active`, `show_mutuals`, `public_profile`
+
+`is_admin`, `status` and `email` are not in that list, so an update naming them
+is refused by Postgres before any policy is consulted. A trigger backs it up in
+case a later migration re-grants the whole table by accident.
+
+**If you add a profile column that members should be able to edit, you must add
+it to that grant** — otherwise it will silently fail to save.
+
+### The first admin
+
+Bootstrapped by email in the migration:
+
+```sql
+do $$ declare bootstrap text := 'joehenderson196@gmail.com';
+```
+
+Change that line before running it if you want a different first admin. After
+that, admins are made by admins from the Users section — the block never needs
+editing again, and it does nothing if that address has not signed up yet.
+
+### Where permission is decided
+
+Not in the browser. Every privileged function's first act is `admin_require()`,
+which raises `Administrators only` for anyone else. `admin.html` hides itself
+from non-admins and the nav only shows the link to admins, but both are
+convenience: typing the URL in gets you a page that can fetch nothing.
+
+Granting `execute` to `authenticated` is deliberate and is *not* the
+permission — the function checks the flag on every call, which is right the
+moment it changes. A custom JWT claim would be stale for as long as the token
+lives.
+
+### Sections
+
+| Section | What it does |
+|---|---|
+| Dashboard | Ten counts, plus who is online (refreshing every 20s) and recent admin activity |
+| Reports | Filter by status, sort, open one to see the conversation around the reported message, mark open/reviewing/dismissed/actioned |
+| Users | Search and sort, suspend, ban, restore, promote, demote, delete, trigger a password reset |
+| Audit log | Every admin action: who, what, target, when, IP |
+
+Adding a section is an entry in `adminSections` plus a render function, and a
+read function in SQL that starts with `admin_require()`. Nothing registers a
+route or a permission.
+
+### Guards that are in the database, not the panel
+
+- You cannot suspend, ban or delete yourself.
+- You cannot remove the last administrator.
+- You cannot suspend, ban or delete another admin without demoting them first.
+- Deleting logs the name *before* the delete, because afterwards there is none.
+
+### Suspended and banned accounts
+
+Enforced on every write path — chat, friend requests, publishing — not in the
+UI. A ban also sets `auth.users.banned_until`, which is the column Supabase's
+own admin API uses, so they cannot sign in again; that write is wrapped so
+that if a future Supabase release moves it, the app-level block still holds.
+
+A suspension with an end date lapses on its own.
+
+### Password resets
+
+The panel calls the ordinary `resetPasswordForEmail` endpoint. It needs no
+elevated rights and grants none — an admin triggering it learns nothing they
+did not already know, and the email goes to the address on file.
+
+### After you run it — check this first
+
+Sign in as a **non-admin** and try:
+
+```js
+supabase.from("profiles").update({ is_admin: true }).eq("id", <their id>)
+```
+
+It must fail. If it succeeds, the column grant did not apply and nothing else
+in this panel is worth anything.

@@ -1110,6 +1110,11 @@
 	border-color: hsl(210 30% 38%);
 	color: hsl(210 20% 94%);
 }
+/* An edge on the outer side, so which way a message faces survives a bubble
+   wide enough that its position no longer says. Colour alone is not enough on
+   a phone held at arm's length. */
+.frMsgRow .frBubble { border-left: 3px solid var(--font-white-4); }
+.frMsgMine .frBubble { border-left: 1px solid hsl(210 30% 38%); border-right: 3px solid hsl(210 55% 62%); }
 .frMsgWhen { font-size: 72%; color: var(--font-white-4); padding: 0.1em 0.2em; }
 
 .frChatCompose { display: flex; gap: 0.4em; align-items: flex-end; padding-top: 0.5em; }
@@ -1132,3 +1137,45 @@
 
 .frChatWarn { font-size: 80%; color: var(--font-white-4); min-height: 1.2em; padding-top: 0.25em; }
 .frChatWarn.frChatWarnBad { color: hsl(5 75% 72%); }
+
+/* Mobile: index.html pins the layout viewport to 520px, so this matches on a
+   phone and never on a desktop window.
+   
+   78% of a 465px log leaves 81px of offset - 17% - and at that width a normal
+   sentence fills the bubble and both sides read as centred, which is exactly
+   what they did. 64% doubles the offset to a third of the width, which is
+   unmistakable at a glance. Long messages wrap a line more; being able to tell
+   who said what is worth more than that. */
+@media (max-width: 620px) {
+	.frBubble { max-width: 64%; }
+	.frChatLog { height: 300px; }
+}
+
+/* the flag on a chat message: quiet until hovered, loud once armed */
+.frMsgFlag {
+	cursor: pointer;
+	padding-left: 0.35em;
+	color: var(--font-white-4);
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+.frMsgRow:hover .frMsgFlag { opacity: 1; }
+.frMsgFlag:hover { color: hsl(5 75% 70%); }
+.frMsgFlag.frMsgFlagArmed { opacity: 1; color: hsl(5 80% 72%); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .frMsgFlag { transition: none; } }
+/* touch devices have no hover, so the flag has to be permanently visible */
+@media (hover: none) { .frMsgFlag { opacity: 0.55; } }
+
+/* admin shortcut in the nav row */
+.authNavLink.authNavAdmin { color: hsl(45 85% 72%); }
+
+/* the sort toggle above a contributor's published phrases */
+.profileContribSort { display: flex; align-items: center; gap: 0.5em; padding-bottom: 0.5em; }
+.profileSectionTitle {
+	font-size: 84%;
+	font-weight: 600;
+	color: var(--font-white-3);
+	padding: 0.9em 0 0.4em 0;
+	border-top: 1px solid var(--separator-accent2);
+	margin-top: 0.6em;
+}
