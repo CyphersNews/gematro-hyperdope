@@ -265,6 +265,14 @@ function createCiphersMenu() { // create menu with all cipher categories
     o += '<input class="intBtn3" type="button" value="All" onclick="enableAllCiphers()">'
     o += '</center></div>'
 
+    // Search, under the filter row. With a couple of hundred ciphers across a
+    // dozen categories, finding one means knowing which category somebody
+    // filed it under - so typing searches across all of them at once.
+    o += '<div class="ciphSearchRow">'
+    o += '<input type="text" id="ciphSearchBox" class="ciphSearchBox" placeholder="Search cyphers…" autocomplete="off" spellcheck="false" oninput="ciphSearchInput()" onkeydown="ciphSearchKey(event)">'
+    o += '<span id="ciphSearchClear" class="ciphSearchClear hideValue" title="Clear the search" onclick="ciphSearchClear()">&#215;</span>'
+    o += '</div>'
+
     o += '<hr style="background-color: var(--separator-accent2); height: 1px; border: none; margin: 0.4em;">'
 
     o += '<div class="ciphCatCol">'
@@ -313,7 +321,81 @@ $(document).ready(function(){
 	});
 });
 
+// ---- cypher search ----------------------------------------------------
+//
+// Filters what the panel shows, and nothing else: cipherList is untouched, so
+// which ciphers are on is exactly what the Empty / Default / All buttons left
+// enabled. Those tick states show through the results, so the two work
+// together - search to find, tick to enable.
+//
+// A search spans every category rather than the open one. Typing "eng" to be
+// told there is no English Ordinal, because you happened to be looking at
+// Languages, would be worse than no search at all.
+
+var ciphSearchTerm = ""
+var ciphLastCat = null // the category to go back to when the search is cleared
+
+function ciphSearchInput() {
+	var box = document.getElementById("ciphSearchBox")
+	ciphSearchTerm = (box === null) ? "" : box.value.trim()
+	var x = document.getElementById("ciphSearchClear")
+	if (x !== null) x.classList.toggle("hideValue", ciphSearchTerm === "")
+	if (ciphSearchTerm === "") displayCipherCatDetailed(ciphLastCat || cCat[0])
+	else displayCipherSearch(ciphSearchTerm)
+}
+
+function ciphSearchClear() {
+	var box = document.getElementById("ciphSearchBox")
+	if (box !== null) { box.value = ""; box.focus() }
+	ciphSearchInput()
+}
+
+function ciphSearchKey(e) {
+	if (e.key === "Escape" || e.keyCode === 27) { ciphSearchClear(); e.preventDefault() }
+}
+
+// One row per matching cipher, in cipherList order, with the category it came
+// from beside the name - without it a flat list of two hundred names gives no
+// clue why "Reduction" appears three times.
+function displayCipherSearch(term) {
+	var q = String(term).toLowerCase()
+	var o = '<table class="cipherCatDetails"><tbody>'
+	var hits = 0
+
+	for (var i = 0; i < cipherList.length; i++) {
+		if (cipherList[i].cipherName.toLowerCase().indexOf(q) === -1) continue
+		hits++
+		var chk = cipherList[i].enabled ? " checked" : ""
+		o += '<tr><td><label class="chkLabel ciphCheckboxLabel2">'
+		o += ciphSearchMark(cipherList[i].cipherName, q)
+		o += '<span class="ciphSearchCat">' + cipherList[i].cipherCategory + '</span>'
+		o += '<input type="checkbox" id="cipher_chkbox' + i + '" onclick="toggleCipher(' + i + ')"' + chk + '><span class="custChkBox"></span></label></td></tr>'
+	}
+	o += '</tbody></table>'
+
+	if (hits === 0) {
+		o = '<div class="ciphSearchNone">No cypher matches &ldquo;' + escHtml(term) + '&rdquo;</div>'
+	}
+	document.getElementById("menuCiphCatDetailsArea").innerHTML = o
+}
+
+// the matched run in bold, so it is obvious why a name came back
+function ciphSearchMark(name, q) {
+	var i = name.toLowerCase().indexOf(q)
+	if (i < 0) return escHtml(name)
+	return escHtml(name.slice(0, i)) + '<b class="ciphSearchHit">' + escHtml(name.slice(i, i + q.length)) + '</b>' + escHtml(name.slice(i + q.length))
+}
+
 function displayCipherCatDetailed(curCat) {
+	ciphLastCat = curCat
+	// a category click is a deliberate move away from the search results
+	if (ciphSearchTerm !== "") {
+		var sb = document.getElementById("ciphSearchBox")
+		if (sb !== null) sb.value = ""
+		ciphSearchTerm = ""
+		var sx = document.getElementById("ciphSearchClear")
+		if (sx !== null) sx.classList.add("hideValue")
+	}
 	var chk = ""; var o = ""
 	if (navigator.maxTouchPoints > 1) {
 		o += '<input class="intBtn3" type="button" value="Toggle Category" style="width: 100%; margin-top: 0.1em" onclick="toggleCipherCategory(&quot;'+curCat+'&quot;)">'

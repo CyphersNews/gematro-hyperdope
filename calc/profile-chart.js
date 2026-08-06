@@ -92,6 +92,14 @@ function pcSetZodiac(z) { pcCapture(); pcZodiac = z; renderProfileChart() }
 function pcToggleTime() { pcCapture(); pcForm.timeKnown = !pcForm.timeKnown; renderProfileChart() }
 function pcRedraw() { pcCapture(); pcDraw() }
 
+// pcField puts its own oninput last, and a duplicate attribute is ignored, so
+// this one has to redraw as well as clear the flag.
+function pcTzEdited() {
+	pcTzGuessed = false
+	$(".pcTzNote").remove() // they have taken charge of it; stop second-guessing
+	pcRedraw()
+}
+
 // ---- computing ---------------------------------------------------------
 
 // An unknown birth time is treated as noon, which keeps every planet except
@@ -157,21 +165,20 @@ function renderProfileChart() {
 		if (pcEditingId) o += '<button class="profileMiniBtn" onclick="pcNew()">New</button>'
 		o += '</div>'
 
+		// One row: what you are reading on the left, what you are saving on the
+		// right. The print group is pushed over with margin-left:auto rather
+		// than a spacer, so it stays right-aligned as the row wraps on mobile.
 		o += '<div class="pcZodiacRow">'
 		o += '<button class="intBtn3 pcZodBtn' + (pcZodiac === "tropical" ? " pcZodOn" : "") + '" onclick="pcSetZodiac(&quot;tropical&quot;)">&#9711; Tropical</button>'
 		o += '<button class="intBtn3 pcZodBtn' + (pcZodiac === "sidereal" ? " pcZodOn" : "") + '" onclick="pcSetZodiac(&quot;sidereal&quot;)">&#9633; Sidereal</button>'
-		o += '<span class="profileWhen">Both are worked out from the same details &mdash; switch freely, nothing is re-entered.</span>'
-		o += '</div>'
-
-		// Printing is its own row: the first two buttons above choose what you
-		// are reading, these three choose what you are saving, and mixing them
-		// made the row read as five ways of looking at the chart.
-		o += '<div class="pcPrintRow">'
+		o += '<span class="pcPrintGroup">'
 		o += '<span class="pcPrintLab">&#128438; Print</span>'
 		o += '<button class="intBtn3 pcZodBtn pcPrintBtn" onclick="pcPrintChart()" title="The wheel on its own, in the zodiac showing now">Chart</button>'
-		o += '<button class="intBtn3 pcZodBtn pcPrintBtn" onclick="pcPrintPlanets()" title="The planet positions on their own, in the zodiac showing now">Planets</button>'
-		o += '<button class="intBtn3 pcZodBtn pcPrintBtn" onclick="pcPrintBoth()" title="Tropical and sidereal side by side, each with its positions">Both charts</button>'
+		o += '<button class="intBtn3 pcZodBtn pcPrintBtn" onclick="pcPrintPlanets()" title="The positions on their own, in the zodiac showing now">Planets</button>'
+		o += '<button class="intBtn3 pcZodBtn pcPrintBtn" onclick="pcPrintBoth()" title="Tropical and sidereal positions side by side, no wheels">Both</button>'
+		o += '</span>'
 		o += '</div>'
+		o += '<div class="pcZodiacNote"><span class="profileWhen">Both are worked out from the same details &mdash; switch freely, nothing is re-entered.</span></div>'
 
 		o += '<div class="pcFields">'
 		o += '<div class="pcRow"><label class="pcLab">Born</label>'
@@ -210,8 +217,17 @@ function renderProfileChart() {
 		o += '<div class="pcRow pcRowSub"><label class="pcLab"></label>'
 		o += pcField("pcLat", "Latitude", f.lat, '', ' step="0.0001"')
 		o += pcField("pcLon", "Longitude", f.lon, '', ' step="0.0001"')
-		o += pcField("pcTZ", "UTC offset", f.tz, '', ' step="0.25"')
+		o += pcField("pcTZ", "UTC offset", f.tz, '', ' step="0.25" oninput="pcTzEdited()"')
 		o += '</div>'
+		// The offset is the input people get wrong, and getting it wrong moves
+		// the Ascendant about a sign every two hours, so it says so rather than
+		// sitting there as one number box among three.
+		if (pcTzGuessed) {
+			o += '<div class="pcRow pcRowSub"><label class="pcLab"></label>'
+			o += '<span class="profileNote profileWarn pcTzNote">Offset guessed as '
+			o += (f.tz >= 0 ? "+" : "") + f.tz + ' from longitude &mdash; check the zone in force on that date, and add an hour for summer time.</span>'
+			o += '</div>'
+		}
 		o += '</div>'
 		o += '</div>'
 
@@ -481,22 +497,27 @@ function pcPrintImage(kind) {
 
 		pcDrawPositions(c, cur, P.pad, P.head + 42, fam)
 
-	} else { // both: title over each column, chart, then that zodiac's positions
+	} else {
+		// Both: the two readings side by side, positions only.
+		//
+		// No wheels. The point of putting tropical next to sidereal is to read
+		// off what moved, and that is entirely in the numbers - two diagrams
+		// differing by 24° tell you nothing you can measure by eye, and they
+		// were making a page-and-a-half of image out of two short columns.
 		var probe2 = document.createElement("canvas").getContext("2d")
 		var hTro = pcDrawPositions(probe2, tro, 0, 0, fam)
 		var hSid = pcDrawPositions(probe2, sid, 0, 0, fam)
-		var listMax = Math.max(hTro, hSid)
 
-		var colW = Math.max(P.size, P.listW)
+		var colW = P.listW
 		w = colW * 2 + P.gap + P.pad * 2
-		h = P.head + 26 + P.size + 24 + listMax + P.pad
+		h = P.head + 26 + Math.max(hTro, hSid) + P.pad
 
 		surf = pcPrintSurface(w, h); c = surf.c
 		pcPrintHeading(c, f, w, fam)
 
 		var cols = [
-			{ x: P.pad, chart: tro, label: "○ Tropical", square: false },
-			{ x: P.pad + colW + P.gap, chart: sid, label: "□ Sidereal (Lahiri)", square: true }
+			{ x: P.pad, chart: tro, label: "○ Tropical" },
+			{ x: P.pad + colW + P.gap, chart: sid, label: "□ Sidereal (Lahiri)" }
 		]
 		for (var i = 0; i < cols.length; i++) {
 			var col = cols[i]
@@ -504,12 +525,7 @@ function pcPrintImage(kind) {
 			c.font = "600 16px " + fam
 			c.fillStyle = pcInk("--font-white-2", "#ccc")
 			c.fillText(col.label, col.x + colW / 2, P.head + 16)
-
-			c.save(); c.translate(col.x + (colW - P.size) / 2, P.head + 26)
-			if (col.square) pcDrawSquare(c, P.size, col.chart); else pcDrawWheel(c, P.size, col.chart)
-			c.restore()
-
-			pcDrawPositions(c, col.chart, col.x + (colW - P.listW) / 2, P.head + 26 + P.size + 24, fam)
+			pcDrawPositions(c, col.chart, col.x, P.head + 42, fam)
 		}
 	}
 
@@ -952,6 +968,18 @@ function pcLookupPlace() {
 		})
 }
 
+// Picking a place has to set the UTC offset as well as the coordinates.
+//
+// It did not, and the offset stayed on whatever it was - 0 for anyone who had
+// not touched it. So a birth time entered as local Brooklyn time was read as
+// UTC, four hours out, and the Ascendant came back two signs wrong: Gemini
+// 16°44' for a chart whose Ascendant is Leo 8°31'. The angles were right all
+// along; they were being asked about the wrong moment.
+//
+// Longitude only gives solar time, so the offset is a starting guess: real
+// zones follow borders, some are on the half hour, and daylight saving depends
+// on the date. It is set and then said out loud, the same as the Astrology tab
+// has always done.
 function pcPickPlace(i) {
 	var r = pcGeoResults[i]
 	if (!r) return
@@ -959,8 +987,14 @@ function pcPickPlace(i) {
 	pcForm.place = r.label
 	pcForm.lat = r.lat
 	pcForm.lon = r.lon
+	pcForm.tz = Math.round(r.lon / 15)
+	pcTzGuessed = true
 	renderProfileChart()
 }
+
+// set when the offset came from a place rather than from the user, so the note
+// appears once and goes away as soon as they touch the field
+var pcTzGuessed = false
 
 // ---- saving ------------------------------------------------------------
 
@@ -1007,6 +1041,7 @@ function pcOpen(id) {
 			tz: (r.tz_offset === null || r.tz_offset === undefined) ? 0 : r.tz_offset
 		}
 		pcEditingId = r.id
+		pcTzGuessed = false // a saved chart's offset is whatever was saved
 		if (r.zodiac === "sidereal" || r.zodiac === "tropical") pcZodiac = r.zodiac
 		renderProfileChart()
 	}).catch(function (err) {
@@ -1017,6 +1052,7 @@ function pcOpen(id) {
 function pcNew() {
 	pcForm = pcDefaultForm()
 	pcEditingId = null
+	pcTzGuessed = false
 	renderProfileChart()
 }
 

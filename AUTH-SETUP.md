@@ -180,3 +180,141 @@ row.
    with `discord_id`, `discord_username` and `discord_avatar` filled in.
 5. Signed in with email/password, open **Profile → Link your Discord account**
    to attach Discord to the existing account rather than making a second one.
+
+---
+
+## Friends
+
+`supabase/migrations/20260806000000_friends.sql`
+
+Run it the same way as the others — SQL Editor, or `supabase db push`. It is
+safe to re-run. **Until it is run the Friends tab says so and does nothing
+else**; the rest of the app is unaffected.
+
+### What it creates
+
+- **`public.friendships`** — one row per *pair*, not per direction. The pair is
+  stored canonically (`user_a < user_b`) with a unique index on
+  `(user_a, user_b)`. That one decision makes every duplicate case impossible
+  in the database rather than in application code:
+
+  | attempt | what stops it |
+  |---|---|
+  | A asks B twice | unique index |
+  | A asks B, then B asks A | same canonical row → unique index |
+  | A asks A | `user_a < user_b` check |
+  | already friends, ask again | same row → unique index |
+
+- **Privacy columns on `profiles`** — `friend_policy`
+  (`everyone`/`members`/`friends_of_friends`/`nobody`), `show_online`,
+  `show_last_active`, `show_mutuals`, `public_profile`, `last_active_at`.
+- **`public.member_cards`** — the friends UI's equivalent of
+  `public_profiles`: identity only, email never referenced.
+- **Functions** — `friend_request`, `friend_respond`, `friend_cancel`,
+  `friend_remove`, `friend_list`, `friend_requests`, `friend_counts`,
+  `member_search`, `member_discover`, `member_profile`, `touch_last_active`.
+
+### Why the writes go through functions
+
+`friendships` has **no insert and no update policy at all** — only select and
+delete, both restricted to rows you are part of. Every state change goes
+through a `security definer` function instead, so rules like *"only the
+addressee may accept"* and *"only the requester may cancel"* live in one place
+and cannot be bypassed from the console.
+
+Select is limited to rows you are in, so nobody can enumerate who is friends
+with whom.
+
+### Presence
+
+`last_active_at` is a timestamp the client touches every 2½ minutes while the
+tab is open, and "online" means *seen in the last five minutes*. There is
+deliberately no online flag: a browser that closes without warning never sends
+the "I left" message, and the member is left showing online for ever.
+
+### Two things to know
+
+- **"Anyone" and "Members only" are the same setting** while the whole social
+  layer needs an account. Both values exist so the distinction is available
+  later; the UI offers one button and says so.
+- **Timezone-style caveat on `friends_of_friends`** — it is evaluated at the
+  moment of the request, so losing a mutual friend afterwards does not undo a
+  friendship already made.
+
+---
+
+## Safe friends chat
+
+`supabase/migrations/20260806010000_chat.sql` — run after the friends one.
+
+### The line that makes the rest of it true
+
+`public.messages` has **no insert policy**. The only writer is `chat_send()`,
+which is `security definer` and runs every check first. A filter in the browser
+is a suggestion — anyone can open the console and insert directly — so none of
+the rules live there. `auth/chat.js` re-implements a handful of the *shape*
+rules (links, phone numbers, emails) purely so the warning appears while you
+type; the server runs them all again regardless.
+
+### Adding a rule
+
+Rules are rows, not code:
+
+```sql
+insert into public.mod_rules (category, kind, pattern, note)
+values ('contact', 'tight', 'newapp', 'keep it here');
+```
+
+`kind` is one of:
+
+| kind | matched against | use for |
+|---|---|---|
+| `word` | whole words in the folded text | short terms where a substring hit would be a disaster |
+| `tight` | substring of the separator-stripped text | terms long enough that a partial hit is deliberate |
+| `regex` | the raw text, case-insensitive | shapes — phone numbers, postcodes, coordinates |
+
+Text is folded before any rule sees it: lower-cased, leetspeak mapped
+(`4→a`, `3→e`, `$→s`…), runs of three or more identical characters collapsed,
+and separators normalised. So `f.u.c.k`, `fuuuck` and `F U C K` are all the
+same string by the time a rule runs.
+
+`public.mod_allow` is the counterweight: innocent words are removed **before**
+substring matching, which is why *Scunthorpe*, *classic* and *assessment* can
+be typed. Adding to that list is the maintenance cost of catching evasion, and
+it is the right trade — the alternative is either missing `f.u.c.k` or blocking
+`grass`.
+
+### Turning on the AI stage
+
+Phase 1 ships with `mod_settings.require_ai = false` and works immediately on
+rules alone. To add the AI check:
+
+```bash
+supabase functions deploy moderate-message
+supabase secrets set OPENAI_API_KEY=sk-...
+```
+```sql
+update public.mod_settings set require_ai = true;
+```
+
+After that `chat_send()` refuses every caller, so the browser can no longer
+reach the table and the Edge Function — which runs rules, then the AI, then
+stores — becomes the only way a message can exist. **Nothing in the chat system
+changes to make that switch.** The function fails closed: if the moderation API
+is unreachable, the message is refused rather than stored unchecked.
+
+### What is logged
+
+`public.moderation_events` gets one row per rejection: who, when, which
+category, which rule, how long the message was. **Not the message.** Keeping
+rejected text would mean building a searchable archive of the worst things
+anyone has typed. Reports go to `public.reports`, insert-only — a member can
+file one and can never read any, including their own.
+
+### What this does not do
+
+Keyword and pattern matching stops the careless and the casual. It does not
+stop someone patient and articulate, and it never will: abuse can be spelled
+correctly and phrased politely. The AI stage narrows that gap and does not
+close it. **This is a floor, not a ceiling, and it is not a substitute for
+reading the reports.**

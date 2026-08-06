@@ -53,6 +53,7 @@ function renderProfilePanel() {
 	o += profileTabBtn("entries", "💾 Saved")
 	o += profileTabBtn("submissions", "📤 Submit")
 	o += profileTabBtn("leaderboard", "🏆 Leaders")
+	o += profileTabBtn("friends", "📧 Friends")
 	o += profileTabBtn("chart", "🔮 Chart")
 	o += profileTabBtn("account", "⚙ Account")
 	o += '</div>'
@@ -70,12 +71,14 @@ function renderProfilePanel() {
 	else if (profileTabActive === "chart") renderProfileChart()
 	else if (profileTabActive === "submissions") renderProfileSubmissions()
 	else if (profileTabActive === "leaderboard") renderProfileLeaderboard()
+	else if (profileTabActive === "friends") renderProfileFriends()
 	else renderProfileAccount()
 }
 
 function profileTabBtn(id, label) {
 	var on = (profileTabActive === id) ? " profileTabOn" : ""
-	return '<input class="intBtn3 profileTab'+on+'" type="button" value="'+label+'" onclick="profileSetTab(&quot;'+id+'&quot;)">'
+	var elId = "profileTab" + id.charAt(0).toUpperCase() + id.slice(1)
+	return '<input class="intBtn3 profileTab'+on+'" id="'+elId+'" type="button" value="'+label+'" onclick="profileSetTab(&quot;'+id+'&quot;)">'
 }
 
 // Every tab loads over the network, so a slow tab's response can land after

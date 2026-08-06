@@ -773,11 +773,17 @@
 .pcZodiacRow { display: flex; align-items: center; gap: 0.4em; flex-wrap: wrap; padding-bottom: 0.6em; }
 .intBtn3.pcZodBtn { width: auto; margin: 0; padding: 0.25em 0.8em; }
 .intBtn3.pcZodBtn.pcZodOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
-/* Printing is a separate row from the zodiac switch: those two buttons choose
-   what you are reading, these three choose what you are saving. */
-.pcPrintRow { display: flex; align-items: center; gap: 0.4em; flex-wrap: wrap; padding-bottom: 0.7em; }
+/* One toolbar: the zodiac switch on the left, the print buttons pushed to the
+   right with margin-left:auto so they stay right-aligned however the row wraps. */
+.pcPrintGroup { display: flex; align-items: center; gap: 0.4em; margin-left: auto; flex-wrap: wrap; }
 .pcPrintLab { font-size: 80%; color: var(--font-white-3); font-weight: 600; }
 .intBtn3.pcPrintBtn { border-color: var(--font-white-4); }
+/* the sentence about the two zodiacs, moved off the toolbar now five controls
+   share it */
+.pcZodiacNote { padding-bottom: 0.6em; }
+@media (max-width: 620px) { /* stacked rather than squeezed */
+	.pcPrintGroup { margin-left: 0; padding-top: 0.3em; }
+}
 
 .pcFields { padding-bottom: 0.6em; }
 /* Time and Place as separate blocks. They used to be four rows in one stack at
@@ -936,3 +942,193 @@
 .pcTransit { display: flex; align-items: baseline; gap: 0.35em; font-size: 86%; flex-wrap: wrap; cursor: help; }
 .pcAspect { font-weight: 600; }
 .pcOrb { color: var(--font-white-2); font-family: var(--font-family-mono), monospace; font-size: 88%; margin-left: auto; }
+
+/* ===================== Friends =====================
+   Reuses .profileRow, .profileList and .profileMiniBtn so a friend, a saved
+   phrase and a leaderboard entry are visibly the same kind of thing. Only
+   what is genuinely new to this tab is defined here. */
+
+.frTabs { display: flex; gap: 0.3em; flex-wrap: wrap; padding-bottom: 0.6em; }
+.intBtn3.frTab { width: auto; margin: 0; padding: 0.25em 0.8em; position: relative; }
+.intBtn3.frTab.frTabOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
+
+/* the count of requests waiting, on the section button and inline in headings */
+.frBadge {
+	display: inline-block;
+	margin-left: 0.4em;
+	min-width: 1.35em;
+	padding: 0 0.3em;
+	border-radius: 999px;
+	background-color: hsl(5 65% 48%);
+	color: #fff;
+	font-size: 78%;
+	font-weight: 700;
+	line-height: 1.45em;
+	text-align: center;
+}
+.frBadgeInline { vertical-align: middle; }
+/* the Friends tab itself, when something is waiting */
+.profileTab.profileTabAlert { border-color: hsl(5 65% 55%); color: hsl(5 80% 78%); }
+
+.frToolbar { display: flex; align-items: center; gap: 0.3em; flex-wrap: wrap; padding-bottom: 0.6em; }
+.frToolLab { font-size: 80%; color: var(--font-white-3); font-weight: 600; padding-right: 0.2em; }
+.intBtn3.frChip { width: auto; margin: 0; padding: 0.18em 0.7em; font-size: 82%; }
+.intBtn3.frChip.frChipOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
+
+.frSectionTitle {
+	font-size: 85%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	padding: 0.7em 0 0.4em 0;
+}
+
+.frRow { align-items: center; gap: 0.5em; }
+.frAvatar {
+	width: 26px; height: 26px;
+	border-radius: 50%;
+	object-fit: cover;
+	flex: 0 0 auto;
+	background-color: var(--btn-bg-accent);
+}
+.frAvatarFallback {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 80%;
+	font-weight: 700;
+	color: var(--font-white-2);
+}
+.frAvatarBig { width: 56px; height: 56px; font-size: 150%; }
+
+.frWho { flex: 1 1 auto; min-width: 0; cursor: pointer; }
+.frWho:hover .frName { color: var(--font-white-1); text-decoration: underline; }
+.frName { display: block; color: var(--font-white-2); font-weight: 600; }
+.frSub { display: block; font-size: 80%; color: var(--font-white-4); }
+
+/* Presence is a timestamp, not a flag, so this is "seen in the last five
+   minutes" rather than a state a closed browser could leave stuck on. */
+.frDot {
+	display: inline-block;
+	width: 7px; height: 7px;
+	border-radius: 50%;
+	margin-left: 0.45em;
+	vertical-align: middle;
+	background-color: var(--font-white-4);
+}
+.frDot.frDotOn { background-color: hsl(140 60% 50%); box-shadow: 0 0 5px hsl(140 60% 45%); }
+
+.frActions { display: flex; align-items: center; gap: 0.3em; flex: 0 0 auto; }
+.profileMiniBtn.frAdd { background-color: hsl(140 40% 30%); border-color: hsl(140 35% 42%); color: hsl(140 25% 92%); }
+.profileMiniBtn.frAdd:hover:not(:disabled) { background-color: hsl(140 44% 36%); }
+.profileMiniBtn.frAccept { background-color: hsl(140 40% 30%); border-color: hsl(140 35% 42%); color: hsl(140 25% 92%); }
+.profileMiniBtn.frAccept:hover:not(:disabled) { background-color: hsl(140 44% 36%); }
+
+.frBack { padding-bottom: 0.5em; }
+.frProfile { padding-bottom: 0.4em; }
+.frProfileHead { display: flex; align-items: center; gap: 0.8em; padding-bottom: 0.8em; }
+.frProfileWho { flex: 1 1 auto; min-width: 0; }
+.frProfileName { font-size: 118%; font-weight: 600; color: var(--font-white-1); }
+.frProfileActions { flex: 0 0 auto; display: flex; gap: 0.3em; }
+
+.frStats { display: flex; gap: 0.5em; flex-wrap: wrap; }
+.frStat {
+	flex: 1 1 5.5em;
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	padding: 0.5em 0.4em;
+	text-align: center;
+}
+.frStatVal { font-family: var(--font-family-mono), monospace; font-size: 125%; font-weight: 700; color: var(--font-white-1); }
+/* --font-white-4 is the shade for things you are meant to skip; a stat's label
+   is the half that says what the number means */
+.frStatLab { font-size: 74%; color: var(--font-white-3); padding-top: 0.15em; }
+
+.frBadgeRow { display: flex; gap: 0.35em; flex-wrap: wrap; }
+.frAward {
+	font-size: 80%;
+	color: var(--font-white-2);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.2em 0.55em;
+	cursor: help;
+}
+
+.frToggleRow { padding: 0.25em 0; }
+.frToggleHint { font-size: 78%; color: var(--font-white-4); padding-left: 1.9em; }
+
+/* ---- chat ---- */
+
+.profileMiniBtn.frMsg { background-color: hsl(210 40% 32%); border-color: hsl(210 35% 45%); color: hsl(210 25% 92%); }
+.profileMiniBtn.frMsg:hover:not(:disabled) { background-color: hsl(210 44% 38%); }
+
+/* one line of preview, cut rather than wrapped: a thread list is a list of
+   people, not a list of messages */
+.frPreview {
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+
+.frChatHead {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding-bottom: 0.5em;
+	border-bottom: 1px solid var(--separator-accent2);
+}
+.frChatWho { flex: 1 1 auto; font-weight: 600; color: var(--font-white-1); }
+.frChatHeadActions { display: flex; gap: 0.3em; flex: 0 0 auto; }
+
+.frChatLog {
+	height: 260px;
+	overflow-y: auto;
+	padding: 0.6em 0.2em;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35em;
+}
+
+.frMsgRow { display: flex; flex-direction: column; align-items: flex-start; max-width: 100%; }
+.frMsgRow.frMsgMine { align-items: flex-end; }
+
+.frBubble {
+	max-width: 78%;
+	padding: 0.4em 0.65em;
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	color: var(--font-white-2);
+	font-size: 90%;
+	line-height: 1.4em;
+	/* a long unbroken string is the one way text can still break a layout */
+	overflow-wrap: anywhere;
+	white-space: normal;
+}
+.frMsgMine .frBubble {
+	background-color: hsl(210 38% 28%);
+	border-color: hsl(210 30% 38%);
+	color: hsl(210 20% 94%);
+}
+.frMsgWhen { font-size: 72%; color: var(--font-white-4); padding: 0.1em 0.2em; }
+
+.frChatCompose { display: flex; gap: 0.4em; align-items: flex-end; padding-top: 0.5em; }
+.frChatBox {
+	flex: 1 1 auto;
+	resize: vertical;
+	min-height: 2.4em;
+	max-height: 8em;
+	box-sizing: border-box;
+	padding: 0.4em 0.5em;
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 90%;
+	color: var(--font-white-1);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	outline: none;
+}
+.frChatBox:focus { border-color: var(--focus-outline); }
+.profileMiniBtn.frChatSend { flex: 0 0 auto; align-self: stretch; padding: 0 1em; }
+
+.frChatWarn { font-size: 80%; color: var(--font-white-4); min-height: 1.2em; padding-top: 0.25em; }
+.frChatWarn.frChatWarnBad { color: hsl(5 75% 72%); }
