@@ -406,11 +406,11 @@ declare
   r record;
 begin
   for r in
-    select * from public.mod_rules where enabled
+    select mr.* from public.mod_rules mr where mr.enabled
     -- shapes before vocabulary: "call me on 07700 900123" should be reported
     -- as a phone number, which is the useful half
-    order by case category when 'personal' then 0 when 'link' then 1
-                           when 'contact' then 2 when 'age' then 3 else 4 end, id
+    order by case mr.category when 'personal' then 0 when 'link' then 1
+                              when 'contact' then 2 when 'age' then 3 else 4 end, mr.id
   loop
     if r.kind = 'word' then
       if w ~ ('(^| )' || r.pattern || '( |$)') then
@@ -621,6 +621,10 @@ $$;
 
 -- The pipeline itself, with the sender passed in rather than assumed.
 --
+-- Every column below is qualified. The names in RETURNS TABLE are PL/pgSQL
+-- variables for the whole body, so an unqualified `id` or `created_at` here
+-- is ambiguous - and it fails at call time, not at create time.
+--
 -- Both entry points below funnel through this, and it runs every check every
 -- time - including the rules the Edge Function has already run. Checking twice
 -- costs a few milliseconds and means the rules apply no matter who is calling
@@ -637,7 +641,7 @@ declare
   clean text;
 begin
   if me is null then raise exception 'Not signed in'; end if;
-  select * into cfg from public.mod_settings where id;
+  select s.* into cfg from public.mod_settings s where s.id;
 
   if not public.are_friends(me, target) then
     raise exception 'You can only message friends';
@@ -658,8 +662,8 @@ begin
   end if;
 
   -- flooding
-  select count(*) into n from public.messages
-   where sender_id = me and created_at > now() - interval '1 minute';
+  select count(*) into n from public.messages fm
+   where fm.sender_id = me and fm.created_at > now() - interval '1 minute';
   if n >= cfg.per_minute then
     insert into public.moderation_events (user_id, category, reason, action, length)
       values (me, 'spam', 'rate limit', 'rejected', length(clean));
@@ -701,7 +705,7 @@ language plpgsql security definer set search_path = public
 as $$
 declare cfg public.mod_settings;
 begin
-  select * into cfg from public.mod_settings where id;
+  select s.* into cfg from public.mod_settings s where s.id;
   if cfg.require_ai then
     raise exception 'Messages must go through moderation';
   end if;
