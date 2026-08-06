@@ -1,0 +1,38 @@
+# GitHub Pages build configuration
+#
+# The site is plain static files. Jekyll is not used to generate anything - it
+# only runs because Pages runs it by default - so the whole of this file is
+# about what NOT to publish.
+#
+# Everything in the repository that is not excluded here is served at
+# cyphers.news. That includes directories added for development, which is how
+# supabase/ was about to become publicly readable:
+#
+#     https://cyphers.news/supabase/migrations/20260806010000_chat.sql
+#
+# ...which is the entire chat filter - every blocked word, every grooming
+# phrase, and the allowlist that says which near-misses are let through. The
+# database deliberately refuses to serve mod_rules to the browser, because
+# knowing a filter exactly is most of the work of getting round it. Publishing
+# the migration that creates it would have handed over the same thing.
+#
+# The migrations also spell out every RLS policy and every security definer
+# function. None of that is a secret in the sense that it must not be known -
+# the design holds whether or not it is public - but it is a map, and there is
+# no reason to hand one out.
+#
+# Setting `exclude` REPLACES Jekyll's defaults rather than adding to them, so
+# the defaults are restated at the end of the list. Kept as one unbroken block
+# with no comments inside it: a comment between list items is legal YAML, but
+# this file is being pushed in the middle of debugging a failed deployment and
+# is not the place for anything that needs a second look to confirm.
+exclude:
+  - supabase/
+  - AUTH-SETUP.md
+  - README.md
+  - .gitignore
+  - .github/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/
