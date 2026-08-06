@@ -99,7 +99,8 @@ function friendsDecline(userId) { return friendsRpc("friend_respond", { target: 
 // read and update under the existing policy, so no function is needed.
 
 var FRIENDS_PRIVACY_KEYS = [
-	"friend_policy", "show_online", "show_last_active", "show_mutuals", "public_profile"
+	"friend_policy", "show_online", "show_last_active", "show_mutuals",
+	"show_friend_count", "public_profile", "roles", "fav_ciphers"
 ]
 
 function friendsPrivacyGet() {
@@ -205,3 +206,64 @@ $(document).ready(function () {
 		})
 	}
 })
+
+// ---- roles ------------------------------------------------------------
+//
+// Read from the database rather than listed here, so adding a role is an
+// INSERT into profile_role_options and this file never changes.
+
+var friendsRoleCache = null
+
+function friendsRoleOptions() {
+	if (friendsRoleCache !== null) return Promise.resolve(friendsRoleCache)
+	var c = friendsClient()
+	if (c === null) return Promise.resolve([])
+	return c.from("profile_role_options").select("key, label, emoji, sort").order("sort")
+		.then(function (res) {
+			if (res.error) throw friendsError(res.error)
+			friendsRoleCache = res.data || []
+			return friendsRoleCache
+		})
+}
+
+function friendsRoleLabel(key) {
+	if (friendsRoleCache === null) return key
+	for (var i = 0; i < friendsRoleCache.length; i++) {
+		if (friendsRoleCache[i].key === key) {
+			return friendsRoleCache[i].emoji + " " + friendsRoleCache[i].label
+		}
+	}
+	return key
+}
+
+// ---- what has been seen ------------------------------------------------
+//
+// The red badge is about news, not about totals. A friend count that is always
+// red says nothing; one that goes red when somebody accepts you says something
+// once, and then stops.
+//
+// Kept per account in localStorage rather than on the server: it is a fact
+// about this browser, and syncing it would mean marking things read on a
+// device you are not looking at.
+
+function friendsSeenKey(what) {
+	var who = (typeof authUser !== "undefined" && authUser !== null) ? authUser.id : "anon"
+	return "frSeen:" + what + ":" + who
+}
+
+function friendsSeenGet(what) {
+	try { return Number(window.localStorage.getItem(friendsSeenKey(what))) || 0 }
+	catch (e) { return 0 }
+}
+
+function friendsSeenSet(what, value) {
+	try { window.localStorage.setItem(friendsSeenKey(what), String(value)) } catch (e) {}
+}
+
+function friendsSeenFlag(what) {
+	try { return window.localStorage.getItem(friendsSeenKey(what)) === "1" } catch (e) { return true }
+}
+
+function friendsSeenMark(what) {
+	try { window.localStorage.setItem(friendsSeenKey(what), "1") } catch (e) {}
+}

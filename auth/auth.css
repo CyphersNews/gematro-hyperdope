@@ -948,14 +948,33 @@
    phrase and a leaderboard entry are visibly the same kind of thing. Only
    what is genuinely new to this tab is defined here. */
 
-.frTabs { display: flex; gap: 0.3em; flex-wrap: wrap; padding-bottom: 0.6em; }
-.intBtn3.frTab { width: auto; margin: 0; padding: 0.25em 0.8em; position: relative; }
+/* Six sections, icon above the word. As text-only buttons they wrapped onto a
+   second row on a phone and read as two menus; stacked, they stay on one line
+   down to 320px. */
+.frTabs { display: flex; gap: 0.25em; padding-bottom: 0.7em; }
+.intBtn3.frTab {
+	width: auto;
+	flex: 1 1 0;
+	min-width: 0;
+	margin: 0;
+	padding: 0.35em 0.2em 0.3em 0.2em;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.1em;
+	line-height: 1.1em;
+}
+.frTabIcon { font-size: 118%; line-height: 1.1em; }
+.frTabLab { font-size: 78%; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .intBtn3.frTab.frTabOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
+@media (max-width: 380px) { .frTabLab { display: none; } .frTabIcon { font-size: 132%; } }
 
 /* the count of requests waiting, on the section button and inline in headings */
 .frBadge {
 	display: inline-block;
 	margin-left: 0.4em;
+	position: relative;
 	min-width: 1.35em;
 	padding: 0 0.3em;
 	border-radius: 999px;
@@ -1003,7 +1022,8 @@
 .frWho { flex: 1 1 auto; min-width: 0; cursor: pointer; }
 .frWho:hover .frName { color: var(--font-white-1); text-decoration: underline; }
 .frName { display: block; color: var(--font-white-2); font-weight: 600; }
-.frSub { display: block; font-size: 80%; color: var(--font-white-4); }
+/* the handle and the join date are read on purpose, not skipped */
+.frSub { display: block; font-size: 80%; color: var(--font-white-3); }
 
 /* Presence is a timestamp, not a flag, so this is "seen in the last five
    minutes" rather than a state a closed browser could leave stuck on. */
@@ -1179,3 +1199,217 @@
 	border-top: 1px solid var(--separator-accent2);
 	margin-top: 0.6em;
 }
+
+
+/* ---- friends nav: badges and the first-time pip ---- */
+
+.frTab .frBadge {
+	position: absolute;
+	top: 1px;
+	right: 2px;
+	margin: 0;
+	font-size: 68%;
+	line-height: 1.4em;
+	min-width: 1.4em;
+}
+/* Not a count - a nudge. Shown until the section has been opened once, then
+   never again, so it cannot become part of the furniture. */
+.frPip {
+	position: absolute;
+	top: 1px;
+	right: 3px;
+	color: hsl(45 90% 68%);
+	font-size: 78%;
+	animation: frPipGlow 2.4s ease-in-out infinite;
+}
+@keyframes frPipGlow { 0%,100% { opacity: 0.45 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .frPip { animation: none; opacity: 0.9 } }
+
+/* ---- one select instead of a row of chips ---- */
+
+.frSelect {
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 82%;
+	color: var(--font-white-1);
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.2em 0.4em;
+	outline: none;
+	max-width: 14em;
+}
+.frSelect:focus { border-color: var(--focus-outline); }
+.frToolCount { font-size: 80%; color: var(--font-white-3); margin-left: auto; }
+
+/* ---- privacy ---- */
+
+.frPrivHead {
+	font-size: 100%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	padding: 1em 0 0.5em 0;
+}
+.frPrivHead:first-child { padding-top: 0.2em; }
+.frPrivFoot {
+	font-size: 80%;
+	color: var(--font-white-3);
+	border-top: 1px solid var(--separator-accent2);
+	margin-top: 1em;
+	padding-top: 0.7em;
+	line-height: 1.45em;
+}
+
+/* one question, three answers - a choice, not a filter */
+.frChoice { display: flex; flex-direction: column; gap: 0.35em; }
+.frChoiceCard {
+	display: flex;
+	align-items: center;
+	gap: 0.7em;
+	width: 100%;
+	box-sizing: border-box;
+	text-align: left;
+	font-family: var(--font-family), "Arial", sans-serif;
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-accent);
+	color: var(--font-white-2);
+	padding: 0.6em 0.8em;
+	cursor: pointer;
+	outline: none;
+}
+.frChoiceCard:hover { background-color: var(--btn-hover-accent); }
+.frChoiceCard.frChoiceOn {
+	border-color: hsl(140 50% 48%);
+	background-color: hsla(140 45% 35% / 0.22);
+	color: var(--font-white-1);
+}
+.frChoiceIcon { font-size: 145%; flex: 0 0 auto; line-height: 1; }
+.frChoiceBody { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.frChoiceTitle { font-weight: 600; font-size: 95%; }
+.frChoiceBlurb { font-size: 80%; color: var(--font-white-3); line-height: 1.35em; }
+.frChoiceTick { color: hsl(140 60% 62%); font-weight: 700; font-size: 115%; flex: 0 0 1em; }
+
+/* switches: whole row is the target, green on, grey off */
+.frSwitchRow {
+	display: flex;
+	align-items: center;
+	gap: 0.7em;
+	padding: 0.55em 0.7em;
+	margin-bottom: 0.3em;
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	cursor: pointer;
+}
+.frSwitchRow:hover { background-color: var(--btn-hover-accent); }
+.frSwitchIcon { font-size: 125%; flex: 0 0 auto; line-height: 1; }
+.frSwitchBody { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.frSwitchTitle { font-size: 92%; color: var(--font-white-2); font-weight: 600; }
+.frSwitchRow.frSwitchOn .frSwitchTitle { color: var(--font-white-1); }
+.frSwitchBlurb { font-size: 78%; color: var(--font-white-3); line-height: 1.35em; }
+
+.frSwitch {
+	flex: 0 0 auto;
+	width: 38px;
+	height: 21px;
+	border-radius: 999px;
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	position: relative;
+	transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+.frSwitchKnob {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 15px;
+	height: 15px;
+	border-radius: 50%;
+	background-color: var(--font-white-3);
+	transition: transform 0.16s ease, background-color 0.16s ease;
+}
+.frSwitchRow.frSwitchOn .frSwitch {
+	background-color: hsl(140 48% 36%);
+	border-color: hsl(140 45% 50%);
+}
+.frSwitchRow.frSwitchOn .frSwitchKnob { transform: translateX(17px); background-color: #fff; }
+@media (prefers-reduced-motion: reduce) {
+	.frSwitch, .frSwitchKnob { transition: none; }
+}
+
+/* ---- profile: roles and favourite cyphers ---- */
+
+.frPreview {
+	border: 1px dashed var(--border-accent);
+	padding: 0.7em;
+	margin-bottom: 0.3em;
+}
+.frRoleGrid { display: flex; flex-wrap: wrap; gap: 0.3em; }
+.frRole {
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 82%;
+	color: var(--font-white-2);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.25em 0.6em;
+	cursor: pointer;
+	outline: none;
+}
+.frRole:hover { background-color: var(--btn-hover-accent); }
+.frRole.frRoleOn {
+	background-color: hsla(140 45% 35% / 0.3);
+	border-color: hsl(140 45% 48%);
+	color: var(--font-white-1);
+	font-weight: 600;
+}
+.frRoleShow { display: flex; flex-wrap: wrap; gap: 0.3em; padding-bottom: 0.6em; }
+.frRoleTag {
+	font-size: 80%;
+	color: var(--font-white-2);
+	background-color: var(--btn-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.15em 0.55em;
+}
+
+.frFavRow, .frFavShow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35em; padding-bottom: 0.6em; }
+.frFavLab { font-size: 80%; color: var(--font-white-3); font-weight: 600; }
+.frFav {
+	font-size: 82%;
+	font-weight: 600;
+	color: var(--font-white-2);
+	border: 1px solid var(--border-accent);
+	padding: 0.15em 0.55em;
+	white-space: nowrap;
+}
+.frFavX { cursor: pointer; padding-left: 0.4em; opacity: 0.7; }
+.frFavX:hover { opacity: 1; }
+
+/* ---- leaderboard: a scroll box, and groups inside it ---- */
+
+.profileChipScroll {
+	max-height: 300px;
+	overflow-y: auto;
+	padding-right: 0.2em;
+	/* a thin scrollbar rather than the platform's, so a long list does not
+	   suddenly grow a wide grey bar down the side of the panel */
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-accent) transparent;
+}
+.profileChipScroll::-webkit-scrollbar { width: 8px; }
+.profileChipScroll::-webkit-scrollbar-track { background: transparent; }
+.profileChipScroll::-webkit-scrollbar-thumb {
+	background-color: var(--border-accent);
+	border-radius: 999px;
+}
+.profileChipScroll::-webkit-scrollbar-thumb:hover { background-color: var(--font-white-4); }
+
+/* the value or cypher a run of chips belongs to */
+.profileChipGroup {
+	flex: 1 0 100%;
+	font-size: 78%;
+	font-weight: 700;
+	color: var(--font-white-3);
+	letter-spacing: 0.04em;
+	padding: 0.6em 0 0.25em 0;
+	border-top: 1px solid var(--separator-accent2);
+	margin-top: 0.3em;
+}
+.profileChipGroup:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+.profileContribSort { display: flex; align-items: center; gap: 0.5em; padding-bottom: 0.5em; flex-wrap: wrap; }

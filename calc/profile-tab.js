@@ -721,30 +721,90 @@ function renderProfileLeaderboard() {
 // Whose submissions are showing, so the same name can close them again.
 var profileContribOpen = null
 
-// "recent" or "value". Kept outside the render so it survives a re-render and
-// so opening a second contributor keeps the order you were reading in.
+// Kept outside the render so it survives a re-render, and so opening a second
+// contributor keeps the order you were reading in.
 var profileContribSort = "recent"
 
-function profileToggleContribSort() {
-	profileContribSort = (profileContribSort === "value") ? "recent" : "value"
+// The list the select is built from. Adding an order is a row here plus a case
+// in profileSortContrib; nothing else changes.
+var profileContribSortOptions = [
+	["recent",   "\uD83C\uDD95 Most recent"],
+	["oldest",   "\uD83D\uDCDC Oldest first"],
+	["valueAsc", "\uD83D\uDD22 Value, low to high"],
+	["valueDesc","\uD83D\uDD22 Value, high to low"],
+	["az",       "\uD83D\uDD24 Alphabetical A\u2013Z"],
+	["za",       "\uD83D\uDD20 Alphabetical Z\u2013A"],
+	["cipher",   "\uD83C\uDFAF By cypher"],
+	["popular",  "\u2B50 Most used cypher"]
+]
+
+function profileSetContribSort(v) {
+	profileContribSort = v
 	if (profileContribOpen !== null) {
 		var id = profileContribOpen
-		profileContribOpen = null      // so the toggle does not read as a close
+		profileContribOpen = null      // so this does not read as a close
 		profileShowContributor(id, profileContribName)
 	}
 }
 
-// Smallest value first. A phrase published without a value - the cypher was
-// removed, or it is a wheel cypher with nothing to add up - has no place on a
-// number line, so those go last rather than counting as zero.
+// A phrase published without a value - the cypher was removed, or it is a
+// wheel cypher with nothing to add up - has no place on a number line, so
+// those go last either way round rather than counting as zero or as huge.
+function profileContribValue(r) {
+	return (r.value === null || r.value === undefined) ? null : Number(r.value)
+}
+
 function profileSortContrib(rows) {
-	if (profileContribSort !== "value") return rows // already newest-first from the query
-	return rows.slice().sort(function (a, b) {
-		var av = (a.value === null || a.value === undefined) ? Infinity : Number(a.value)
-		var bv = (b.value === null || b.value === undefined) ? Infinity : Number(b.value)
-		if (av !== bv) return av - bv
-		return String(a.phrase).localeCompare(String(b.phrase), undefined, { sensitivity: "base" })
-	})
+	var out = rows.slice()
+	var byText = function (a, b) {
+		return String(a.phrase).localeCompare(String(b.phrase), undefined, { sensitivity: "base", numeric: true })
+	}
+	var byValue = function (dir) {
+		return function (a, b) {
+			var av = profileContribValue(a), bv = profileContribValue(b)
+			if (av === null && bv === null) return byText(a, b)
+			if (av === null) return 1      // valueless last whichever way round
+			if (bv === null) return -1
+			return av === bv ? byText(a, b) : (av - bv) * dir
+		}
+	}
+
+	switch (profileContribSort) {
+		case "oldest":    return out.sort(function (a, b) { return Date.parse(a.created_at) - Date.parse(b.created_at) })
+		case "valueAsc":  return out.sort(byValue(1))
+		case "valueDesc": return out.sort(byValue(-1))
+		case "az":        return out.sort(byText)
+		case "za":        return out.sort(function (a, b) { return byText(b, a) })
+		case "cipher":    return out.sort(function (a, b) {
+			var c = String(a.cipher || "").localeCompare(String(b.cipher || ""), undefined, { sensitivity: "base" })
+			return c !== 0 ? c : byValue(1)(a, b)
+		})
+		case "popular": {
+			// which cypher they publish in most, first - so the sort says
+			// something about them rather than about any one phrase
+			var freq = {}
+			out.forEach(function (r) { var k = r.cipher || ""; freq[k] = (freq[k] || 0) + 1 })
+			return out.sort(function (a, b) {
+				var d = (freq[b.cipher || ""] || 0) - (freq[a.cipher || ""] || 0)
+				if (d !== 0) return d
+				var c = String(a.cipher || "").localeCompare(String(b.cipher || ""))
+				return c !== 0 ? c : byValue(1)(a, b)
+			})
+		}
+		default: return out // already newest-first from the query
+	}
+}
+
+// The heading a chip sits under, or null when grouping would only add noise.
+function profileContribGroupOf(r) {
+	if (profileContribSort === "cipher" || profileContribSort === "popular") {
+		return r.cipher || "No cypher recorded"
+	}
+	if (profileContribSort === "valueAsc" || profileContribSort === "valueDesc") {
+		var v = profileContribValue(r)
+		return (v === null) ? "No value" : String(v)
+	}
+	return null
 }
 
 // remembered so the sort toggle can reopen the same person
@@ -792,19 +852,30 @@ function profileShowContributor(userId, name) {
 		o += '<div class="profileContribTitle">Published by '+authEsc(name)+'</div>'
 		if (rows.length === 0) o += '<div class="profileNote">Nothing to show.</div>'
 		else {
-			// Two ways to read somebody's contributions: what they published
-			// last, and where their numbers sit. One button rather than two,
-			// because it is the same list either way round.
+			// A select rather than a growing row of buttons: these are mutually
+			// exclusive orders, and there are now eight of them.
 			o += '<div class="profileContribSort">'
-			o += '<button class="profileMiniBtn" onclick="profileToggleContribSort()">'
-			o += (profileContribSort === "value" ? '&#8593; Value, low to high' : '&#128337; Most recent')
-			o += '</button>'
+			o += '<select class="frSelect" onchange="profileSetContribSort(this.value)">'
+			profileContribSortOptions.forEach(function (opt) {
+				o += '<option value="'+opt[0]+'"'+(profileContribSort === opt[0] ? ' selected' : '')+'>'+opt[1]+'</option>'
+			})
+			o += '</select>'
 			o += '<span class="profileWhen">'+rows.length+(rows.length === 1 ? ' phrase' : ' phrases')+'</span>'
 			o += '</div>'
 
 			rows = profileSortContrib(rows)
-			o += '<div class="profileChips">'
+			o += '<div class="profileChipScroll"><div class="profileChips">'
+			var lastGroup = null
 			rows.forEach(function (r) {
+				// A divider whenever the thing being sorted by changes, so a long
+				// list reads as groups rather than as one wall. Only where it
+				// means something: grouping an alphabetical list by value would
+				// put a heading between every pair of chips.
+				var g = profileContribGroupOf(r)
+				if (g !== null && g !== lastGroup) {
+					o += '<div class="profileChipGroup">'+authEsc(g)+'</div>'
+					lastGroup = g
+				}
 				var hasVal = (r.value !== null && r.value !== undefined)
 				var why = r.cipher
 					? (r.cipher + (hasVal ? ' = ' + r.value : '') + ' — send to the calculator')
@@ -824,7 +895,7 @@ function profileShowContributor(userId, name) {
 				}
 				o += '</span>'
 			})
-			o += '</div>'
+			o += '</div></div>'
 		}
 		o += '</div>'
 		host.innerHTML = o
