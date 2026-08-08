@@ -92,6 +92,11 @@ function adminOnline(mins)         { return adminRpc("admin_online", { window_mi
 function adminReports(status, sort){ return adminRpc("admin_reports", { status_filter: status || null, sort: sort || "newest" }).then(rowsOr) }
 function adminReportContext(id)    { return adminRpc("admin_report_context", { report: id }).then(rowsOr) }
 function adminAudit(limit)         { return adminRpc("admin_audit_list", { lim: limit || 100 }).then(rowsOr) }
+function adminFlags()              { return adminRpc("admin_flags").then(rowsOr) }
+function adminSetFlag(key, on)     { return adminRpc("admin_set_flag", { flag_key: key, on_off: !!on }) }
+function adminSetSubscription(id, status, until) {
+	return adminRpc("admin_set_subscription", { target: id, new_status: status, until: until || null })
+}
 
 function rowsOr(r) { return r || [] }
 
@@ -106,18 +111,23 @@ function adminReportStatus(id, s, note) {
 	return adminRpc("admin_report_status", { report: id, new_status: s, note: note || null })
 }
 
-// Password resets go through the ordinary reset endpoint rather than an admin
-// one: it emails the address on file and does not need - or grant - any
-// elevated rights. An admin triggering it learns nothing they did not know.
-function adminSendReset(email) {
+// Password resets, without the panel ever holding the address.
+//
+// The user list no longer returns emails, so this asks the database for one
+// at the moment of sending. admin_user_email() checks admin rights, writes an
+// audit line - reading an address is the one thing this design otherwise
+// prevents, so the exception leaves a trace - and hands it back for the single
+// call that needs it. It is not stored, not rendered, and not logged here.
+function adminSendReset(id) {
 	var c = adminClient()
 	if (c === null) return Promise.reject(new Error("Not signed in"))
-	if (!email) return Promise.reject(new Error("That account has no email address"))
-	return c.auth.resetPasswordForEmail(email, {
-		redirectTo: window.location.origin + "/reset-password.html"
-	}).then(function (res) {
-		if (res.error) throw adminErr(res.error)
-		return true
+	return adminRpc("admin_user_email", { target: id }).then(function (addr) {
+		return c.auth.resetPasswordForEmail(addr, {
+			redirectTo: window.location.origin + "/reset-password.html"
+		}).then(function (res) {
+			if (res.error) throw adminErr(res.error)
+			return true
+		})
 	})
 }
 

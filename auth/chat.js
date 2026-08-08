@@ -25,7 +25,12 @@ function chatRpc(name, args) {
 
 // ---- reading ----------------------------------------------------------
 
-function chatThreads()            { return chatRpc("chat_threads").then(function (r) { return r || [] }) }
+function chatThreads(archived)    { return chatRpc("chat_threads", { include_archived: !!archived }).then(function (r) { return r || [] }) }
+function chatArchive(id, on)      { return chatRpc("chat_archive", { target: id, on_off: on !== false }) }
+// Clears your side only. The other person keeps theirs, and anything already
+// attached to a report keeps its copy - deleting for both would let anyone
+// erase the evidence of what they just said.
+function chatClear(id)            { return chatRpc("chat_clear", { target: id }) }
 function chatHistory(id, limit)   { return chatRpc("chat_history", { target: id, lim: limit || 100 }).then(function (r) { return (r || []).reverse() }) }
 function chatMarkRead(id)         { return chatRpc("chat_mark_read", { target: id }) }
 function chatUnreadTotal()        { return chatRpc("chat_unread_total") }
@@ -45,9 +50,31 @@ function chatSend(target, body) {
 function chatBlock(id)               { return chatRpc("member_block", { target: id }) }
 function chatUnblock(id)             { return chatRpc("member_unblock", { target: id }) }
 function chatBlockedList()           { return chatRpc("member_blocked_list").then(function (r) { return r || [] }) }
-function chatReport(id, reason, det, messageId) {
-	return chatRpc("member_report", { target: id, reason: reason, detail: det || null, message: messageId || null })
+function chatReport(id, reason, det, messageId, action) {
+	return chatRpc("member_report", {
+		target: id, reason: reason, detail: det || null,
+		message: messageId || null, action: action || "review"
+	})
 }
+
+// The list the report dialog offers. Kept here so the wording is in one place
+// and the values match the check constraint on reports.action_requested.
+var CHAT_REPORT_REASONS = [
+	["spam",          "\uD83D\uDEAB Spam"],
+	["harassment",    "\uD83E\uDD2C Harassment"],
+	["hate",          "\u26A0\uFE0F Hate speech"],
+	["inappropriate", "\uD83D\uDC76 Inappropriate content"],
+	["scam",          "\uD83C\uDFA3 Scam or phishing"],
+	["advertising",   "\uD83D\uDCE2 Advertising"],
+	["other",         "\u2753 Something else"]
+]
+
+var CHAT_REPORT_ACTIONS = [
+	["review",      "Just review it"],
+	["warn",        "Warn them"],
+	["investigate", "Look at the whole conversation"],
+	["other",       "Something else (say below)"]
+]
 
 // ---- the local pre-check ----------------------------------------------
 //

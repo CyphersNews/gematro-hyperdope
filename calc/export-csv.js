@@ -99,9 +99,10 @@ function importFileAction(file, hasLocalFile) {
 			ciph = file.split(",new cipher") // split string into array
 
 			cipherList = []; cCat = []; defaultCipherArray = [] // clear arrays with previously defined ciphers, categories, default ciphers
-			for (n = 0; n < ciph.length; n++) {
-				cipherList.push(eval("new cipher("+ciph[n].slice(1,-1)+")")) // remove parethesis, evaluate string as javascript code
-			}
+			// Parsed as JSON and type-checked rather than eval()d. See the security
+			// note above ciphersFromListBody() in gematria.js — this is the path an
+			// imported file takes, and it used to execute that file as code.
+			cipherList = ciphersFromListBody(file)
 			document.getElementById("calcOptionsPanel").innerHTML = "" // clear menu panel
 			
 			initCalc(false, true) // reinit, keeping the imported cipher selection
@@ -149,9 +150,10 @@ function importFileAction(file, hasLocalFile) {
 			ciph = file.split(",new cipher") // split string into array
 
 			cipherList = []; cCat = []; defaultCipherArray = [] // clear arrays with previously defined ciphers, categories, default ciphers
-			for (n = 0; n < ciph.length; n++) {
-				cipherList.push(eval("new cipher("+ciph[n].slice(1,-1)+")")) // remove parethesis, evaluate string as javascript code
-			}
+			// Parsed as JSON and type-checked rather than eval()d. See the security
+			// note above ciphersFromListBody() in gematria.js — this is the path an
+			// imported file takes, and it used to execute that file as code.
+			cipherList = ciphersFromListBody(file)
 			document.getElementById("calcOptionsPanel").innerHTML = "" // clear menu panel
 			initCalc(false, true) // reinit, keeping the imported cipher selection
 			updateTables() // update tables
@@ -240,9 +242,62 @@ function isJsonString(str) {
     return true;
 }
 
+// The permitted option names, derived from the same array the exporter writes
+// from, so there is one list rather than two that drift apart. Each entry looks
+// like "'optNumCalcMethod'+' = '+optNumCalcMethod"; the leading quoted token is
+// the name.
+function calcOptionNames() {
+	var names = []
+	if (typeof calcOptionsArr === "undefined") return names
+	for (var i = 0; i < calcOptionsArr.length; i++) {
+		var m = /^'([A-Za-z_$][\w$]*)'/.exec(String(calcOptionsArr[i]))
+		if (m !== null) names.push(m[1])
+	}
+	return names
+}
+
+// SECURITY. This used to be:
+//
+//     for (var i = 0; i < calcOpt.length; i++) eval(calcOpt[i])
+//
+// where calcOpt is the calcOptions block read straight out of an imported
+// settings file. Every line was executed as JavaScript, so a file containing
+// one crafted entry ran arbitrary code in the member's origin - the same
+// account-takeover path the cipher list had, in the half of the blob that got
+// less attention because the values looked like plain numbers.
+//
+// An option line is "name = jsonValue" and nothing more. The name is checked
+// against the exporter's own list and the value is JSON, so an entry naming
+// something that is not an option, or carrying anything JSON cannot express,
+// is skipped rather than run.
 function importCalcOptions(calcOpt) { // load user options
-	if (typeof calcOpt !== 'undefined' && calcOpt !== null) {
-		for (var i = 0; i < calcOpt.length; i++) eval(calcOpt[i])
+	if (Array.isArray(calcOpt)) {
+		var allowed = calcOptionNames()
+		var skipped = 0
+
+		for (var i = 0; i < calcOpt.length; i++) {
+			var line = String(calcOpt[i])
+			var eq = line.indexOf(" = ")
+			if (eq < 1) { skipped++; continue }
+
+			var name = line.slice(0, eq)
+			// An unknown name is the whole attack: without this check the value
+			// could be assigned over any global on the page.
+			if (allowed.indexOf(name) === -1) { skipped++; continue }
+
+			var value
+			try {
+				// captions and coderainStyle are exported JSON.stringify'd, so
+				// every value on the right of the separator is valid JSON
+				value = JSON.parse(line.slice(eq + 3))
+			} catch (e) { skipped++; continue }
+
+			// these are top-level `var`s in calc.js, so they are window
+			// properties - the same target the assignment used to reach
+			window[name] = value
+		}
+
+		if (skipped > 0) console.warn("Import: " + skipped + " option(s) skipped as unrecognised.")
 	}
 	toggleCodeRain() // update coderain
 }

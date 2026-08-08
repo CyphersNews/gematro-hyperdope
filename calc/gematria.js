@@ -317,3 +317,105 @@ function gemForMatching(ciph, phrase) {
 	if (ciph.wheelCipher) return NaN
 	return ciph.calcGematria(phrase)
 }
+
+// ================ Safe cipher deserialisation ================
+//
+// SECURITY. Every import path used to build ciphers with
+//
+//     eval("new cipher(" + argumentText + ")")
+//
+// which executes the imported text as JavaScript. That is the only path in the
+// application where data becomes code, and it is reachable three ways: a
+// settings file the member opens, their own localStorage, and their own synced
+// workspace row.
+//
+// None of those is remotely attacker-controlled - RLS pins the workspace row to
+// auth.uid() - but the file import is socially deliverable. Someone posts "my
+// cypher setup" in the chat, a member imports it, and arbitrary JavaScript runs
+// in their origin with access to their Supabase session in localStorage. That
+// is account takeover, delivered by a text file.
+//
+// It was worse than a plain import risk, because exportCiphersDB() wrote cipher
+// NAMES into the file without escaping them. A cipher named with an embedded
+// quote closed the string and continued as code, so the round trip through
+// export and import was itself an injection channel.
+//
+// The cipher arguments were never code. They are a string, a string, three
+// numbers, two arrays and three booleans - all of which JSON expresses exactly.
+// So they are parsed as JSON and type-checked, and nothing is executed.
+
+var CIPHER_ARG_COUNT = 10 // name, category, H, S, L, cArr, vArr, diacritics, enabled, caseSensitive
+
+// Parses one serialised argument list into a real cipher, or returns null.
+//
+// Returning null rather than throwing is deliberate: a single unreadable cipher
+// must not take the whole workspace with it. The caller skips it and carries on,
+// which is the behaviour a member wants when one entry in a long list is stale.
+function cipherFromArgString(argText) {
+	if (typeof argText !== "string") return null
+
+	var args
+	try {
+		// The exporter emits exactly JSON for every field, so wrapping the
+		// argument list in brackets makes the whole thing a JSON array. Anything
+		// that is not valid JSON - a function, a getter, an expression - fails
+		// here rather than running.
+		args = JSON.parse("[" + argText + "]")
+	} catch (e) {
+		console.warn("Cipher skipped: its definition did not parse.")
+		return null
+	}
+
+	if (!Array.isArray(args) || args.length < 7) return null
+	while (args.length < CIPHER_ARG_COUNT) args.push(undefined) // trailing optionals
+
+	// Shape check. JSON cannot express code, but it can express the wrong types,
+	// and the wrong types reach the drawing and matching code as NaN or
+	// undefined rather than as an error anybody sees.
+	if (typeof args[0] !== "string" || typeof args[1] !== "string") return null
+	if (!isFinite(args[2]) || !isFinite(args[3]) || !isFinite(args[4])) return null
+	if (!Array.isArray(args[5]) || !Array.isArray(args[6])) return null
+
+	// cArr is codepoints. vArr is numbers, or strings for a wheel cipher.
+	for (var i = 0; i < args[5].length; i++) {
+		if (typeof args[5][i] !== "number" || !isFinite(args[5][i])) return null
+	}
+	for (var j = 0; j < args[6].length; j++) {
+		var v = args[6][j]
+		if (typeof v === "number") { if (!isFinite(v)) return null }
+		else if (typeof v !== "string") return null
+	}
+
+	// A cipher with no characters divides by zero in the chart renderer
+	if (args[5].length === 0 || args[6].length === 0) return null
+
+	return new cipher(
+		String(args[0]).slice(0, 120),   // the name is drawn into the DOM; bound it
+		String(args[1]).slice(0, 120),
+		Number(args[2]), Number(args[3]), Number(args[4]),
+		args[5], args[6],
+		args[7] === undefined ? true  : !!args[7],   // diacriticsAsRegular
+		args[8] === undefined ? false : !!args[8],   // enabled
+		args[9] === undefined ? false : !!args[9]    // caseSensitive
+	)
+}
+
+// Turns the body of a "cipherList = [ ... ]" block into cipher objects.
+// Replaces the loop that used to eval() each entry.
+function ciphersFromListBody(listBody) {
+	var out = []
+	if (typeof listBody !== "string") return out
+
+	var parts = listBody.split(",new cipher")
+	var skipped = 0
+	for (var n = 0; n < parts.length; n++) {
+		// each part arrives as "( ...args... )" - drop the brackets
+		var built = cipherFromArgString(parts[n].slice(1, -1))
+		if (built === null) { skipped++; continue }
+		out.push(built)
+	}
+	if (skipped > 0) {
+		console.warn("Import: " + skipped + " cipher definition(s) skipped as unreadable.")
+	}
+	return out
+}

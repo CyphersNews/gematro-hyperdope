@@ -54,14 +54,38 @@ function renderProfilePanel() {
 		return
 	}
 
+	// Ordered in runs - what you work with, who you work with, then the account
+	// itself - and separated by a gap rather than by a heading. An earlier
+	// version put a "WORKSPACE" / "COMMUNITY" / "ACCOUNT" label at the head of
+	// each run. Two things were wrong with it: the labels sat inline at tab
+	// size and looked clickable when they were not, and because this row wraps
+	// they did not stay at the head of their run anyway - ACCOUNT would land
+	// mid-line beside Community's tabs. Whitespace cannot be clicked, and it
+	// wraps without lying.
 	o += '<div class="profileTabs">'
 	o += profileTabBtn("presets", "✅ Presets")
 	o += profileTabBtn("csv", "📄 CSV")
 	o += profileTabBtn("entries", "💾 Saved")
 	o += profileTabBtn("leaderboard", "🏆 Leaders")
-	o += profileTabBtn("friends", "📧 Friends")
 	o += profileTabBtn("chart", "🔮 Chart")
-	o += profileTabBtn("account", "⚙ Account")
+
+	o += profileTabBtn("friends", "📧 Friends", "profileTabRun")
+	o += profileTabBtn("social", "🌐 Social")
+	// Matching is its own page rather than a tab: it needs the ephemeris and
+	// the whole cypher list to set up, and it is the one paid thing on the
+	// site, so it gets somewhere of its own to explain itself.
+	// siteMatchUrl(), not a literal — Matching is the half most likely to move
+	// to its own origin, and this is the only place that has to know.
+	//
+	// The label carries the offer. On the free side of the site this tab IS the
+	// call to action, so it says what is on the other side of the click rather
+	// than making somebody find out by clicking.
+	o += profileTabLink(siteMatchUrl("match.html"),
+		(typeof flagEnabled === "function" && flagEnabled("matching_force_free"))
+			? "✨ Matching · free now"
+			: "✨ Matching")
+
+	o += profileTabBtn("account", "⚙ Account", "profileTabRun")
 	o += '</div>'
 
 	o += '<div id="profileBody" class="profileBody"><div class="profileLoading">Loading…</div></div>'
@@ -77,13 +101,21 @@ function renderProfilePanel() {
 	else if (profileTabActive === "chart") renderProfileChart()
 	else if (profileTabActive === "leaderboard") renderProfileLeaderboard()
 	else if (profileTabActive === "friends") renderProfileFriends()
+	else if (profileTabActive === "social") renderProfileSocial()
 	else renderProfileAccount()
 }
 
-function profileTabBtn(id, label) {
+// A tab that leaves the panel. Drawn as a tab because that is where a member
+// looks for it, marked with an arrow because it is a different page.
+function profileTabLink(href, label) {
+	return '<a class="intBtn3 profileTab profileTabAway" href="' + href + '">' + label + '</a>'
+}
+
+// extra is for profileTabRun, which puts a gap before the first tab of a run
+function profileTabBtn(id, label, extra) {
 	var on = (profileTabActive === id) ? " profileTabOn" : ""
 	var elId = "profileTab" + id.charAt(0).toUpperCase() + id.slice(1)
-	return '<input class="intBtn3 profileTab'+on+'" id="'+elId+'" type="button" value="'+label+'" onclick="profileSetTab(&quot;'+id+'&quot;)">'
+	return '<input class="intBtn3 profileTab'+on+(extra ? " " + extra : "")+'" id="'+elId+'" type="button" value="'+label+'" onclick="profileSetTab(&quot;'+id+'&quot;)">'
 }
 
 // Every tab loads over the network, so a slow tab's response can land after
@@ -201,8 +233,11 @@ function renderProfileEntries() {
 			o += '</div>'
 		}
 
-		o += '<div class="profileNote profileFoot">Saving is private. A phrase is only visible to others once you press Submit.'
-		o += ' Phrases already in the database, or already published by someone else, cannot be submitted.</div>'
+		o += '<div class="profileNote profileFoot profileRules">'
+		o += '<div class="profileRule">&#128274; Saving is private &mdash; everything here is yours alone.</div>'
+		o += '<div class="profileRule">&#128065; A phrase only becomes public when you press <b>Submit</b>.</div>'
+		o += '<div class="profileRule">&#128683; A phrase already in the database, or already published by someone else, cannot be submitted again.</div>'
+		o += '</div>'
 		profileBody(o, tok)
 	}).catch(function (err) { profileBody(profileErr(err), tok) })
 }
@@ -704,8 +739,12 @@ function renderProfileLeaderboard() {
 			var av = r.avatar
 				? '<img class="profileLbAvatar" src="'+authEsc(r.avatar)+'" alt="">'
 				: '<span class="profileLbAvatar profileLbFallback">'+authEsc(String(r.display_name).charAt(0).toUpperCase())+'</span>'
-			o += '<div class="profileRow profileLbRow" data-uid="'+r.user_id+'" onclick="profileShowContributor(&quot;'+r.user_id+'&quot;, &quot;'+authEsc(r.display_name).replace(/"/g,'&quot;')+'&quot;)">'
-			o += '<span class="profileLbRank">'+(i+1)+'</span>'
+			// top three get a metal. Only the first three, and only when they have
+			// actually published something - a podium in a list of one is a joke.
+			var podium = (i < 3 && rows.length > 1) ? ' frPodium' + (i + 1) : ''
+			var medal = ['&#129351;', '&#129352;', '&#129353;'][i] || ''
+			o += '<div class="profileRow profileLbRow'+podium+'" data-uid="'+r.user_id+'" onclick="profileShowContributor(&quot;'+r.user_id+'&quot;, &quot;'+authEsc(r.display_name).replace(/"/g,'&quot;')+'&quot;)">'
+			o += '<span class="profileLbRank">'+(podium ? medal : (i+1))+'</span>'
 			o += av
 			o += '<span class="profileRowPhrase">'+authEsc(r.display_name)+frAdminBadge(r.user_id)+'</span>'
 			o += '<span class="profileRowActions"><span class="profileBadge">'+r.submissions+'</span></span>'

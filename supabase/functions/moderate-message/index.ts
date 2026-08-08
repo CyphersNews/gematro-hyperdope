@@ -27,17 +27,32 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const CORS = {
-	"Access-Control-Allow-Origin": "*",
-	"Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-	"Access-Control-Allow-Methods": "POST, OPTIONS",
+const ALLOWED = (Deno.env.get("SITE_ORIGINS") ?? "https://cyphers.news")
+	.split(",").map((s) => s.trim()).filter(Boolean)
+
+// An allow-list rather than "*". A Bearer-token API is not exploitable through
+// a wildcard on its own — the token is a header, not a cookie, so a hostile
+// page has nothing to replay. But an allow-list costs nothing, and when
+// Matching moves to its own origin this is already the place that decides
+// which origins are ours.
+function corsFor(req: Request): Record<string, string> {
+	const origin = req.headers.get("Origin") ?? ""
+	return {
+		"Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : ALLOWED[0],
+		"Vary": "Origin",
+		"Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+		"Access-Control-Allow-Methods": "POST, OPTIONS",
+	}
 }
 
-function json(body: unknown, status = 200) {
-	return new Response(JSON.stringify(body), {
-		status,
-		headers: { ...CORS, "Content-Type": "application/json" },
-	})
+// Bound per request so the reply carries the caller's own origin.
+function jsonFor(req: Request) {
+	const cors = corsFor(req)
+	return (body: unknown, status = 200) =>
+		new Response(JSON.stringify(body), {
+			status,
+			headers: { ...cors, "Content-Type": "application/json" },
+		})
 }
 
 // The categories worth blocking outright. "flagged" on its own is broader than
@@ -75,7 +90,8 @@ async function aiVerdict(text: string): Promise<{ blocked: boolean; reason: stri
 }
 
 Deno.serve(async (req: Request) => {
-	if (req.method === "OPTIONS") return new Response("ok", { headers: CORS })
+	const json = jsonFor(req)
+	if (req.method === "OPTIONS") return new Response("ok", { headers: corsFor(req) })
 	if (req.method !== "POST") return json({ error: "POST only" }, 405)
 
 	const url = Deno.env.get("SUPABASE_URL")!

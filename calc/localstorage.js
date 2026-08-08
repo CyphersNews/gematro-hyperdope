@@ -27,10 +27,11 @@ function restoreCalcSettingsLocalStorage(silentMode = false) {
 // Split out of restoreCalcSettingsLocalStorage so the saved-workspace feature
 // can reuse exactly the same import path rather than duplicating it.
 //
-// Note this eval()s the cipher definitions, which is how the existing import
-// and localStorage restore have always worked. That is only safe because the
-// string can only ever come from the user themselves: localStorage, a file
-// they chose, or their own workspace row, which RLS restricts to auth.uid().
+// Both halves of a settings blob are parsed as data, never executed. The
+// ciphers go through ciphersFromListBody() and the options through
+// importCalcOptions(), which checks each name against calcOptionsArr. Neither
+// runs code from the file, so an imported settings file is inert even when it
+// came from somebody else.
 function applyCalcSettingsString(file, silentMode = false) {
 	if (typeof file !== "string" || file.length === 0) return false
 
@@ -58,9 +59,9 @@ function applyCalcSettingsString(file, silentMode = false) {
 	ciph = file.split(",new cipher") // split string into array
 
 	cipherList = []; cCat = []; defaultCipherArray = [] // clear arrays with previously defined ciphers, categories, default ciphers
-	for (n = 0; n < ciph.length; n++) {
-		cipherList.push(eval("new cipher("+ciph[n].slice(1,-1)+")")) // remove parethesis, evaluate string as javascript code
-	}
+	// Parsed as JSON and type-checked, never executed. See the security note
+	// above ciphersFromListBody() in gematria.js.
+	cipherList = ciphersFromListBody(file)
 	// a stored blob only knows the ciphers that existed when it was saved, so
 	// anything shipped since is added back before ordering runs
 	if (typeof mergeBuiltinCiphers === "function") mergeBuiltinCiphers()

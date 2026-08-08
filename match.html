@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<head>
+<title>Matching | Cyphers</title>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org https://maps.googleapis.com; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-src https://checkout.stripe.com https://js.stripe.com; base-uri 'none'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/x-icon" href="res/favicon.png">
+
+<script src="lib/jquery.min.js?v=20260808c"></script>
+<script src="lib/supabase.min.js?v=20260808c"></script>
+
+<link rel="stylesheet" type="text/css" href="calc/styles.css?v=20260808c">
+<link rel="stylesheet" type="text/css" href="auth/auth.css?v=20260808c">
+<link rel="stylesheet" type="text/css" href="auth/match.css?v=20260808c">
+
+<script src="auth/site-config.js?v=20260808c"></script>
+<script src="auth/supabase-config.js?v=20260808c"></script>
+<script src="auth/auth.js?v=20260808c"></script>
+<script src="auth/auth-ui.js?v=20260808c"></script>
+<script src="auth/flags.js?v=20260808c"></script>
+<script src="auth/billing.js?v=20260808c"></script>
+<script src="auth/matching.js?v=20260808c"></script>
+<script src="auth/esoteric.js?v=20260808c"></script>
+
+<!-- calcGematria reads five calculator options as globals. They live in
+     calc/calc.js, which cannot be loaded here - it builds the whole calculator
+     interface on load and would need a DOM this page does not have. So the
+     five are declared with calc.js's own defaults instead.
+
+     This means a member who has changed those options in the calculator gets
+     the DEFAULT reading here rather than their own. That is visible rather
+     than hidden: the page shows every value before it is saved, so what they
+     agree to store is what they were shown. -->
+<script>
+	var optNumCalcMethod = 2;             // 0 off, 1 full, 2 reduced
+	var optGemSubstitutionMode = true;
+	var optGemMultCharPos = false;
+	var optGemMultCharPosReverse = false;
+	var optAllowPhraseComments = true;    // text inside [...] is not evaluated
+</script>
+
+<!-- The ephemeris and the cypher engine, so a member can set their matching
+     profile up here rather than being sent back to the calculator for it.
+     gematria.js first: it defines the class ciphers.js builds with. -->
+<script src="calc/gematria.js?v=20260808c"></script>
+<script src="calc/ciphers.js?v=20260808c"></script>
+<script src="calc/astrology.js?v=20260808c"></script>
+<script src="calc/profile-chart.js?v=20260808c"></script>
+</head>
+
+<body>
+
+	<a class="authBackBtn" href="index.html" onclick="authBackFlash(this)">&#8592; Back to the calculator</a>
+
+<div class="authPage matchPage">
+	<div id="matchRoot" class="matchRoot">
+		<div class="matchLoading">Loading…</div>
+	</div>
+</div>
+
+<script>
+requireAuth("login.html");
+
+// Everything the page draws comes from these three, so they are fetched once
+// together and the page is drawn from the result rather than in pieces.
+function matchBoot() {
+	Promise.all([flagsLoad(), billingLoad(), matchStatus().catch(function () { return null })])
+		.then(function (all) {
+			mStatus = all[2];
+			// Coming back from Stripe takes over the page and polls until the
+			// webhook lands, so the normal render must not also run.
+			if (matchCheckoutReturn()) return;
+			matchRender(all[2]);
+		})
+		.catch(function (err) { matchFail(err); });
+}
+
+$(document).ready(function () {
+	onAuthReady(function (user) {
+		if (user === null) return; // requireAuth is redirecting
+		matchBoot();
+	});
+});
+
+function matchWrite(html) {
+	document.getElementById("matchRoot").innerHTML = html;
+}
+
+function matchFail(err) {
+	matchWrite(matchHeaderHtml() +
+		'<div class="matchCard matchCardWarn">' + authEsc(err.message || String(err)) + '</div>');
+}
+</script>
+
+<script src="auth/match-ui.js?v=20260808c"></script>
+</body>
+</html>

@@ -431,10 +431,17 @@ function exportCiphersDB(expAllCiph = false) {
 				vArr_.push(cipherList[i].vArr[m])
 			}
 			
+			// JSON.stringify, not bare quotes. A cipher name containing a quote
+			// used to close the string and let the rest of the name continue as
+			// JavaScript in the eval() that read this file back — the round trip
+			// through export and import was itself an injection channel. The
+			// importer no longer evals, so this is now a correctness fix as well:
+			// a name with an apostrophe or quote in it survives the round trip
+			// instead of corrupting the whole block.
 			out +=
 				'\tnew cipher(\n'+
-				'\t\t"'+cipherList[i].cipherName+'",\n'+
-				'\t\t"'+cipherList[i].cipherCategory+'",\n'+
+				'\t\t'+JSON.stringify(String(cipherList[i].cipherName))+',\n'+
+				'\t\t'+JSON.stringify(String(cipherList[i].cipherCategory))+',\n'+
 				'\t\t'+cipherList[i].H+', '+cipherList[i].S+', '+cipherList[i].L+',\n'+
 				'\t\t'+JSON.stringify(cArr_)+',\n'+
 				'\t\t'+JSON.stringify(vArr_)+',\n'+
@@ -458,12 +465,20 @@ function exportCiphersDB(expAllCiph = false) {
 // a word, so no option restored at all, from localStorage, a synced workspace
 // or a preset. Only the cipher list came back.
 //
-// JSON.stringify escapes the inner quotes, so the entry survives the round
-// trip and eval() still sees a plain assignment.
+// JSON.stringify escapes the inner quotes, so the entry survives the round trip
+// and the importer's JSON.parse reads it back exactly.
+//
+// The last eval() in the application lived in this function. Its input was a
+// hardcoded array in calc.js, so it was never attacker-controlled — but "this
+// codebase contains no eval at all" is a property anyone can check in one grep,
+// whereas "the one eval is fine because of where its input comes from" stops
+// being true the day somebody adds a user-supplied entry to calcOptionsArr.
+// Reading the value off window produces byte-identical output.
 function exportCalcOptions() {
 	var o = "calcOptions = [\n\t"
-	for (var i = 0; i < calcOptionsArr.length; i++) {
-		o += JSON.stringify(String(eval(calcOptionsArr[i])))+",\n\t"
+	var names = calcOptionNames() // same list the importer checks against
+	for (var i = 0; i < names.length; i++) {
+		o += JSON.stringify(names[i] + " = " + JSON.stringify(window[names[i]]))+",\n\t"
 	}
 	o = o.slice(0,-3) + "\n]\n" // remove comma, new line, tab; new line, close array, new line
 	return o

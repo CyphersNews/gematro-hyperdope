@@ -28,6 +28,7 @@
 # is not the place for anything that needs a second look to confirm.
 exclude:
   - supabase/
+  - .claude/
   - AUTH-SETUP.md
   - README.md
   - .gitignore

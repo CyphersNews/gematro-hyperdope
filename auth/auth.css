@@ -948,27 +948,40 @@
    phrase and a leaderboard entry are visibly the same kind of thing. Only
    what is genuinely new to this tab is defined here. */
 
-/* Six sections, icon above the word. As text-only buttons they wrapped onto a
-   second row on a phone and read as two menus; stacked, they stay on one line
-   down to 320px. */
-.frTabs { display: flex; gap: 0.25em; padding-bottom: 0.7em; }
+/* Icon beside the word, not above it, and at text size rather than a size
+   that makes the row read as a toolbar of pictures. The icons are given a
+   fixed width so they line up down the column whatever glyph is in them -
+   emoji have wildly different advance widths, and without this the labels
+   stagger. */
+.frTabs { display: flex; gap: 0.25em; padding-bottom: 0.7em; flex-wrap: wrap; }
 .intBtn3.frTab {
 	width: auto;
-	flex: 1 1 0;
+	flex: 1 1 auto;
 	min-width: 0;
 	margin: 0;
-	padding: 0.35em 0.2em 0.3em 0.2em;
+	padding: 0.3em 0.55em;
 	position: relative;
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	align-items: center;
-	gap: 0.1em;
-	line-height: 1.1em;
+	justify-content: center;
+	gap: 0.35em;
+	line-height: 1.3em;
+	transition: color 0.15s ease, background-color 0.15s ease;
 }
-.frTabIcon { font-size: 118%; line-height: 1.1em; }
-.frTabLab { font-size: 78%; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.frTabIcon {
+	font-size: 95%;
+	line-height: 1;
+	width: 1.15em;
+	text-align: center;
+	flex: 0 0 auto;
+}
+.frTabLab { font-size: 84%; overflow: hidden; text-overflow: ellipsis; }
 .intBtn3.frTab.frTabOn { background-color: var(--btn-active-accent); color: var(--font-white-1); font-weight: 600; }
-@media (max-width: 380px) { .frTabLab { display: none; } .frTabIcon { font-size: 132%; } }
+/* the site's green, the same one the back button and Find Matches use */
+.intBtn3.frTab:hover { color: hsl(140 60% 66%); border-color: hsl(140 45% 45%); }
+@media (prefers-reduced-motion: reduce) { .intBtn3.frTab { transition: none; } }
+@media (max-width: 420px) { .frTabLab { display: none; } .frTabIcon { font-size: 110%; width: auto; } }
 
 /* the count of requests waiting, on the section button and inline in headings */
 .frBadge {
@@ -1413,3 +1426,255 @@
 }
 .profileChipGroup:first-child { border-top: none; margin-top: 0; padding-top: 0; }
 .profileContribSort { display: flex; align-items: center; gap: 0.5em; padding-bottom: 0.5em; flex-wrap: wrap; }
+
+/* ---- leaderboard podium ----
+   The top three get a metal. Kept to a left edge, a faint wash and a coloured
+   rank rather than a glow around the whole row: a leaderboard is a list you
+   scan, and three rows lit up like buttons would fight the names for
+   attention. */
+.profileRow.profileLbRow.frPodium1,
+.profileRow.profileLbRow.frPodium2,
+.profileRow.profileLbRow.frPodium3 { border-left-width: 3px; border-left-style: solid; }
+
+.profileLbRow.frPodium1 {
+	border-left-color: hsl(45 85% 55%);
+	background: linear-gradient(90deg, hsla(45 80% 50% / 0.16), transparent 45%);
+}
+.profileLbRow.frPodium2 {
+	border-left-color: hsl(210 12% 72%);
+	background: linear-gradient(90deg, hsla(210 10% 70% / 0.14), transparent 45%);
+}
+.profileLbRow.frPodium3 {
+	border-left-color: hsl(25 55% 50%);
+	background: linear-gradient(90deg, hsla(25 55% 45% / 0.14), transparent 45%);
+}
+.profileLbRow.frPodium1 .profileLbRank,
+.profileLbRow.frPodium2 .profileLbRank,
+.profileLbRow.frPodium3 .profileLbRank { font-size: 105%; }
+.profileLbRow.frPodium1 .profileRowPhrase { color: hsl(45 75% 78%); font-weight: 600; }
+.profileLbRow.frPodium2 .profileRowPhrase { color: hsl(210 15% 88%); font-weight: 600; }
+.profileLbRow.frPodium3 .profileRowPhrase { color: hsl(25 60% 74%); font-weight: 600; }
+
+/* ---- a conversation with something in it ----
+   A soft breathing edge rather than a hard highlight: it has to be noticeable
+   in a list without being the brightest thing in the panel. Stops the moment
+   the thread is opened, because at that point it is no longer news. */
+.profileRow.frRow.frThreadUnread {
+	border-left: 3px solid hsl(140 55% 48%);
+	animation: frThreadGlow 2.6s ease-in-out infinite;
+}
+@keyframes frThreadGlow {
+	0%, 100% { background-color: transparent; }
+	50%      { background-color: hsla(140 50% 40% / 0.16); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.profileRow.frRow.frThreadUnread { animation: none; background-color: hsla(140 50% 40% / 0.14); }
+}
+
+.frThreadWho { flex: 0 0 auto; cursor: pointer; display: flex; align-items: center; }
+.frThreadName { cursor: pointer; }
+.frThreadName:hover { color: hsl(140 60% 66%); text-decoration: underline; }
+.frChatRules { padding-top: 0.5em; }
+.frChatRule {
+	font-size: 79%;
+	color: var(--font-white-3);
+	line-height: 1.45em;
+	padding: 0.12em 0;
+}
+
+.profileRules { padding-top: 0.6em; }
+.profileRule { font-size: 80%; color: var(--font-white-3); line-height: 1.45em; padding: 0.1em 0; }
+.profileRule b { color: var(--font-white-2); }
+
+/* ---- membership nav ----
+   The tabs run in three groups: what you work with, who you work with, and the
+   account. The separator is a gap, not a heading — an earlier version used
+   inline "WORKSPACE" / "COMMUNITY" / "ACCOUNT" labels, which sat at tab size,
+   looked clickable, were not, and did not survive the row wrapping. Whitespace
+   has none of those problems. */
+.profileTab.profileTabRun { margin-left: 1.1em; }
+@media (max-width: 560px) {
+	/* a phone wraps this row several times, so a horizontal gap says nothing —
+	   the runs land on their own lines anyway */
+	.profileTab.profileTabRun { margin-left: 0; }
+}
+
+/* ---- social feed ---- */
+
+.soBar { display: flex; align-items: center; gap: 0.3em; flex-wrap: wrap; padding-bottom: 0.7em; }
+.profileMiniBtn.soShareBtn { margin-left: auto; }
+
+.soFeed { display: flex; flex-direction: column; gap: 0.6em; max-height: 460px; overflow-y: auto; padding-right: 0.2em;
+	scrollbar-width: thin; scrollbar-color: var(--border-accent) transparent; }
+.soFeed::-webkit-scrollbar { width: 8px; }
+.soFeed::-webkit-scrollbar-thumb { background-color: var(--border-accent); border-radius: 999px; }
+
+.soPost {
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	padding: 0.7em 0.8em;
+}
+.soHead { display: flex; align-items: center; gap: 0.5em; padding-bottom: 0.5em; }
+.soWho { display: flex; align-items: center; gap: 0.45em; cursor: pointer; min-width: 0; }
+.soName { font-weight: 600; color: var(--font-white-2); font-size: 90%; }
+.soWho:hover .soName { color: hsl(140 60% 66%); text-decoration: underline; }
+.soWhen { margin-left: auto; font-size: 76%; color: var(--font-white-3); white-space: nowrap; }
+
+/* the finding is the loudest thing in the card, because it is the point */
+.soPhrase {
+	font-size: 112%;
+	font-weight: 600;
+	color: var(--font-white-1);
+	cursor: pointer;
+	padding-bottom: 0.45em;
+	overflow-wrap: anywhere;
+}
+.soPhrase:hover { color: hsl(140 60% 70%); }
+
+.soReadings { display: flex; flex-wrap: wrap; gap: 0.3em; padding-bottom: 0.5em; }
+.soReading {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.35em;
+	border: 1px solid var(--border-accent);
+	border-left-width: 3px;
+	padding: 0.12em 0.5em;
+	font-size: 80%;
+}
+.soCipher { font-weight: 600; color: var(--font-white-2); }
+.soValue { font-family: var(--font-family-mono), monospace; font-weight: 700; color: var(--font-white-1); }
+
+.soCaption {
+	font-size: 88%;
+	color: var(--font-white-2);
+	line-height: 1.5em;
+	padding-bottom: 0.5em;
+	overflow-wrap: anywhere;
+}
+
+.soFoot { display: flex; align-items: center; gap: 0.3em; border-top: 1px solid var(--separator-accent2); padding-top: 0.45em; }
+.soAct {
+	font-family: var(--font-family), "Arial", sans-serif;
+	font-size: 80%;
+	color: var(--font-white-3);
+	background: none;
+	border: 1px solid transparent;
+	padding: 0.15em 0.5em;
+	cursor: pointer;
+	outline: none;
+	transition: color 0.15s ease;
+}
+.soAct:hover:not(:disabled) { color: hsl(140 60% 66%); }
+.soAct.soActOn { color: hsl(5 75% 68%); }
+.soAct.soActOn:hover { color: hsl(5 80% 76%); }
+.soAct.soActSoon { opacity: 0.4; cursor: default; }
+.soAct.soActDel { margin-left: auto; }
+.soAct.soActDel:hover { color: hsl(5 75% 70%); }
+.soHeart { font-size: 105%; }
+@media (prefers-reduced-motion: reduce) { .soAct { transition: none; } }
+
+.soCompose {
+	background-color: var(--menu-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 0.8em;
+	margin-bottom: 0.7em;
+}
+.soComposeLab { font-size: 82%; font-weight: 600; color: var(--font-white-2); padding: 0.5em 0 0.35em 0; }
+.soComposeLab:first-child { padding-top: 0; }
+.soPhrasePick { max-width: 100%; width: 100%; }
+.soCaption2 { width: 100%; box-sizing: border-box; }
+.profileMiniBtn.soPostBtn { margin-top: 0.4em; }
+
+/* ---- report dialog ---- */
+.frReportBack {
+	position: fixed; inset: 0; z-index: 400;
+	background: hsla(0 0% 0% / 0.55);
+}
+.frReportBox {
+	position: fixed; z-index: 401;
+	left: 50%; top: 50%; transform: translate(-50%, -50%);
+	width: min(23em, 92vw);
+	box-sizing: border-box;
+	background-color: var(--menu-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 1em 1.1em 1.1em 1.1em;
+	max-height: 88vh; overflow-y: auto;
+}
+.frReportSel { width: 100%; max-width: 100%; }
+.frReportBtns { display: flex; gap: 0.4em; justify-content: flex-end; padding-top: 0.7em; }
+.profileMiniBtn.frThreadBtn { padding: 0.1em 0.45em; }
+
+/* ---- first-run onboarding ----
+   Sits over the welcome page rather than beside it: one question at a time,
+   and nothing else on screen competing for the answer. */
+.obBack {
+	position: fixed; inset: 0; z-index: 500;
+	background: hsla(0 0% 0% / 0.72);
+}
+.obBox {
+	position: fixed; z-index: 501;
+	left: 50%; top: 50%; transform: translate(-50%, -50%);
+	width: min(27em, 94vw);
+	max-height: 92vh;
+	box-sizing: border-box;
+	display: flex; flex-direction: column;
+	background-color: var(--menu-bg-accent);
+	border: 1px solid var(--border-accent);
+	padding: 1.2em 1.3em 1.1em 1.3em;
+}
+
+.obDots { display: flex; gap: 0.35em; justify-content: center; padding-bottom: 1.1em; flex: 0 0 auto; }
+.obDot {
+	width: 1.6em; height: 3px;
+	background-color: var(--separator-accent2);
+	transition: background-color 0.2s ease;
+}
+.obDotDone { background-color: hsl(140 45% 42%); }
+.obDotOn   { background-color: hsl(140 60% 60%); }
+@media (prefers-reduced-motion: reduce) { .obDot { transition: none; } }
+
+.obBody { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+
+.obIcon  { font-size: 210%; text-align: center; line-height: 1.1em; padding-bottom: 0.2em; }
+.obTitle {
+	font-size: 130%; font-weight: 600; text-align: center;
+	color: var(--font-white-1);
+	padding-bottom: 0.4em;
+}
+.obLead {
+	font-size: 88%; text-align: center; line-height: 1.5em;
+	color: var(--font-white-3);
+	padding-bottom: 1em;
+}
+.obNote {
+	font-size: 80%; text-align: center; line-height: 1.5em;
+	color: var(--font-white-4);
+	padding-top: 0.9em;
+}
+.obField { padding-bottom: 0.2em; }
+
+.obList { display: flex; flex-direction: column; gap: 0.7em; }
+.obPoint { display: flex; align-items: flex-start; gap: 0.6em; }
+.obPointIcon  { font-size: 125%; flex: 0 0 auto; line-height: 1.2em; }
+.obPointBody  { display: flex; flex-direction: column; min-width: 0; }
+.obPointTitle { font-size: 90%; font-weight: 600; color: var(--font-white-2); }
+.obPointBlurb { font-size: 80%; line-height: 1.45em; color: var(--font-white-3); }
+
+.obNav {
+	flex: 0 0 auto;
+	display: flex; gap: 0.4em; align-items: center;
+	padding-top: 1.1em;
+}
+.obNav .authBtn { margin: 0; flex: 0 0 auto; width: auto; padding-left: 1em; padding-right: 1em; }
+/* Skip sits between Back and Next, quiet but the same size to hit */
+.obBtnSkip { margin-left: auto !important; color: var(--font-white-4); }
+.obNav .authBtnPrimary { flex: 0 0 auto; }
+.obBtnWide { flex: 1 1 auto !important; width: 100% !important; }
+
+/* a membership tab that leads to another page */
+.profileTab.profileTabAway {
+	display: inline-block;
+	text-decoration: none;
+	line-height: normal;
+}
+.profileTab.profileTabAway::after { content: " \2197"; opacity: 0.55; }

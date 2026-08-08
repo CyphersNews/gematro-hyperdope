@@ -1,0 +1,15 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "cyphers",
+			"runtimeExecutable": "python",
+			"runtimeArgs": [
+				"C:\\Users\\Joe\\AppData\\Local\\Temp\\claude\\D--MID8-website\\a3f0d138-75af-42c7-ae9a-ae7e57c348f1\\scratchpad\\devserver.py",
+				"8000",
+				"D:\\CYPHERS NEWS\\CYPHERS.NEWS\\gematro-hyperdope-master"
+			],
+			"port": 8000
+		}
+	]
+}

@@ -9,7 +9,8 @@ var adminSections = [
 	{ id: "dashboard", label: "Dashboard", render: function (h) { adminRenderDashboard(h) } },
 	{ id: "reports",   label: "Reports",   render: function (h) { adminRenderReports(h) } },
 	{ id: "users",     label: "Users",     render: function (h) { adminRenderUsers(h) } },
-	{ id: "audit",     label: "Audit log", render: function (h) { adminRenderAudit(h) } }
+	{ id: "audit",     label: "Audit log", render: function (h) { adminRenderAudit(h) } },
+	{ id: "flags",     label: "Flags",     render: function (h) { adminRenderFlags(h) } }
 ]
 
 var adminSection = "dashboard"
@@ -185,7 +186,7 @@ function adminRenderReports(host) {
 			if (!rows.length) { adminWrite(host, o + '<div class="adminNote">No reports here.</div>', tok); return }
 
 			o += '<table class="adminTable"><thead><tr>'
-			o += '<th>When</th><th>Reported</th><th>By</th><th>Message</th><th>Status</th><th></th>'
+			o += '<th>When</th><th>Reported</th><th>By</th><th>Why</th><th>Message</th><th>Wants</th><th>Status</th><th></th>'
 			o += '</tr></thead><tbody>'
 			for (var i = 0; i < rows.length; i++) {
 				var r = rows[i]
@@ -193,7 +194,9 @@ function adminRenderReports(host) {
 				o += '<td class="adminDim">' + adminWhen(r.created_at) + '</td>'
 				o += '<td>' + adminEsc(r.reported_name) + '</td>'
 				o += '<td class="adminDim">' + adminEsc(r.reporter_name) + '</td>'
-				o += '<td class="adminClip">' + (r.message_body ? adminEsc(r.message_body) : '<span class="adminDim">' + adminEsc(r.reason || "—") + '</span>') + '</td>'
+				o += '<td>' + adminReasonLabel(r.reason) + '</td>'
+				o += '<td class="adminClip">' + (r.message_body ? adminEsc(r.message_body) : '<span class="adminDim">&mdash;</span>') + '</td>'
+				o += '<td class="adminDim">' + adminActionLabel(r.action_requested) + '</td>'
 				o += '<td><span class="adminPill adminPill-' + adminEsc(r.status) + '">' + adminEsc(r.status) + '</span></td>'
 				o += '<td><button class="adminBtn" onclick="adminOpenReportDetail(&quot;' + r.id + '&quot;)">Open</button></td>'
 				o += '</tr>'
@@ -202,6 +205,41 @@ function adminRenderReports(host) {
 			adminWrite(host, o, tok)
 		}).catch(function (err) { adminWrite(host, adminError(err), tok) })
 }
+
+// The reporter picks from a list, so these are known values rather than free
+// text. Anything unrecognised is still shown, escaped, rather than dropped -
+// reports written before the list existed carry whatever wording they had.
+var ADMIN_REASON_LABELS = {
+	spam:          "\uD83D\uDEAB Spam",
+	harassment:    "\uD83E\uDD2C Harassment",
+	hate:          "\u26A0\uFE0F Hate speech",
+	inappropriate: "\uD83D\uDC76 Inappropriate",
+	scam:          "\uD83C\uDFA3 Scam",
+	advertising:   "\uD83D\uDCE2 Advertising",
+	other:         "\u2753 Other"
+}
+
+var ADMIN_ACTION_LABELS = {
+	review:      "review it",
+	warn:        "warn them",
+	investigate: "read the conversation",
+	other:       "see detail"
+}
+
+function adminReasonLabel(v) {
+	if (!v) return '<span class="adminDim">&mdash;</span>'
+	return ADMIN_REASON_LABELS[v] || adminEsc(v)
+}
+
+function adminActionLabel(v) {
+	if (!v) return "&mdash;"
+	return ADMIN_ACTION_LABELS[v] || adminEsc(v)
+}
+
+// adminKV escapes what it is given, so the detail card needs the plain wording
+// rather than the marked-up cell above
+function adminReasonText(v) { return v ? (ADMIN_REASON_LABELS[v] || v) : "—" }
+function adminActionText(v) { return v ? (ADMIN_ACTION_LABELS[v] || v) : "—" }
 
 function adminSetReportFilter(s) { adminReportStatusFilter = s; adminRender() }
 function adminSetReportSort(s) { adminReportSort = s; adminRender() }
@@ -224,7 +262,8 @@ function adminRenderReportDetail(host, tok) {
 		o += adminKV("Reported", r.reported_name)
 		o += adminKV("Reported by", r.reporter_name)
 		o += adminKV("When", new Date(r.created_at).toLocaleString())
-		o += adminKV("Reason", r.reason || "—")
+		o += adminKV("Reason", adminReasonText(r.reason))
+		o += adminKV("Asked for", adminActionText(r.action_requested))
 		if (r.detail) o += adminKV("Detail", r.detail)
 		if (r.handled_by_name) o += adminKV("Handled by", r.handled_by_name + " · " + adminWhen(r.handled_at))
 		if (r.admin_note) o += adminKV("Note", r.admin_note)
@@ -299,7 +338,7 @@ function adminRenderUsers(host) {
 			if (!rows.length) { adminWrite(host, o + '<div class="adminNote">Nobody matches that.</div>', tok); return }
 
 			o += '<table class="adminTable"><thead><tr>'
-			o += '<th>Member</th><th>Email</th><th>Joined</th><th>Last active</th><th>Subs</th><th>Status</th><th>Actions</th>'
+			o += '<th>Member</th><th>Joined</th><th>Last active</th><th>Subs</th><th>Reports</th><th>Status</th><th>Actions</th>'
 			o += '</tr></thead><tbody>'
 			for (var i = 0; i < rows.length; i++) o += adminUserRow(rows[i])
 			o += '</tbody></table>'
@@ -319,10 +358,13 @@ function adminUserRow(u) {
 	if (u.is_admin) o += ' <span class="adminBadge">&#128737; Admin</span>'
 	if (me) o += ' <span class="adminDim">(you)</span>'
 	o += '</span></td>'
-	o += '<td class="adminDim adminClip">' + adminEsc(u.email || "—") + '</td>'
 	o += '<td class="adminDim">' + adminDate(u.joined_at) + '</td>'
 	o += '<td class="adminDim">' + adminWhen(u.last_active_at) + '</td>'
 	o += '<td class="adminDim">' + u.submissions + '</td>'
+	// reports against them is the number a moderator actually wants beside a
+	// name; the address it replaced was never used to decide anything
+	o += '<td class="adminDim">' + (u.reports_against > 0
+		? '<span class="adminPill adminPill-open">' + u.reports_against + '</span>' : '0') + '</td>'
 	o += '<td><span class="adminPill adminPill-' + adminEsc(u.status) + '">' + adminEsc(u.status) + '</span>'
 	if (u.status_reason) o += '<div class="adminDim adminClip" title="' + adminEsc(u.status_reason) + '">' + adminEsc(u.status_reason) + '</div>'
 	o += '</td>'
@@ -334,7 +376,11 @@ function adminUserRow(u) {
 	} else {
 		o += '<button class="adminBtn adminBtnGood" onclick="adminAct(this,' + q(u.id) + ',&quot;restore&quot;)">Restore</button>'
 	}
-	o += '<button class="adminBtn" onclick="adminAct(this,' + q(u.id) + ',&quot;reset&quot;,' + q(u.email || "") + ')">Reset password</button>'
+	// disabled when there is no address to send to - a Discord-only account has
+	// none, and offering the button would be offering something that cannot work
+	o += u.has_email
+		? '<button class="adminBtn" onclick="adminAct(this,' + q(u.id) + ',&quot;reset&quot;)">Reset password</button>'
+		: '<button class="adminBtn" disabled title="No email address on this account">Reset password</button>'
 	o += u.is_admin
 		? '<button class="adminBtn" onclick="adminAct(this,' + q(u.id) + ',&quot;demote&quot;)">Remove admin</button>'
 		: '<button class="adminBtn" onclick="adminAct(this,' + q(u.id) + ',&quot;promote&quot;)">Make admin</button>'
@@ -393,7 +439,7 @@ function adminAct(btn, id, verb, extra) {
 	else if (verb === "promote") { call = adminSetAdmin(id, true); done = "User promoted to Administrator." }
 	else if (verb === "demote") { call = adminSetAdmin(id, false); done = "Administrator rights removed." }
 	else if (verb === "delete") { call = adminDeleteUser(id); done = "User deleted successfully." }
-	else if (verb === "reset") { call = adminSendReset(extra); done = "Password reset email sent." }
+	else if (verb === "reset") { call = adminSendReset(id); done = "Password reset email sent." }
 	else return
 
 	btn.disabled = true
@@ -431,4 +477,50 @@ function adminRenderAudit(host) {
 		o += '</tbody></table>'
 		adminWrite(host, o, tok)
 	}).catch(function (err) { adminWrite(host, adminError(err), tok) })
+}
+
+
+// ---- flags ------------------------------------------------------------
+//
+// The paywall switch lives here rather than in a config file so it can be
+// thrown without a deploy. Both the browser and match_list() read the same
+// row, so there is no window where the page and the server disagree about
+// whether Matching costs money.
+
+function adminRenderFlags(host) {
+	var tok = adminSeq
+	adminFlags().then(function (rows) {
+		var o = '<div class="adminNote">These are read by the site on load and by the database on every ' +
+			'call. A change takes effect for a member on their next page load.</div>'
+
+		if (!rows.length) { adminWrite(host, o + '<div class="adminNote">No flags defined.</div>', tok); return }
+
+		o += '<div class="adminFlagList">'
+		for (var i = 0; i < rows.length; i++) {
+			var f = rows[i]
+			o += '<div class="adminFlagRow' + (f.enabled ? ' adminFlagOn' : '') + '" ' +
+				'onclick="adminToggleFlag(this,&quot;' + adminEsc(f.key) + '&quot;)">'
+			o += '<span class="adminFlagBody">'
+			o += '<span class="adminFlagTitle">' + adminEsc(f.label || f.key) + '</span>'
+			o += '<span class="adminFlagKey">' + adminEsc(f.key) + '</span>'
+			if (f.note) o += '<span class="adminFlagNote">' + adminEsc(f.note) + '</span>'
+			o += '</span>'
+			o += '<span class="adminFlagSwitch"><span class="adminFlagKnob"></span></span>'
+			o += '</div>'
+		}
+		o += '</div>'
+		adminWrite(host, o, tok)
+	}).catch(function (err) { adminWrite(host, adminError(err), tok) })
+}
+
+function adminToggleFlag(row, key) {
+	var on = !row.classList.contains("adminFlagOn")
+	row.classList.toggle("adminFlagOn", on)
+	adminSetFlag(key, on).then(function () {
+		adminNotify(adminEsc(key) + (on ? " on" : " off"))
+		if (typeof flagsInvalidate === "function") flagsInvalidate()
+	}).catch(function (err) {
+		row.classList.toggle("adminFlagOn", !on)
+		adminNotify(err.message || "Could not change that", true)
+	})
 }

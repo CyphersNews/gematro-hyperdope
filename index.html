@@ -2,29 +2,34 @@
 <head>
 <title>Calculator</title>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org https://maps.googleapis.com; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-src https://checkout.stripe.com https://js.stripe.com; base-uri 'none'; object-src 'none'">
 <meta name="viewport" content="width=520, maximum-scale=1, user-scalable=no">
 <link rel="shortcut icon" type="image/x-icon" href="res/favicon.png">
 
 <!-- Android Web App - Add to Home Screen -->
 <link rel="manifest" href="manifest.json">
 
-<script src="lib/jquery.min.js?v=20260806m"></script>
-<script src="lib/supabase.min.js?v=20260806m"></script>
+<script src="lib/jquery.min.js?v=20260808c"></script>
+<script src="lib/supabase.min.js?v=20260808c"></script>
 <!-- html2canvas v1.0.0-alpha.12 -->
 
-<script src="calc/gematria.js?v=20260806m"></script>
-<script src="calc/calc.js?v=20260806m"></script>
-<script src="calc/init-variables.js?v=20260806m"></script>
-<script src="calc/ciphers.js?v=20260806m"></script>
+<script src="calc/gematria.js?v=20260808c"></script>
+<script src="calc/calc.js?v=20260808c"></script>
+<script src="calc/init-variables.js?v=20260808c"></script>
+<script src="calc/ciphers.js?v=20260808c"></script>
 
-<link rel="stylesheet" type="text/css" href="calc/styles.css?v=20260806m">
-<link rel="stylesheet" type="text/css" href="auth/auth.css?v=20260806m">
+<link rel="stylesheet" type="text/css" href="calc/styles.css?v=20260808c">
+<link rel="stylesheet" type="text/css" href="auth/auth.css?v=20260808c">
 
 <script>
 window.onpaint = function() {
 	updateInterfaceColor(true); // update interface color (first run)
 }
-$(window).load(function(){
+// .on("load"), not .load(fn) — the shorthand was removed in jQuery 3, where
+// .load() resolves to the AJAX method instead and calls .indexOf on its first
+// argument. Passing a function there threw "e.indexOf is not a function" and
+// the loading overlay never faded out.
+$(window).on("load", function(){
 	$("#loader").delay(287).fadeOut("fast");
 });
 </script>
@@ -83,40 +88,46 @@ $(window).load(function(){
 
 <span id="loadPanel"></span>
 
-<script src="calc/breakdown.js?v=20260806m"></script>
+<script src="calc/breakdown.js?v=20260808c"></script>
 
-<script src="calc/highlighter.js?v=20260806m"></script>
-<script src="calc/export.js?v=20260806m"></script>
-<script src="calc/export-csv.js?v=20260806m"></script>
-<script src="calc/num-prop.js?v=20260806m"></script>
-<script src="calc/edit-ciphers.js?v=20260806m"></script>
-<script src="calc/date-calc.js?v=20260806m"></script>
-<script src="calc/astrology.js?v=20260806m"></script>
-<script src="calc/profile-tab.js?v=20260806m"></script>
-<script src="calc/profile-chart.js?v=20260806m"></script>
-<script src="calc/friends-tab.js?v=20260806m"></script>
-<script src="calc/database.js?v=20260806m"></script>
-<script src="calc/quick-guide.js?v=20260806m"></script>
+<script src="calc/highlighter.js?v=20260808c"></script>
+<script src="calc/export.js?v=20260808c"></script>
+<script src="calc/export-csv.js?v=20260808c"></script>
+<script src="calc/num-prop.js?v=20260808c"></script>
+<script src="calc/edit-ciphers.js?v=20260808c"></script>
+<script src="calc/date-calc.js?v=20260808c"></script>
+<script src="calc/astrology.js?v=20260808c"></script>
+<script src="calc/profile-tab.js?v=20260808c"></script>
+<script src="calc/profile-chart.js?v=20260808c"></script>
+<script src="calc/friends-tab.js?v=20260808c"></script>
+<script src="calc/social-tab.js?v=20260808c"></script>
+<script src="calc/database.js?v=20260808c"></script>
+<script src="calc/quick-guide.js?v=20260808c"></script>
 
-<script src="calc/localstorage.js?v=20260806m"></script>
-<script src="calc/encoding.js?v=20260806m"></script>
-<script src="calc/encoding-ciphers.js?v=20260806m"></script>
+<script src="calc/localstorage.js?v=20260808c"></script>
+<script src="calc/encoding.js?v=20260808c"></script>
+<script src="calc/encoding-ciphers.js?v=20260808c"></script>
 
-<script src="calc/coderain.js?v=20260806m"></script>
+<script src="calc/coderain.js?v=20260808c"></script>
 
 <!-- after every script that declares an option, before anything that restores one -->
-<script src="calc/reset-defaults.js?v=20260806m"></script>
+<script src="calc/reset-defaults.js?v=20260808c"></script>
 
-<script src="auth/supabase-config.js?v=20260806m"></script>
-<script src="auth/auth.js?v=20260806m"></script>
-<script src="auth/auth-ui.js?v=20260806m"></script>
-<script src="auth/history-sync.js?v=20260806m"></script>
-<script src="auth/workspace-sync.js?v=20260806m"></script>
-<script src="auth/profile-features.js?v=20260806m"></script>
-<script src="auth/friends.js?v=20260806m"></script>
-<script src="auth/chat.js?v=20260806m"></script>
-<script src="auth/admin.js?v=20260806m"></script>
-<script src="lib/html2canvas.min.js?v=20260806m"></script>
+<script src="auth/site-config.js?v=20260808c"></script>
+<script src="auth/supabase-config.js?v=20260808c"></script>
+<script src="auth/auth.js?v=20260808c"></script>
+<script src="auth/auth-ui.js?v=20260808c"></script>
+<script src="auth/history-sync.js?v=20260808c"></script>
+<script src="auth/workspace-sync.js?v=20260808c"></script>
+<script src="auth/profile-features.js?v=20260808c"></script>
+<script src="auth/friends.js?v=20260808c"></script>
+<script src="auth/chat.js?v=20260808c"></script>
+<script src="auth/social.js?v=20260808c"></script>
+<script src="auth/flags.js?v=20260808c"></script>
+<script src="auth/billing.js?v=20260808c"></script>
+<script src="auth/esoteric.js?v=20260808c"></script>
+<script src="auth/admin.js?v=20260808c"></script>
+<script src="lib/html2canvas.min.js?v=20260808c"></script>
 
 <!-- Initialzie the calculator.  This needs to run before loading a database or theme. -->
 <script>

@@ -694,29 +694,53 @@ function friendsRefreshBadge() {
 // over the whole tab rather than sitting inside it, because a chat wants the
 // height and the panel does not have much to spare.
 
+var frShowArchived = false
+
+function frToggleArchived() { frShowArchived = !frShowArchived; frRenderChats(profileRenderSeq) }
+
 function frRenderChats(tok) {
 	frBody('<div class="profileLoading">Loading…</div>', tok)
-	chatThreads().then(function (rows) {
+	chatThreads(frShowArchived).then(function (rows) {
+		if (frShowArchived) rows = rows.filter(function (r) { return r.archived })
 		chatUnreadInvalidate()
 		var o = ''
+		o += '<div class="frToolbar">'
+		o += '<button class="intBtn3 frChip' + (frShowArchived ? '' : ' frChipOn') + '" onclick="frShowArchived&&frToggleArchived()">&#128172; Inbox</button>'
+		o += '<button class="intBtn3 frChip' + (frShowArchived ? ' frChipOn' : '') + '" onclick="frShowArchived||frToggleArchived()">&#128229; Archived</button>'
+		o += '</div>'
+
 		if (!rows.length) {
-			o += '<div class="profileNote">No conversations yet. Open <b>Friends</b> and press Message on someone.</div>'
+			o += '<div class="profileNote">' + (frShowArchived
+				? 'Nothing archived.'
+				: 'No conversations yet. Open <b>Friends</b> and press Message on someone.') + '</div>'
 			frBody(o, tok); return
 		}
 		o += '<div class="profileList">'
 		for (var i = 0; i < rows.length; i++) {
 			var r = rows[i]
-			o += '<div class="profileRow frRow" onclick="frOpenChat(&quot;' + r.friend_id + '&quot;)">'
+			// Unread rows breathe until they are opened. The badge says how many;
+			// the glow says which row to look at without counting.
+			o += '<div class="profileRow frRow' + (r.unread > 0 ? ' frThreadUnread' : '') + '">'
+			// The avatar and the name open the profile, the rest of the row opens
+			// the conversation - the same split as everywhere else on the site,
+			// where a name is always a link to the person.
+			o += '<span class="frThreadWho" onclick="frOpenProfile(&quot;' + r.friend_id + '&quot;)" title="See their profile">'
 			o += frAvatar({ avatar: r.avatar, display_name: r.display_name })
-			o += '<span class="frWho">'
-			o += '<span class="frName">' + authEsc(r.display_name) + frAdminBadge(r.friend_id) + '</span>'
+			o += '</span>'
+			o += '<span class="frWho" onclick="frOpenChat(&quot;' + r.friend_id + '&quot;)" title="Open the conversation">'
+			o += '<span class="frThreadName" onclick="event.stopPropagation();frOpenProfile(&quot;' + r.friend_id + '&quot;)" title="See their profile">'
+			o += authEsc(r.display_name) + frAdminBadge(r.friend_id) + '</span>'
 			// the preview is escaped like the message itself: a thread list is
 			// no place for the one bit of unescaped text in the app
 			o += '<span class="frSub frPreview">' + (r.last_body ? authEsc(r.last_body) : "no messages yet") + '</span>'
 			o += '</span>'
 			o += '<span class="profileRowActions frActions">'
 			if (r.unread > 0) o += '<span class="frBadge">' + r.unread + '</span>'
-			o += '<span class="profileWhen">' + frWhen(r.last_at) + '</span>'
+			o += '<span class="profileWhen" onclick="frOpenChat(&quot;' + r.friend_id + '&quot;)">' + frWhen(r.last_at) + '</span>'
+			o += '<button class="profileMiniBtn frThreadBtn" onclick="frArchiveThread(this,&quot;' + r.friend_id + '&quot;,' + (r.archived ? 'false' : 'true') + ')" '
+			o += 'title="' + (r.archived ? 'Put it back in the inbox' : 'Archive this conversation') + '">' + (r.archived ? '&#128228;' : '&#128229;') + '</button>'
+			o += '<button class="profileMiniBtn profileMiniDanger frThreadBtn" onclick="frClearThread(this,&quot;' + r.friend_id + '&quot;)" '
+			o += 'title="Delete your copy of this conversation">&#128465;</button>'
 			o += '</span></div>'
 		}
 		o += '</div>'
@@ -760,7 +784,14 @@ function frRenderChatWindow(id, tok) {
 		o += '<button class="profileMiniBtn frChatSend" id="frChatSendBtn" onclick="frChatSend()">Send</button>'
 		o += '</div>'
 		o += '<div id="frChatWarn" class="frChatWarn"></div>'
-		o += '<div class="profileNote profileFoot">Text and emoji only. Links, contact details and personal information are blocked, and messages are checked before they send.</div>'
+		// Says what is checked and, just as importantly, what is not. The old
+		// wording said messages "are checked", which reads as somebody reading
+		// them.
+		o += '<div class="frChatRules">'
+		o += '<div class="frChatRule">&#128172; Text and emoji only.</div>'
+		o += '<div class="frChatRule">&#128274; Links, contact details and personal information are filtered out automatically before a message sends.</div>'
+		o += '<div class="frChatRule">&#129302; Those checks are automatic. Nobody reads your conversations &mdash; a moderator only ever sees a message if it is reported.</div>'
+		o += '</div>'
 
 		profileBody(o, tok)
 		frChatScrollDown()
@@ -875,13 +906,83 @@ function frStopChatPoll() {
 
 // ---- report and block -------------------------------------------------
 
-function frReportPrompt(btn, id) {
-	if (!profileConfirmClick(btn, "Report?")) return
-	chatReport(id, "chat", null).then(function () {
-		displayCalcNotification("Reported. Thank you — we read every one.", 2600)
+// A report with a reason and a requested outcome, rather than a bare flag. A
+// moderator opening "reported" with nothing else to go on has to reconstruct
+// what the problem was; two dropdowns save that entirely.
+var frReportTarget = null, frReportMessage = null
+
+function frReportPrompt(btn, id, messageId) {
+	frReportTarget = id
+	frReportMessage = messageId || null
+	frShowReportDialog()
+}
+
+function frShowReportDialog() {
+	frCloseReport()
+	var o = '<div id="frReportBack" class="frReportBack" onclick="frCloseReport()"></div>'
+	o += '<div id="frReportBox" class="frReportBox">'
+	o += '<div class="frPrivHead">&#128681; Report ' + (frReportMessage ? 'this message' : 'this member') + '</div>'
+
+	o += '<div class="soComposeLab">What is wrong?</div>'
+	o += '<select id="frReportReason" class="frSelect frReportSel">'
+	for (var i = 0; i < CHAT_REPORT_REASONS.length; i++) {
+		o += '<option value="' + CHAT_REPORT_REASONS[i][0] + '">' + CHAT_REPORT_REASONS[i][1] + '</option>'
+	}
+	o += '</select>'
+
+	o += '<div class="soComposeLab">What would you like done?</div>'
+	o += '<select id="frReportAction" class="frSelect frReportSel">'
+	for (var a = 0; a < CHAT_REPORT_ACTIONS.length; a++) {
+		o += '<option value="' + CHAT_REPORT_ACTIONS[a][0] + '">' + CHAT_REPORT_ACTIONS[a][1] + '</option>'
+	}
+	o += '</select>'
+
+	o += '<div class="soComposeLab">Anything else? (optional)</div>'
+	o += '<textarea id="frReportNote" class="frChatBox soCaption2" rows="2" maxlength="1000" placeholder="Context that would help"></textarea>'
+
+	o += '<div class="profileNote">An administrator sees the conversation around a reported message, so they can judge it in context.</div>'
+	o += '<div class="frReportBtns">'
+	o += '<button class="profileMiniBtn" onclick="frCloseReport()">Cancel</button>'
+	o += '<button class="profileMiniBtn profileMiniDanger" id="frReportSend" onclick="frSendReport()">Send report</button>'
+	o += '</div></div>'
+	$(o).appendTo("body")
+}
+
+function frCloseReport() { $("#frReportBack, #frReportBox").remove() }
+
+function frSendReport() {
+	var reason = $("#frReportReason").val()
+	var action = $("#frReportAction").val()
+	var note = $("#frReportNote").val()
+	var btn = document.getElementById("frReportSend")
+	if (btn) btn.disabled = true
+	chatReport(frReportTarget, reason, note || null, frReportMessage, action).then(function () {
+		frCloseReport()
+		displayCalcNotification("Reported. An administrator will look at it.", 2800)
 	}).catch(function (err) {
-		displayCalcNotification(err.message || "Could not report", 2600)
+		if (btn) btn.disabled = false
+		displayCalcNotification(err.message || "Could not report", 2800)
 	})
+}
+
+function frArchiveThread(btn, id, on) {
+	btn.disabled = true
+	chatArchive(id, on).then(function () {
+		displayCalcNotification(on ? "Archived" : "Back in your inbox", 1600)
+		frRenderChats(profileRenderSeq)
+	}).catch(function (err) {
+		btn.disabled = false
+		displayCalcNotification(err.message || "Could not archive", 2400)
+	})
+}
+
+function frClearThread(btn, id) {
+	if (!profileConfirmClick(btn, "Delete?")) return
+	chatClear(id).then(function () {
+		displayCalcNotification("Deleted your copy. Theirs is untouched.", 2800)
+		chatUnreadInvalidate()
+		frRenderChats(profileRenderSeq)
+	}).catch(function (err) { displayCalcNotification(err.message || "Could not delete", 2400) })
 }
 
 function frBlockMember(btn, id) {
@@ -923,9 +1024,5 @@ function frReportMessage(el, senderId, messageId) {
 	}
 	el.dataset.armed = ""
 	el.classList.remove("frMsgFlagArmed")
-	chatReport(senderId, "chat message", null, messageId).then(function () {
-		displayCalcNotification("Reported. Thank you — an administrator will look at it.", 2800)
-	}).catch(function (err) {
-		displayCalcNotification(err.message || "Could not report", 2600)
-	})
+	frReportPrompt(el, senderId, messageId)
 }

@@ -420,3 +420,280 @@ supabase.from("profiles").update({ is_admin: true }).eq("id", <their id>)
 
 It must fail. If it succeeds, the column grant did not apply and nothing else
 in this panel is worth anything.
+
+---
+
+## Matching, feature flags and subscriptions
+
+`supabase/migrations/20260807000000_matching.sql` — run after the social one.
+The page lives at **`/match.html`**.
+
+It creates four tables and the functions over them:
+
+| Table | Holds | Who can read it |
+| --- | --- | --- |
+| `feature_flags` | the runtime switches | everyone, including signed-out |
+| `subscriptions` | status and period end, **no payment details** | its owner only |
+| `user_birth_data` | birth inputs and the derived signature | its owner only |
+| `user_cypher_preferences` | chosen systems and their values | its owner only |
+
+### Where the paywall actually is
+
+`match_list()`. Not the page, not the button, not `auth/flags.js`. The
+function raises before it selects if the caller has no active subscription,
+and none of the four tables has a policy letting one member read another's
+row — so there is no route to the data that avoids the gate. Everything in
+the browser decides what to *draw*.
+
+### After you run it — check this first
+
+Sign in as a member **without** a subscription and call:
+
+```js
+supabase.rpc("match_list", {})
+```
+
+It must fail with *Matching needs an active subscription*. If it returns rows,
+the flag row is wrong or the function did not replace cleanly, and nothing
+else about the paywall is worth anything.
+
+Then check the data boundary, as the same member:
+
+```js
+supabase.from("user_birth_data").select("*")
+```
+
+It must return only their own row — never anybody else's, whatever they pass.
+
+### Turning it on and off
+
+Admin panel → **Flags**, or directly:
+
+```sql
+update public.feature_flags set enabled = false where key = 'matching_requires_payment';
+```
+
+That opens Matching to every signed-in member — the switch for a free beta.
+`matching_enabled = false` closes it for everyone, subscribers included.
+
+### Giving someone access without a payment
+
+```sql
+select public.admin_set_subscription('<user uuid>', 'comped', null);
+```
+
+`comped` is a first-class status, for moderators and complimentary accounts.
+It is logged to `admin_audit` like every other admin action.
+
+### What is not built
+
+Checkout. See the *Not built yet* section of README.md — two Edge Functions,
+`create-checkout-session` and `payment-webhook`. Until they exist,
+`admin_set_subscription()` is how a subscription starts, which is enough to
+test the whole gate.
+
+---
+
+## Stripe, the LLM, and GDPR
+
+Three migrations, in order, after `20260807000000_matching.sql`:
+
+```
+20260807010000_stripe.sql      billing_events, webhook apply, admin billing view
+20260807020000_esoteric.sql    llm_usage, llm_limits, rate limit, esoteric_context
+20260807030000_gdpr.sql        consent_events, account_export, retention pruning
+```
+
+### Stripe setup, in order
+
+1. **Product and price.** Stripe → Products → *Matching Access*, recurring
+   monthly. Copy the **price** id (`price_...`), not the product id.
+2. **Secrets:**
+   ```bash
+   supabase secrets set STRIPE_SECRET_KEY=sk_live_...
+   supabase secrets set STRIPE_PRICE_ID=price_...
+   supabase secrets set SITE_ORIGINS=https://cyphers.news,https://www.cyphers.news
+   ```
+3. **Deploy.** The webhook needs `--no-verify-jwt` and the other two must not
+   have it:
+   ```bash
+   supabase functions deploy create-checkout-session
+   supabase functions deploy create-portal-session
+   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+   `--no-verify-jwt` on the webhook is required and is not a hole: Stripe has
+   no Supabase JWT to send, and authenticates by signing the raw body. The
+   signature check is the authentication, and it runs before anything is read
+   out of the payload.
+4. **Webhook endpoint.** Stripe → Developers → Webhooks → add
+   `https://<project>.supabase.co/functions/v1/stripe-webhook`, selecting:
+   `checkout.session.completed`, `customer.subscription.created`,
+   `customer.subscription.updated`, `customer.subscription.deleted`,
+   `invoice.payment_failed`. Copy the signing secret:
+   ```bash
+   supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+   ```
+5. **Enable the Billing Portal** at Stripe → Settings → Billing → Customer
+   portal, with cancellation allowed. Without this, `create-portal-session`
+   returns a Stripe configuration error.
+
+### The test flow: subscribe → access → cancel → lose access
+
+Run this end-to-end in Stripe **test mode** before going live. Card
+`4242 4242 4242 4242`, any future expiry, any CVC.
+
+| # | Do this | Expect |
+| --- | --- | --- |
+| 1 | Sign in as a member with no subscription, open `/match.html` | The paywall card. **Subscribe to Matching**, no "Manage subscription" |
+| 2 | `select public.match_list();` as that member in SQL | `42501` — *Matching needs an active subscription* |
+| 3 | Click **Subscribe to Matching** | Redirect to `checkout.stripe.com` |
+| 4 | Pay with the test card | Back at `/match.html?checkout=success`, "Thank you", then within seconds the matches list |
+| 5 | `select * from billing_events order by received_at desc limit 3;` | Rows for `checkout.session.completed` and `customer.subscription.created`, `note` null |
+| 6 | `select status, current_period_end from subscriptions where user_id = '<id>';` | `active`, period end about a month out |
+| 7 | Repeat step 2 | Rows come back |
+| 8 | Click **Explain this match** on any card | Two or three paragraphs, and `n of 60 today` in the footer |
+| 9 | Stripe dashboard → Customers → the customer → **Cancel subscription** → *immediately* | — |
+| 10 | Reload `/match.html` | The paywall card again, now with **Manage subscription** |
+| 11 | Repeat step 2 | `42501` again |
+| 12 | `select status from subscriptions where user_id = '<id>';` | `canceled` |
+
+**Also test the two failure paths — they are the ones that bite:**
+
+| Test | Do this | Expect |
+| --- | --- | --- |
+| Replay | Stripe → Webhooks → any delivered event → **Resend** | 200, `{"applied":false}`. `subscriptions.updated_at` unchanged |
+| Failed payment | Subscribe with `4000 0000 0000 0341` (fails on the *second* charge), then Stripe → advance the test clock | Status `past_due`; `/match.html` locked with the "last payment did not go through" note |
+| Cancel at period end | Cancel via the Billing Portal instead (step 9) | `cancel_at_period_end = true`, status stays `active`, **access continues to the period end** — that is correct, they paid for it |
+| Clock-only revocation | `update subscriptions set current_period_end = now() - interval '1 day' where user_id = '<id>';` | `match_list()` refuses immediately, with no webhook involved |
+
+That last one is the important one: it proves access lapses on the clock even
+if the webhook never fires again.
+
+### After you run it — check this first
+
+Sign in as a **non-admin, non-subscriber** and try:
+
+```js
+supabase.rpc("billing_apply_event", { event_id: "evt_fake", event_type: "x",
+  event_at: new Date().toISOString(), customer_id: "cus_x", sub_id: null,
+  new_status: "active", period_end: null })
+```
+
+It must fail with `42501`. If it succeeds, the revoke did not apply and anyone
+can grant themselves a subscription.
+
+Then check the ledger boundary:
+
+```js
+supabase.from("billing_events").select("*")   // must return nothing / 42501
+supabase.from("subscriptions").update({ status: "active" })   // must fail
+```
+
+### The LLM function
+
+```bash
+supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+supabase functions deploy esoteric
+```
+
+The key is an Edge Function secret. It is never in `auth/`, never in a response
+body, and never logged.
+
+Verify the rate limit is real — as a **free** member, click *Explain this
+match* four times:
+
+```
+1st, 2nd  -> readings
+3rd       -> reading (the free allowance is 3/day, 2/hour, so this one is
+             blocked by the HOURLY limit first)
+```
+
+Expect *"That is 2 readings this hour — try again shortly"* with HTTP 429, not
+a silent failure. Then confirm the ledger is honest:
+
+```sql
+select prompt_type, status, input_tokens, output_tokens from llm_usage
+ where user_id = '<id>' order by created_at desc;
+```
+
+Every row must have a `prompt_type` and a status, and **no column anywhere
+holding prompt or response text**. If you can read a reading back out of the
+database, something has gone wrong.
+
+### GDPR checks
+
+```js
+await supabase.rpc("account_export")   // one JSON document
+```
+
+It must contain the caller's own data and must **not** contain: any other
+member's messages, any moderation event, or any Stripe identifier. Confirm the
+consent log is being written:
+
+```sql
+select purpose, granted, created_at from consent_events where user_id = '<id>';
+```
+
+Toggling *Include me in matching* off and on again must add two rows.
+
+### Retention
+
+Neither ledger prunes itself. Schedule it:
+
+```sql
+select cron.schedule('llm-prune', '0 4 * * *', 'select public.llm_prune()');
+```
+
+---
+
+## Testing mode: `matching_force_free`
+
+`supabase/migrations/20260807040000_force_free.sql` — run after the Stripe one.
+
+It seeds `matching_force_free = true`, so **Matching is free from the moment
+you run it**. That is the intended state for now; it is also the one flag in
+the project whose safe default is not its seeded value, so it is worth knowing
+that applying this migration to production gives Matching away until you turn
+it off.
+
+### Confirm it works
+
+As a **normal signed-in member with no subscription**:
+
+| # | Do this | Expect |
+| --- | --- | --- |
+| 1 | Open `/match.html` | Green **TESTING MODE** banner, then the setup form or the matches list — **no paywall** |
+| 2 | `select public.match_list();` | Rows, not `42501` |
+| 3 | `select * from public.match_status();` | `subscribed = true`, `force_free = true`, `paying = false` |
+| 4 | Look at the pill, top right | **NOT SUBSCRIBED** — because they are not, and the badge must never imply a charge |
+| 5 | Click **Explain this match** six times | Six readings. The free ceiling is 3/day; testing mode grants the paid tier |
+| 6 | `select public.llm_tier('<id>');` | `paid` |
+| 7 | Click **Subscribe anyway** in the banner | Stripe Checkout opens — the paid path is still fully testable |
+
+### Turn paid mode back on
+
+```sql
+update public.feature_flags set enabled = false where key = 'matching_force_free';
+```
+
+or Admin panel → **Flags** → toggle it off. Then verify the gate is back, as
+the same unsubscribed member:
+
+| # | Do this | Expect |
+| --- | --- | --- |
+| 1 | `select public.match_list();` | `42501` — *Matching needs an active subscription* |
+| 2 | Reload `/match.html` | The paywall card. No banner |
+| 3 | `select public.llm_tier('<id>');` | `free` |
+| 4 | A subscriber repeats step 1 | Rows — paying members are unaffected throughout |
+
+Finally set `matching_force_free: false` in `auth/flags.js` and redeploy, so
+the pre-network default agrees with the row. That file only decides what is
+drawn — the row is what decides what comes back — so the redeploy can happen
+whenever, not in the same minute.
+
+### Pre-launch checklist
+
+- [ ] `matching_force_free` row → **false**
+- [ ] `auth/flags.js` → `matching_force_free: false`
+- [ ] Stripe out of test mode; live `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`
+- [ ] `select public.match_list()` as an unsubscribed member returns `42501`

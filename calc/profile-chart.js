@@ -165,6 +165,25 @@ function renderProfileChart() {
 		if (pcEditingId) o += '<button class="profileMiniBtn" onclick="pcNew()">New</button>'
 		o += '</div>'
 
+		// The list of answers to "Whose chart is this?", so it sits with that
+		// question rather than at the very bottom past the wheel and the
+		// transits - which is where you had to scroll to reopen a chart.
+		if (rows.length) {
+			o += '<div class="pcSectionTitle">Saved charts</div>'
+			o += '<div class="profileList">'
+			rows.forEach(function (r) {
+				var nm = authEsc(r.name).replace(/"/g, '&quot;')
+				o += '<div class="profileRow">'
+				o += '<span class="profileRowPhrase" onclick="pcOpen(&quot;' + r.id + '&quot;)">' + authEsc(r.name) + '</span>'
+				o += '<span class="profileRowActions">'
+				o += '<span class="profileWhen">' + authEsc(r.birth_date) + (r.time_known === false ? ' (no time)' : '') + '</span>'
+				o += '<button class="profileMiniBtn" onclick="pcOpen(&quot;' + r.id + '&quot;)">Open</button>'
+				o += '<button class="profileMiniBtn profileMiniDanger" onclick="pcDelete(this,&quot;' + r.id + '&quot;)">&#215;</button>'
+				o += '</span></div>'
+			})
+			o += '</div>'
+		}
+
 		// One row: what you are reading on the left, what you are saving on the
 		// right. The print group is pushed over with margin-left:auto rather
 		// than a spacer, so it stays right-aligned as the row wraps on mobile.
@@ -237,22 +256,6 @@ function renderProfileChart() {
 		o += '<div id="pcPlanets" class="pcReading"></div>'
 		o += '</div>'
 		o += '<div id="pcTransits"></div>'
-
-		if (rows.length) {
-			o += '<div class="pcSectionTitle">Saved charts</div>'
-			o += '<div class="profileList">'
-			rows.forEach(function (r) {
-				var nm = authEsc(r.name).replace(/"/g, '&quot;')
-				o += '<div class="profileRow">'
-				o += '<span class="profileRowPhrase" onclick="pcOpen(&quot;' + r.id + '&quot;)">' + authEsc(r.name) + '</span>'
-				o += '<span class="profileRowActions">'
-				o += '<span class="profileWhen">' + authEsc(r.birth_date) + (r.time_known === false ? ' (no time)' : '') + '</span>'
-				o += '<button class="profileMiniBtn" onclick="pcOpen(&quot;' + r.id + '&quot;)">Open</button>'
-				o += '<button class="profileMiniBtn profileMiniDanger" onclick="pcDelete(this,&quot;' + r.id + '&quot;)">&#215;</button>'
-				o += '</span></div>'
-			})
-			o += '</div>'
-		}
 
 		profileBody(o, tok)
 		// on the next frame, so the row has actually laid out - measuring the

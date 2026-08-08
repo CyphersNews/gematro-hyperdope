@@ -526,7 +526,11 @@ $(document).ready(function(){
 
 	// history table value clicked (right mouse button)
 	// disable context menu for the element so right click works
-	$(".tC").live('contextmenu', function() { // ".bind" for existing elements, ".live" for future
+	// Delegated from document, which is what .live() did internally before it
+	// was removed in jQuery 1.9. The rows of the history table are rebuilt on
+	// every calculation, so the handler has to survive elements that do not
+	// exist yet — that is the whole reason .live() was used here.
+	$(document).on('contextmenu', '.tC', function() {
 		$(this).find(".gV").toggleClass('hideValue'); // <b> "style="display: none;"
 		return false; // don't show menu
 	})

@@ -308,3 +308,43 @@
 	.adminKVRow { flex-direction: column; gap: 0; }
 	.adminKVKey { flex: none; }
 }
+
+/* ---- flags ---- */
+.adminFlagList { display: flex; flex-direction: column; gap: 0.5em; }
+.adminFlagRow {
+	display: flex; align-items: center; gap: 0.9em;
+	padding: 0.9em 1em;
+	background-color: var(--input-bg-accent);
+	border: 1px solid var(--border-dark-accent);
+	cursor: pointer;
+	transition: border-color 0.15s ease;
+}
+.adminFlagRow:hover { border-color: var(--border-accent); }
+.adminFlagOn { border-color: hsl(140 40% 40%); }
+.adminFlagBody { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.adminFlagTitle { font-size: 95%; font-weight: 600; color: var(--font-white-2); }
+.adminFlagOn .adminFlagTitle { color: var(--font-white-1); }
+.adminFlagKey {
+	font-family: var(--font-family-mono), monospace;
+	font-size: 74%; color: var(--font-white-4); padding-top: 0.1em;
+}
+.adminFlagNote { font-size: 78%; line-height: 1.45em; color: var(--font-white-3); padding-top: 0.35em; }
+.adminFlagSwitch {
+	flex: 0 0 auto;
+	width: 38px; height: 21px; border-radius: 999px;
+	background-color: var(--border-dark-accent);
+	border: 1px solid var(--border-accent);
+	position: relative;
+	transition: background-color 0.18s ease;
+}
+.adminFlagKnob {
+	position: absolute; top: 2px; left: 2px;
+	width: 15px; height: 15px; border-radius: 50%;
+	background-color: var(--font-white-4);
+	transition: transform 0.18s ease, background-color 0.18s ease;
+}
+.adminFlagOn .adminFlagSwitch { background-color: hsl(140 45% 38%); border-color: hsl(140 45% 48%); }
+.adminFlagOn .adminFlagKnob { transform: translateX(17px); background-color: #fff; }
+@media (prefers-reduced-motion: reduce) {
+	.adminFlagRow, .adminFlagSwitch, .adminFlagKnob { transition: none; }
+}
